@@ -15,6 +15,7 @@ dist-ssr
 venv/
 .env
 __pycache__/
+.vite/
 
 # Editor directories and files
 .vscode/*
