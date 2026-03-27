@@ -3,6 +3,7 @@ import Login from './pages/auth/Login';
 import UserDashboard from './pages/user/UserDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import ManagerDashboard from './pages/manager/ManagerDashboard';
+import FinanceDashboard from './pages/finance/FinanceDashboard';
 
 function App() {
   const isAuth = false;
@@ -33,6 +34,12 @@ function App() {
         <Route
           path="/manager/*"
           element={<ManagerDashboard />}
+        />
+
+        {/* Finance Dashboard */}
+        <Route
+          path="/finance/*"
+          element={<FinanceDashboard />}
         />
 
         {/* Catch-all untuk URL yang tidak ada */}
