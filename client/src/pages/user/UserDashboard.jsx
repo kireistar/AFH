@@ -15,7 +15,7 @@ function UserDashboard() {
           <a href="#" className="block p-3 rounded hover:bg-slate-800 transition">Incidents</a>
         </nav>
         <div className="p-4 border-t border-slate-800 text-sm text-slate-400">
-          Logged in as: <span className="text-white">IT Admin</span>
+          Logged in as: <span className="text-white">User</span>
         </div>
       </aside>
 
