@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import Login from './pages/auth/Login';
 import UserDashboard from './pages/user/UserDashboard';
 import AdminDashboard from './pages/admin/AdminDashboard';
-// import AdminDashboard from './pages/admin/AdminDashboard'; // Uncomment nanti
+import ManagerDashboard from './pages/manager/ManagerDashboard';
 
 function App() {
   const isAuth = false;
@@ -28,6 +28,13 @@ function App() {
           path="/admin/*"
           element={<AdminDashboard />}
         />
+
+        {/* Manager Dashboard */}
+        <Route
+          path="/manager/*"
+          element={<ManagerDashboard />}
+        />
+
         {/* Catch-all untuk URL yang tidak ada */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
