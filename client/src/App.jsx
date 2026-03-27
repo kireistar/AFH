@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/auth/Login';
 import UserDashboard from './pages/user/UserDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
 // import AdminDashboard from './pages/admin/AdminDashboard'; // Uncomment nanti
 
 function App() {
@@ -22,8 +23,11 @@ function App() {
           element={<UserDashboard />} 
         />
 
-        {/* Admin Dashboard (nanti uncomment import AdminDashboard) */}
-
+        {/* Admin Dashboard */}
+        <Route
+          path="/admin/*"
+          element={<AdminDashboard />}
+        />
         {/* Catch-all untuk URL yang tidak ada */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
