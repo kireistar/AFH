@@ -11,7 +11,7 @@ export default function Login() {
                         <span className="text-[#B91C1C]">AFH</span>
                         <span className="text-[#1E3A8A]"> System</span>
                     </h1>
-                    <p className="text-sm font-medium text-slate-400">Silakan login ke akun Anda</p>
+                    <p className="text-sm font-medium text-slate-400">Please log in to your account</p>
                 </header>
                 
                 <form className="space-y-4 sm:space-y-5" onSubmit={(e) => e.preventDefault()}>
@@ -59,7 +59,7 @@ export default function Login() {
                 </form>
 
                 <footer className="mt-6 text-center text-sm font-medium text-slate-500">
-                    Belum punya akun? <button className="text-[#1E3A8A] hover:underline font-bold">Hubungi IT Admin</button>
+                    Don't have an account? <button className="text-[#1E3A8A] hover:underline font-bold">Contact IT Admin</button>
                 </footer>
             </section>
         </main>

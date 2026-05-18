@@ -10,6 +10,7 @@ function FinanceDashboard() {
   const location = useLocation();
   const currentPath = location.pathname;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const getLinkClass = (path) => {
     const isActive = currentPath === path || (path === '/finance' && currentPath === '/finance/');
@@ -44,9 +45,9 @@ function FinanceDashboard() {
           </h1>
           <button className="md:hidden text-slate-500 hover:text-slate-800 p-2" onClick={() => setIsMobileMenuOpen(false)}>✕</button>
         </div>
-        <nav className="flex-1 px-4 mt-4 md:mt-6 space-y-6 overflow-y-auto">
+        <nav className="flex-1 px-4 mt-4 md:mt-6 space-y-6 overflow-y-auto mb-4">
           <div>
-            <p className="px-4 text-xs font-bold text-slate-400 tracking-wider mb-2 uppercase">Menu Utama</p>
+            <p className="px-4 text-xs font-bold text-slate-400 tracking-wider mb-2 uppercase">Main Menu</p>
             <div className="space-y-1">
               <button onClick={() => handleNavigation('/finance')} className={getLinkClass('/finance')}><span>Dashboard</span></button>
               <button onClick={() => handleNavigation('/finance/invoices')} className={getLinkClass('/finance/invoices')}><span>Invoices</span></button>
@@ -56,38 +57,55 @@ function FinanceDashboard() {
             </div>
           </div>
         </nav>
-        <div className="p-4 mt-auto border-t border-slate-100">
-          <button className="w-full text-left px-4 py-3 font-medium text-[#B91C1C] hover:bg-red-50 rounded-xl transition-colors text-sm uppercase tracking-widest font-black">
-            Logout
-          </button>
-        </div>
       </aside>
 
       {/* MAIN CONTENT */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* HEADER */}
-        <header className="h-16 md:h-20 bg-white border-b border-slate-100 flex items-center justify-between px-4 md:px-8 shrink-0">
+        <header className="h-16 md:h-20 bg-white border-b border-slate-100 flex items-center justify-between px-4 md:px-8 shrink-0 relative z-30">
           <div className="flex items-center flex-1">
             <button className="mr-4 md:hidden p-2 text-slate-600 hover:bg-slate-50 rounded-lg" onClick={() => setIsMobileMenuOpen(true)}>
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
-            <input type="text" placeholder="Cari invoice..." className="hidden sm:block w-48 md:w-96 px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:ring-2 focus:ring-[#1E3A8A] outline-none transition-all" />
+            <input type="text" placeholder="Search invoices..." className="hidden sm:block w-48 md:w-96 px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:ring-2 focus:ring-[#1E3A8A] outline-none transition-all" />
           </div>
 
           <div className="flex items-center space-x-4 md:space-x-6">
             <div className="relative cursor-pointer text-xs md:text-sm font-bold text-slate-400 hover:text-[#1E3A8A] uppercase tracking-tighter transition-colors">
-              <span className="hidden sm:inline">Notifikasi</span>
+              <span className="hidden sm:inline">Notifications</span>
               <span className="sm:hidden">🔔</span>
               <span className="absolute -top-1 -right-2 w-2 h-2 bg-[#B91C1C] rounded-full border border-white"></span>
             </div>
             <div className="h-6 w-[1px] bg-slate-200 hidden md:block"></div>
-            <div className="flex items-center space-x-2 md:space-x-3 cursor-pointer">
-              <div className="text-right hidden md:block">
-                <p className="text-sm font-bold text-slate-800">Finance Dept</p>
-                <p className="text-[10px] font-bold text-[#1E3A8A] uppercase">Officer</p>
+            
+            {/* PROFILE DROPDOWN TRIGGER */}
+            <div className="relative">
+              <div 
+                className="flex items-center space-x-2 md:space-x-3 cursor-pointer"
+                onClick={() => setIsProfileOpen(!isProfileOpen)}
+              >
+                <div className="text-right hidden md:block">
+                  <p className="text-sm font-bold text-slate-800">Finance Dept</p>
+                  <p className="text-[10px] font-bold text-[#1E3A8A] uppercase">Officer</p>
+                </div>
+                <div className="w-8 h-8 md:w-10 md:h-10 bg-[#1E3A8A] text-white font-bold rounded-xl flex items-center justify-center shadow-sm text-sm md:text-lg border-2 border-white">F</div>
               </div>
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-[#1E3A8A] text-white font-bold rounded-xl flex items-center justify-center shadow-sm text-sm md:text-lg border-2 border-white">F</div>
+
+              {/* DROPDOWN MENU */}
+              {isProfileOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)} />
+                  <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border border-slate-100 z-50 overflow-hidden">
+                    <div className="py-2">
+                      <button className="w-full text-left px-4 py-2.5 text-sm font-bold text-[#B91C1C] hover:bg-red-50 transition-colors uppercase tracking-wider">
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
+
           </div>
         </header>
 
@@ -95,12 +113,12 @@ function FinanceDashboard() {
           <div className="mb-6 md:mb-8">
             <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
               {currentPath === '/finance' || currentPath === '/finance/' ? 'FINANCE OVERVIEW' : 
-               currentPath === '/finance/invoices' ? 'MANAJEMEN INVOICES' : 
-               currentPath === '/finance/payments' ? 'MANAJEMEN PAYMENTS' : 
-               currentPath === '/finance/fines' ? 'VERIFIKASI DENDA' : 
-               currentPath === '/finance/reports' ? 'LAPORAN KEUANGAN' : 'PAGE'}
+               currentPath === '/finance/invoices' ? 'INVOICE MANAGEMENT' : 
+               currentPath === '/finance/payments' ? 'PAYMENT MANAGEMENT' : 
+               currentPath === '/finance/fines' ? 'FINE VERIFICATION' : 
+               currentPath === '/finance/reports' ? 'FINANCIAL REPORTS' : 'PAGE'}
             </h2>
-            <p className="text-slate-400 text-xs md:text-sm font-medium mt-1">Pantau arus kas dan verifikasi denda operasional aset.</p>
+            <p className="text-slate-400 text-xs md:text-sm font-medium mt-1">Monitor cash flow and verify asset operational fines.</p>
           </div>
           <Routes>
             <Route path="/" element={<DashboardOverview />} />
@@ -115,7 +133,7 @@ function FinanceDashboard() {
   );
 }
 
-// DASHBOARD OVERVIEW 
+// Keep your DashboardOverview exactly the same...
 function DashboardOverview() {
   return (
     <div className="space-y-6 md:space-y-8">
@@ -140,7 +158,6 @@ function DashboardOverview() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
-        {/* FINE VERIFICATION QUEUE PREVIEW */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-4 md:p-6 border-b border-slate-100 font-bold text-slate-800 text-sm md:text-base">
             Fine Verification Queue
@@ -165,7 +182,6 @@ function DashboardOverview() {
           </div>
         </div>
 
-        {/* RECENT INVOICES PREVIEW */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-4 md:p-6 border-b border-slate-100 font-bold text-slate-800 text-sm md:text-base">
             Recent Payment Reports
