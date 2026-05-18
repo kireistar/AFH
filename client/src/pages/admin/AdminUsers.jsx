@@ -1,0 +1,41 @@
+import React from 'react';
+
+const AdminUsers = ({ users }) => {
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+        <h3 className="text-lg font-bold text-slate-800">Manajemen Pengguna</h3>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
+              <th className="p-4 font-semibold">Pengguna</th>
+              <th className="p-4 font-semibold">Departemen</th>
+              <th className="p-4 font-semibold">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50">
+            {users.map(user => (
+              <tr key={user.id} className="hover:bg-slate-50/50">
+                <td className="p-4 text-sm">
+                  <div className="font-semibold text-slate-800">{user.name}</div>
+                  <div className="text-xs text-slate-500">{user.email}</div>
+                </td>
+                <td className="p-4 text-sm text-slate-600">{user.department}</td>
+                <td className="p-4 text-sm">
+                  <div className="flex items-center text-slate-600">
+                    <span className={`w-2 h-2 rounded-full mr-2 ${user.status === 'Active' ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
+                    {user.status}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+};
+
+export default AdminUsers;
