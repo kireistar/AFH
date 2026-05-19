@@ -3,51 +3,52 @@ import React from 'react';
 const AdminOverview = ({ assetStats, pendingHandoverCount, recentActivities, systemAlerts }) => {
   return (
     <div className="space-y-8">
-      {/* Metrik Utama */}
+      {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h3 className="text-slate-500 text-sm font-medium">Total Aset</h3>
+          <h3 className="text-slate-500 text-sm font-medium">Total Assets</h3>
           <p className="text-3xl font-bold text-slate-800 mt-2">{assetStats.total}</p>
           <div className="mt-4 flex items-center text-xs text-emerald-600 font-semibold">
-            ▲ +12% <span className="text-slate-400 font-normal ml-1">dari bulan lalu</span>
+            ▲ +12% <span className="text-slate-400 font-normal ml-1">from last month</span>
           </div>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
           <h3 className="text-slate-500 text-sm font-medium">Pending Handovers</h3>
           <p className="text-3xl font-bold text-slate-800 mt-2">{pendingHandoverCount}</p>
-          <div className="mt-4 text-xs text-slate-400 font-medium">Siap diserahkan fisik</div>
+          <div className="mt-4 text-xs text-slate-400 font-medium">Ready for physical handover</div>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h3 className="text-slate-500 text-sm font-medium">Insiden Aktif</h3>
+          <h3 className="text-slate-500 text-sm font-medium">Active Incidents</h3>
           <p className="text-3xl font-bold text-slate-800 mt-2">3</p>
           <div className="mt-4 text-xs text-[#B91C1C] font-semibold">
-            ▲ +2 <span className="text-slate-400 font-normal ml-1">hari ini</span>
+            ▲ +2 <span className="text-slate-400 font-normal ml-1">today</span>
           </div>
         </div>
       </div>
 
-      {/* Akses Cepat */}
+      {/* Quick Access */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4">Akses Cepat</h3>
+        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4">Quick Access</h3>
         <div className="flex flex-wrap gap-4">
-          <button className="flex-1 min-w-[150px] py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center">
-            Scan QR Handover
+          <button className="flex-1 min-w-37.5 py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center">
+            Scan Handover QR
           </button>
-          <button className="flex-1 min-w-[150px] py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center">
-            Tambah Aset Baru
+          <button className="flex-1 min-w-37.5 py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center">
+            Add New Asset
           </button>
-          <button className="flex-1 min-w-[150px] py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center">
-            Cetak Laporan
+          <button className="flex-1 min-w-37.5 py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center">
+            Print Report
           </button>
         </div>
       </div>
 
-      {/* Detail Log & Status */}
+      {/* Logs & Status Details */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column: Activities */}
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-            <h3 className="font-bold text-slate-800">Aktivitas Terbaru</h3>
-            <button className="text-xs font-bold text-[#1E3A8A] hover:underline">Lihat Semua</button>
+            <h3 className="font-bold text-slate-800">Recent Activities</h3>
+            <button className="text-xs font-bold text-[#1E3A8A] hover:underline">See All</button>
           </div>
           <div className="p-4">
             <div className="space-y-4">
@@ -67,13 +68,14 @@ const AdminOverview = ({ assetStats, pendingHandoverCount, recentActivities, sys
           </div>
         </div>
 
+        {/* Right Column: Status & Alerts */}
         <div className="space-y-8">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <h3 className="font-bold text-slate-800 mb-4">Status Inventaris</h3>
+            <h3 className="font-bold text-slate-800 mb-4">Inventory Status</h3>
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between text-xs font-bold mb-1">
-                  <span className="text-emerald-600 uppercase">Tersedia</span>
+                  <span className="text-emerald-600 uppercase">Available</span>
                   <span>{assetStats.available}</span>
                 </div>
                 <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -82,7 +84,7 @@ const AdminOverview = ({ assetStats, pendingHandoverCount, recentActivities, sys
               </div>
               <div>
                 <div className="flex justify-between text-xs font-bold mb-1">
-                  <span className="text-[#1E3A8A] uppercase">Dipinjam</span>
+                  <span className="text-[#1E3A8A] uppercase">Borrowed</span>
                   <span>{assetStats.borrowed}</span>
                 </div>
                 <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -91,7 +93,7 @@ const AdminOverview = ({ assetStats, pendingHandoverCount, recentActivities, sys
               </div>
               <div>
                 <div className="flex justify-between text-xs font-bold mb-1">
-                  <span className="text-[#B91C1C] uppercase">Perbaikan</span>
+                  <span className="text-[#B91C1C] uppercase">Maintenance</span>
                   <span>{assetStats.maintenance}</span>
                 </div>
                 <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -102,7 +104,7 @@ const AdminOverview = ({ assetStats, pendingHandoverCount, recentActivities, sys
           </div>
 
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-            <h3 className="font-bold text-slate-800 mb-4">Peringatan Sistem</h3>
+            <h3 className="font-bold text-slate-800 mb-4">System Alerts</h3>
             <div className="space-y-3">
               {systemAlerts.map(alert => (
                 <div key={alert.id} className={`p-3 rounded-xl border-l-4 ${alert.urgency === 'High' ? 'bg-red-50 border-[#B91C1C]' : 'bg-orange-50 border-orange-500'}`}>

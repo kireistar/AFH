@@ -1,183 +1,112 @@
 import React, { useState } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import DashboardLayout from '../../components/DashboardLayout';
 import UserAssets from './UserAssets';
 import UserRequests from './UserRequests';
 import UserIncidents from './UserIncidents';
 
-function UserDashboard() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const currentPath = location.pathname;
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+const UserDashboard = () => {
+  const [activeTab, setActiveTab] = useState('Dashboard');
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
 
-  const getLinkClass = (path) => {
-    const isActive = currentPath === path || (path === '/user' && currentPath === '/user/');
-    return `w-full flex items-center justify-between px-4 py-3 md:py-2.5 transition-all border-l-4 rounded-r-xl ${
-      isActive 
-        ? 'bg-blue-50/50 border-[#1E3A8A] text-[#1E3A8A] font-semibold' 
-        : 'border-transparent text-slate-500 hover:bg-slate-50'
-    }`;
+  // Profile metadata for Employee
+  const userProfile = {
+    name: 'Budi Santoso',
+    subTitle: 'IT Engineering Staff',
+    email: 'budi.santoso@president.ac.id',
+    avatarLetter: 'B'
   };
 
-  const handleNavigation = (path) => {
-    navigate(path);
-    setIsMobileMenuOpen(false);
+  // Flat sidebar menu items for Employee Portal
+  const menuItems = [
+    { name: 'Dashboard', badge: null },
+    { name: 'Assets', badge: null },
+    { name: 'Requests', badge: null },
+    { name: 'Incidents', badge: null },
+  ];
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'Dashboard':
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-slate-800">Need a Device for Work?</h3>
+                <p className="text-slate-500 text-sm mt-2 leading-relaxed">
+                  Submit an automated application for laptops, peripherals, or hardware infrastructure. 
+                  Our system evaluates risk scoring instantaneously.
+                </p>
+              </div>
+              <button 
+                onClick={() => setIsRequestModalOpen(true)}
+                className="mt-6 w-full py-3 bg-[#1E3A8A] text-white font-bold rounded-xl text-sm hover:bg-blue-900 transition-all text-center"
+              >
+                Request Asset Now
+              </button>
+            </div>
+
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-slate-800">Found Hardware Issues?</h3>
+                <p className="text-slate-500 text-sm mt-2 leading-relaxed">
+                  Report immediate device breakdowns, accidental asset damages, or hardware malfunctions to prevent processing penalization.
+                </p>
+              </div>
+              <button 
+                onClick={() => setIsIncidentModalOpen(true)}
+                className="mt-6 w-full py-3 bg-[#B91C1C] text-white font-bold rounded-xl text-sm hover:bg-red-800 transition-all text-center"
+              >
+                Report Broken Device
+              </button>
+            </div>
+          </div>
+        );
+      case 'Assets': 
+        return <UserAssets />;
+      case 'Requests': 
+        return <UserRequests onOpenRequestModal={() => setIsRequestModalOpen(true)} />;
+      case 'Incidents': 
+        return <UserIncidents onOpenIncidentModal={() => setIsIncidentModalOpen(true)} />;
+      default: 
+        return null;
+    }
   };
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] font-sans overflow-hidden">
-      {/* MOBILE OVERLAY */}
-      {isMobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-slate-900/40 z-40 md:hidden backdrop-blur-sm transition-opacity"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
+    <DashboardLayout
+      roleTitle="Portal"
+      menuItems={menuItems}
+      activeTab={activeTab}
+      setActiveTab={setActiveTab}
+      userProfile={userProfile}
+      pageHeaderTitle={activeTab === 'Dashboard' ? 'EMPLOYEE PORTAL' : `MY ${activeTab.toUpperCase()}`}
+      pageHeaderSubtitle={activeTab === 'Dashboard' ? 'Manage your corporate devices and submit asset forms securely.' : `View status of your current ${activeTab.toLowerCase()}.`}
+    >
+      {renderContent()}
+
+      {/* Placeholder binding slots for modal components */}
+      {isRequestModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full text-center">
+            <h4 className="text-lg font-bold text-slate-800">New Request Application</h4>
+            <p className="text-slate-500 text-xs mt-1">Simulated modal connection for NewRequestModal.</p>
+            <button onClick={() => setIsRequestModalOpen(false)} className="mt-4 px-4 py-2 bg-slate-100 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200">Close Window</button>
+          </div>
+        </div>
       )}
 
-      {/* SIDEBAR */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-100 flex flex-col transform transition-transform duration-300 ease-in-out md:relative md:translate-x-0 ${isMobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`}>
-        <div className="p-6 md:p-8 pb-4 flex justify-between items-center">
-          <h1 className="text-2xl font-black tracking-tight uppercase">
-            <span className="text-[#B91C1C]">AFH</span>
-            <span className="text-[#1E3A8A]">Portal</span>
-          </h1>
-          <button className="md:hidden text-slate-500 hover:text-slate-800 p-2" onClick={() => setIsMobileMenuOpen(false)}>✕</button>
+      {isIncidentModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full text-center">
+            <h4 className="text-lg font-bold text-slate-800">Report System Incident</h4>
+            <p className="text-slate-500 text-xs mt-1">Simulated modal connection for ReportIncidentModal.</p>
+            <button onClick={() => setIsIncidentModalOpen(false)} className="mt-4 px-4 py-2 bg-slate-100 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200">Close Window</button>
+          </div>
         </div>
-        <nav className="flex-1 px-4 mt-4 md:mt-6 space-y-6 overflow-y-auto mb-4">
-          <div>
-            <p className="px-4 text-xs font-bold text-slate-400 tracking-wider mb-2 uppercase">Main Menu</p>
-            <div className="space-y-1">
-              <button onClick={() => handleNavigation('/user')} className={getLinkClass('/user')}><span>Dashboard</span></button>
-              <button onClick={() => handleNavigation('/user/assets')} className={getLinkClass('/user/assets')}><span>My Assets</span></button>
-              <button onClick={() => handleNavigation('/user/requests')} className={getLinkClass('/user/requests')}><span>Requests</span></button>
-              <button onClick={() => handleNavigation('/user/incidents')} className={getLinkClass('/user/incidents')}><span>Incidents</span></button>
-            </div>
-          </div>
-        </nav>
-      </aside>
-
-      {/* MAIN CONTENT */}
-      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* HEADER */}
-        <header className="h-16 md:h-20 bg-white border-b border-slate-100 flex items-center justify-between px-4 md:px-8 shrink-0 relative z-30">
-          <div className="flex items-center flex-1">
-            <button className="mr-4 md:hidden p-2 text-slate-600 hover:bg-slate-50 rounded-lg" onClick={() => setIsMobileMenuOpen(true)}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
-            </button>
-            <input type="text" placeholder="Search my assets..." className="hidden sm:block w-48 md:w-96 px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:ring-2 focus:ring-[#1E3A8A] outline-none transition-all" />
-          </div>
-
-          <div className="flex items-center space-x-4 md:space-x-6">
-            <div className="relative cursor-pointer text-xs md:text-sm font-bold text-slate-400 hover:text-[#1E3A8A] uppercase tracking-tighter transition-colors">
-              <span className="hidden sm:inline">Notifications</span>
-              <span className="sm:hidden">🔔</span>
-            </div>
-            <div className="h-6 w-[1px] bg-slate-200 hidden md:block"></div>
-            
-            {/* PROFILE DROPDOWN TRIGGER */}
-            <div className="relative">
-              <div 
-                className="flex items-center space-x-2 md:space-x-3 cursor-pointer"
-                onClick={() => setIsProfileOpen(!isProfileOpen)}
-              >
-                <div className="text-right hidden md:block">
-                  <p className="text-sm font-bold text-slate-800">Employee Name</p>
-                  <p className="text-[10px] font-bold text-[#1E3A8A] uppercase">Staff</p>
-                </div>
-                <div className="w-8 h-8 md:w-10 md:h-10 bg-[#1E3A8A] text-white font-bold rounded-xl flex items-center justify-center shadow-sm text-sm md:text-lg border-2 border-white">E</div>
-              </div>
-
-              {/* DROPDOWN MENU */}
-              {isProfileOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setIsProfileOpen(false)} />
-                  <div className="absolute right-0 mt-3 w-48 bg-white rounded-xl shadow-lg border border-slate-100 z-50 overflow-hidden">
-                    <div className="py-2">
-                      <button className="w-full text-left px-4 py-2.5 text-sm font-bold text-[#B91C1C] hover:bg-red-50 transition-colors uppercase tracking-wider">
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
-
-          </div>
-        </header>
-
-        <section className="flex-1 overflow-y-auto p-4 md:p-8">
-          <div className="mb-6 md:mb-8">
-            <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
-              {currentPath === '/user' || currentPath === '/user/' ? 'EMPLOYEE PORTAL' : 
-               currentPath === '/user/assets' ? 'MY ASSETS' : 
-               currentPath === '/user/requests' ? 'ASSET REQUESTS' : 
-               currentPath === '/user/incidents' ? 'INCIDENT REPORTS' : 'PAGE'}
-            </h2>
-            <p className="text-slate-400 text-xs md:text-sm font-medium mt-1">Manage asset loans, new requests, and report incidents.</p>
-          </div>
-          <Routes>
-            <Route path="/" element={<DashboardOverview />} />
-            <Route path="/assets" element={<UserAssets />} />
-            <Route path="/requests" element={<UserRequests />} />
-            <Route path="/incidents" element={<UserIncidents />} />
-          </Routes>
-        </section>
-      </main>
-    </div>
+      )}
+    </DashboardLayout>
   );
-}
-
-// Keep your DashboardOverview exactly the same...
-function DashboardOverview() {
-  return (
-    <div className="space-y-6 md:space-y-8">
-      {/* DASHBOARD CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-        <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100">
-          <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total Assets</p>
-          <p className="text-2xl md:text-3xl font-black text-[#1E3A8A]">4</p>
-        </div>
-        <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100">
-          <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Pending Requests</p>
-          <p className="text-2xl md:text-3xl font-black text-yellow-600">1</p>
-        </div>
-        <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-slate-100 sm:col-span-2 lg:col-span-1">
-          <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Active Fines</p>
-          <p className="text-2xl md:text-3xl font-black text-[#B91C1C]">0</p>
-        </div>
-      </div>
-
-      {/* TABLE PREVIEW */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-4 md:p-6 border-b border-slate-100 font-bold text-slate-800 text-sm md:text-base">
-          Recent Return Checks
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[600px]">
-            <thead className="bg-slate-50 text-slate-400 text-[10px] md:text-xs uppercase font-bold tracking-wider">
-              <tr>
-                <th className="p-3 md:p-4">User</th>
-                <th className="p-3 md:p-4">Asset</th>
-                <th className="p-3 md:p-4">Damaged?</th>
-                <th className="p-3 md:p-4">Late?</th>
-                <th className="p-3 md:p-4">Lost?</th>
-              </tr>
-            </thead>
-            <tbody className="text-slate-600 text-xs md:text-sm divide-y divide-slate-50">
-              <tr>
-                <td className="p-3 md:p-4 font-medium">Hafidh Bintang</td>
-                <td className="p-3 md:p-4 font-bold text-[#1E3A8A]">MacBook Pro M3</td>
-                <td className="p-3 md:p-4"><span className="bg-green-50 text-green-700 px-2 py-1 md:px-3 rounded-full text-[9px] md:text-[10px] font-bold uppercase">No</span></td>
-                <td className="p-3 md:p-4"><span className="bg-red-50 text-red-700 px-2 py-1 md:px-3 rounded-full text-[9px] md:text-[10px] font-bold uppercase">Yes (2 Days)</span></td>
-                <td className="p-3 md:p-4"><span className="bg-green-50 text-green-700 px-2 py-1 md:px-3 rounded-full text-[9px] md:text-[10px] font-bold uppercase">No</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-}
+};
 
 export default UserDashboard;

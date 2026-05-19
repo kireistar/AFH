@@ -4,19 +4,19 @@ const AdminHandover = ({ handovers, handleCompleteHandover }) => {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-        <h3 className="text-lg font-bold text-slate-800">Daftar Penyerahan Aset</h3>
-        <p className="text-sm text-slate-500 mt-1">Aset di bawah ini telah disetujui dan siap diserahkan kepada peminjam.</p>
+        <h3 className="text-lg font-bold text-slate-800">Asset Handover List</h3>
+        <p className="text-sm text-slate-500 mt-1">Assets below have been approved and are ready to be handed over to the borrower.</p>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-left">
           <thead>
             <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
               <th className="p-4 font-semibold">ID</th>
-              <th className="p-4 font-semibold">Peminjam</th>
-              <th className="p-4 font-semibold">Aset</th>
-              <th className="p-4 font-semibold">Disetujui Oleh</th>
+              <th className="p-4 font-semibold">Borrower</th>
+              <th className="p-4 font-semibold">Asset</th>
+              <th className="p-4 font-semibold">Approved By</th>
               <th className="p-4 font-semibold">Status</th>
-              <th className="p-4 font-semibold text-right">Aksi</th>
+              <th className="p-4 font-semibold text-right">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
@@ -38,9 +38,9 @@ const AdminHandover = ({ handovers, handleCompleteHandover }) => {
                 <td className="p-4 text-sm text-right">
                   {h.status === 'Pending Handover' ? (
                     <button onClick={() => handleCompleteHandover(h.id)} className="px-4 py-1.5 bg-[#1E3A8A] text-white shadow-sm hover:bg-blue-900 rounded-lg transition-all font-semibold text-xs">
-                      Serahkan Aset
+                      Handover Asset
                     </button>
-                  ) : <span className="text-xs font-medium text-slate-400 mr-2">Selesai</span>}
+                  ) : <span className="text-xs font-medium text-slate-400 mr-2">Completed</span>}
                 </td>
               </tr>
             ))}
