@@ -1,67 +1,78 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
 
-export default function Login() {
-    const [showPassword, setShowPassword] = useState(false);
+function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-    return (
-        <main className="min-h-screen flex items-center justify-center bg-[#F8FAFC] px-4 sm:px-6 font-sans">
-            <section className="bg-white p-6 sm:p-8 rounded-2xl shadow-xl w-full max-w-md border border-slate-100">
-                <header className="mb-6 sm:mb-8 text-center">
-                    <h1 className="text-3xl sm:text-4xl font-black tracking-tight uppercase mb-2">
-                        <span className="text-[#B91C1C]">AFH</span>
-                        <span className="text-[#1E3A8A]"> System</span>
-                    </h1>
-                    <p className="text-sm font-medium text-slate-400">Please log in to your account</p>
-                </header>
-                
-                <form className="space-y-4 sm:space-y-5" onSubmit={(e) => e.preventDefault()}>
-                    <div className="space-y-2">
-                        <label htmlFor="email" className="block text-sm font-bold text-slate-700 tracking-tight">
-                            Employee Email
-                        </label>
-                        <input 
-                            id="email"
-                            type="email" 
-                            placeholder="name@company.com" 
-                            className="w-full px-4 py-2.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1E3A8A] outline-none transition-all" 
-                            required
-                        />
-                    </div>
+  const handleMockLogin = (e) => {
+    e.preventDefault();
+    
+    let assignedRole = 'user';
+    if (email.includes('admin')) assignedRole = 'admin';
+    else if (email.includes('manager')) assignedRole = 'manager';
+    else if (email.includes('finance')) assignedRole = 'finance';
 
-                    <div className="space-y-2">
-                        <label htmlFor="password" className="block text-sm font-bold text-slate-700 tracking-tight">
-                            Password
-                        </label>
-                        <div className="relative">
-                            <input 
-                                id="password"
-                                type={showPassword ? "text" : "password"} 
-                                placeholder="••••••••" 
-                                className="w-full px-4 py-2.5 sm:py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-[#1E3A8A] outline-none transition-all" 
-                                required
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-[#1E3A8A] text-xs font-bold uppercase tracking-wider p-2"
-                            >
-                                {showPassword ? "Hide" : "Show"}
-                            </button>
-                        </div>
-                    </div>
+    login(assignedRole);
+    navigate(`/${assignedRole}`);
+  };
 
-                    <button 
-                        type="submit"
-                        className="w-full bg-[#1E3A8A] text-white py-3 sm:py-2.5 rounded-xl font-bold uppercase tracking-wider hover:bg-blue-900 active:scale-95 transition-all duration-200 shadow-sm mt-6"
-                    >
-                        Login System
-                    </button>
-                </form>
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 to-slate-200 p-6">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 p-8 space-y-8">
+        
+        {/* Header Section */}
+        <div className="text-center">
+          <div className="w-14 h-14 bg-linear-to-tr from-blue-700 to-blue-500 rounded-xl mx-auto flex items-center justify-center shadow-lg shadow-blue-500/30 mb-4">
+            <span className="text-white font-extrabold text-2xl tracking-wider">AFH</span>
+          </div>
+          <h2 className="text-2xl font-bold text-slate-800">Login ke Sistem</h2>
+          <p className="mt-2 text-sm text-slate-500">
+            Ketik <strong>admin</strong>, <strong>manager</strong>, atau <strong>finance</strong> pada email untuk uji coba role.
+          </p>
+        </div>
 
-                <footer className="mt-6 text-center text-sm font-medium text-slate-500">
-                    Don't have an account? <button className="text-[#1E3A8A] hover:underline font-bold">Contact IT Admin</button>
-                </footer>
-            </section>
-        </main>
-    );
+        {/* Form Section */}
+        <form onSubmit={handleMockLogin} className="space-y-6">
+          <div className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Alamat Email</label>
+              <input
+                type="email"
+                required
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                placeholder="nama@afh.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1.5">Kata Sandi</label>
+              <input
+                type="password"
+                required
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full py-3 px-4 text-white font-semibold bg-linear-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-500/30 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+          >
+            Masuk ke Dashboard
+          </button>
+        </form>
+
+      </div>
+    </div>
+  );
 }
+
+export default Login;
