@@ -1,0 +1,77 @@
+"""
+User schemas — Pydantic validation untuk endpoint user & auth.
+PENTING: UserResponse TIDAK pernah expose password_hash.
+"""
+from datetime import date, datetime
+from decimal import Decimal
+from typing import Optional
+from uuid import UUID
+
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+from app.schemas.enums import EmploymentStatus, RiskTier, UserRole
+
+
+# ---- Base (shared fields) ----
+class UserBase(BaseModel):
+    employee_id: str = Field(..., min_length=1, max_length=20, examples=["EMP-0001"])
+    employee_name: str = Field(..., min_length=1, max_length=100)
+    email: EmailStr
+    role: UserRole
+    department: str = Field(..., min_length=1, max_length=50)
+    clearance_level: int = Field(default=1, ge=1, le=5)
+    employment_status: EmploymentStatus = EmploymentStatus.ACTIVE
+    hire_date: date
+    resignation_date: Optional[date] = None
+
+
+# ---- Create (input untuk POST /users atau registrasi) ----
+class UserCreate(UserBase):
+    password: str = Field(..., min_length=8, max_length=128,
+                          description="Raw password; akan di-hash dengan bcrypt di backend")
+
+
+# ---- Update (partial, semua optional) ----
+class UserUpdate(BaseModel):
+    employee_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    email: Optional[EmailStr] = None
+    role: Optional[UserRole] = None
+    department: Optional[str] = None
+    clearance_level: Optional[int] = Field(None, ge=1, le=5)
+    employment_status: Optional[EmploymentStatus] = None
+    resignation_date: Optional[date] = None
+    risk_score: Optional[Decimal] = Field(None, ge=0, le=100)
+    risk_score_tier: Optional[RiskTier] = None
+    public_key: Optional[str] = None
+
+
+# ---- Response (output API; NO password_hash) ----
+class UserResponse(UserBase):
+    id: UUID
+    risk_score: Decimal = Field(..., ge=0, le=100)
+    risk_score_tier: RiskTier
+    public_key: Optional[str] = None
+    last_login_at: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ---- Auth-specific schemas ----
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=1, max_length=128)
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserResponse  # eager-include profile biar FE tidak perlu round-trip lagi
+
+
+class TokenPayload(BaseModel):
+    """JWT payload struktur (sub = user UUID)."""
+    sub: str  # user.id as string
+    role: UserRole
+    exp: int  # expiry timestamp

@@ -1,12 +1,29 @@
-from sqlalchemy import Column, Integer, String, DateTime
-from sqlalchemy.sql import func
-from .database import Base
+"""
+DEPRECATED — Modul ini di-keep untuk backward compatibility saja.
+Semua SQLAlchemy models sekarang ada di `app/models/` (split per entity).
 
-class Asset(Base):
-    __tablename__ = "assets"
+Cara import yang benar (mulai sekarang):
+    from app.models import User, Asset, AssetRequest, Transaction, Invoice, \\
+                           Incident, HandoverToken, UserBehaviorStats, Base
 
-    id = Column(Integer, primary_key=True, index=True)
-    asset_name = Column(String, nullable=False)
-    category = Column(String, nullable=False)
-    status = Column(String, default="Available")
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+File ini akan dihapus di rilis berikutnya.
+"""
+import warnings
+
+from app.models import (  # noqa: F401
+    Asset,
+    AssetRequest,
+    Base,
+    HandoverToken,
+    Incident,
+    Invoice,
+    Transaction,
+    User,
+    UserBehaviorStats,
+)
+
+warnings.warn(
+    "`app.core.models` is deprecated. Import from `app.models` instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
