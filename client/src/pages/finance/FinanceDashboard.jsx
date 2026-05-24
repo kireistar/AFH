@@ -21,10 +21,11 @@ const FinanceDashboard = () => {
     { id: 1, type: 'Unpaid Fine', message: 'Diana Manager has an unpaid fine of Rp 150.000 (Overdue 5 days)', urgency: 'High' }
   ];
 
-  const fines = [
+  // UBAH: Menggunakan useState agar tabel denda menjadi interaktif
+  const [fines, setFines] = useState([
     { id: 'FIN-001', user: 'Agus Pratama', reason: 'Damaged Laptop Screen', amount: 'Rp 500.000', status: 'Paid' },
     { id: 'FIN-002', user: 'Diana Manager', reason: 'Lost Charger', amount: 'Rp 150.000', status: 'Unpaid' },
-  ];
+  ]);
 
   const invoices = [
     { id: 'INV-1022', description: 'Procurement: 10 Monitors', date: 'Oct 20, 2023', amount: 'Rp 15.000.000', status: 'Paid' },
@@ -35,6 +36,13 @@ const FinanceDashboard = () => {
     { id: 'PAY-881', party: 'Agus Pratama', date: 'Oct 29, 2023', method: 'Bank Transfer', amount: 'Rp 500.000' },
     { id: 'PAY-882', party: 'Tech Vendor Ltd', date: 'Oct 22, 2023', method: 'Corporate Credit', amount: 'Rp 15.000.000' },
   ];
+
+  // TAMBAH: Fungsi untuk mengubah status denda menjadi lunas
+  const handleMarkAsPaid = (id) => {
+    if (window.confirm("Confirm payment received for this fine?")) {
+      setFines(fines.map(fine => fine.id === id ? { ...fine, status: 'Paid' } : fine));
+    }
+  };
 
   // Profile configuration for Finance
   const financeProfile = {
@@ -56,7 +64,8 @@ const FinanceDashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'Dashboard': return <FinanceOverview financeStats={financeStats} recentTransactions={recentTransactions} alerts={alerts} />;
-      case 'Fines': return <FinanceFines fines={fines} />;
+      // UBAH: Meneruskan props fines dan fungsi handleMarkAsPaid
+      case 'Fines': return <FinanceFines fines={fines} handleMarkAsPaid={handleMarkAsPaid} />;
       case 'Invoices': return <FinanceInvoices invoices={invoices} />;
       case 'Payments': return <FinancePayments payments={payments} />;
       case 'Reports': return <FinanceReports />;

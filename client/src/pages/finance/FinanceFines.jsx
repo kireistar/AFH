@@ -1,6 +1,7 @@
 import React from 'react';
 
-const FinanceFines = ({ fines }) => {
+// UBAH: Menerima props handleMarkAsPaid
+const FinanceFines = ({ fines, handleMarkAsPaid }) => {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -32,7 +33,11 @@ const FinanceFines = ({ fines }) => {
                 </td>
                 <td className="p-4 text-sm text-right">
                   {fine.status === 'Unpaid' ? (
-                    <button className="px-4 py-1.5 bg-[#1E3A8A] text-white shadow-sm hover:bg-blue-900 rounded-lg transition-all font-semibold text-xs">
+                    // UBAH: Menambahkan event handler onClick
+                    <button 
+                      onClick={() => handleMarkAsPaid(fine.id)}
+                      className="px-4 py-1.5 bg-[#1E3A8A] text-white shadow-sm hover:bg-blue-900 rounded-lg transition-all font-semibold text-xs"
+                    >
                       Mark as Paid
                     </button>
                   ) : <span className="text-xs font-medium text-slate-400 mr-2">Cleared</span>}

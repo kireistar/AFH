@@ -3,6 +3,9 @@ import DashboardLayout from '../../components/DashboardLayout';
 import UserAssets from './UserAssets';
 import UserRequests from './UserRequests';
 import UserIncidents from './UserIncidents';
+// Import komponen Modal yang telah kamu buat
+import NewRequestModal from './NewRequestModal';
+import ReportIncidentModal from './ReportIncidentModal';
 
 const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
@@ -85,26 +88,16 @@ const UserDashboard = () => {
     >
       {renderContent()}
 
-      {/* Placeholder binding slots for modal components */}
-      {isRequestModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full text-center">
-            <h4 className="text-lg font-bold text-slate-800">New Request Application</h4>
-            <p className="text-slate-500 text-xs mt-1">Simulated modal connection for NewRequestModal.</p>
-            <button onClick={() => setIsRequestModalOpen(false)} className="mt-4 px-4 py-2 bg-slate-100 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200">Close Window</button>
-          </div>
-        </div>
-      )}
-
-      {isIncidentModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-2xl shadow-xl max-w-md w-full text-center">
-            <h4 className="text-lg font-bold text-slate-800">Report System Incident</h4>
-            <p className="text-slate-500 text-xs mt-1">Simulated modal connection for ReportIncidentModal.</p>
-            <button onClick={() => setIsIncidentModalOpen(false)} className="mt-4 px-4 py-2 bg-slate-100 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-200">Close Window</button>
-          </div>
-        </div>
-      )}
+      {/* Komponen Modal yang Terintegrasi Penuh */}
+      <NewRequestModal 
+        isOpen={isRequestModalOpen} 
+        onClose={() => setIsRequestModalOpen(false)} 
+      />
+      
+      <ReportIncidentModal 
+        isOpen={isIncidentModalOpen} 
+        onClose={() => setIsIncidentModalOpen(false)} 
+      />
     </DashboardLayout>
   );
 };
