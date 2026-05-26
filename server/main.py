@@ -8,7 +8,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.routers import assets
+from app.routers import assets, users
 
 app = FastAPI(
     title="AFH Backend - Supabase Edition",
@@ -27,6 +27,7 @@ app.add_middleware(
 
 # Register routers (tambah baris baru per router saat Tahap 2+)
 app.include_router(assets.router)
+app.include_router(users.router)
 
 
 @app.get("/")
