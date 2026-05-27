@@ -31,4 +31,4 @@ class UserBehaviorStats(Base):
 
     def __repr__(self) -> str:
         return (f"<UserBehaviorStats user_id={self.user_id} "
-                f"borrows={self.total_borrows} late={self.late_returns}>")
+                f"borrows={self.total_borrows}>")

@@ -1,6 +1,10 @@
 """
-Invoice router — CRUD endpoint untuk invoice/denda.
-Updated: import dari struktur baru (app.models, app.schemas).
+Invoice router — manajemen denda.
+RBAC:
+  - GET    : finance, admin
+  - POST   : admin (auto-generated saat return damage/late)
+  - PATCH  : finance (verifikasi pembayaran)
+  - DELETE : admin
 """
 from typing import List
 from uuid import UUID
@@ -9,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.dependencies import require_role
 from app.models import Invoice, Transaction, User
 from app.schemas import InvoiceCreate, InvoiceResponse, InvoiceUpdate
 
@@ -23,48 +28,45 @@ def get_all_invoices(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
+    _: User = Depends(require_role("finance", "admin")),
 ):
-    """Mengambil semua invoice dari database (paginated)."""
+    """Semua invoice. Finance & Admin."""
     return db.query(Invoice).offset(skip).limit(limit).all()
 
 
 @router.get("/{invoice_id}", response_model=InvoiceResponse)
-def get_invoice(invoice_id: int, db: Session = Depends(get_db)):
-    """Ambil 1 invoice by id."""
+def get_invoice(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("finance", "admin")),
+):
+    """Ambil 1 invoice. Finance & Admin."""
     invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not invoice:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Invoice with id {invoice_id} not found",
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Invoice with id {invoice_id} not found")
     return invoice
 
 
 @router.post("/", response_model=InvoiceResponse, status_code=status.HTTP_201_CREATED)
-def create_invoice(invoice_in: InvoiceCreate, db: Session = Depends(get_db)):
+def create_invoice(
+    invoice_in: InvoiceCreate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("admin")),
+):
     """
-    Buat invoice baru (otomatis di-generate saat return damage/late).
-    TODO: invoice_code harus di-generate dengan format tertentu (misal: INV-2024-0001).
+    Buat invoice (denda). Admin only.
+    TODO: generate invoice_code dari service layer.
     """
-    # Validate transaction exists
-    transaction = db.query(Transaction).filter(Transaction.id == invoice_in.transaction_id).first()
-    if not transaction:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Transaction with id {invoice_in.transaction_id} not found",
-        )
+    if not db.query(Transaction).filter(Transaction.id == invoice_in.transaction_id).first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Transaction with id {invoice_in.transaction_id} not found")
+    if not db.query(User).filter(User.id == invoice_in.user_id).first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"User with id {invoice_in.user_id} not found")
 
-    # Validate user exists
-    user = db.query(User).filter(User.id == invoice_in.user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with id {invoice_in.user_id} not found",
-        )
-
-    # TODO: Generate invoice_code dari service layer
     invoice_data = invoice_in.model_dump()
-    invoice_data["invoice_code"] = "INV-TEMP"  # TODO: Replace dengan generated code
+    invoice_data["invoice_code"] = "INV-TEMP"  # TODO: generate kode
 
     new_invoice = Invoice(**invoice_data)
     db.add(new_invoice)
@@ -74,33 +76,35 @@ def create_invoice(invoice_in: InvoiceCreate, db: Session = Depends(get_db)):
 
 
 @router.patch("/{invoice_id}", response_model=InvoiceResponse)
-def update_invoice(invoice_id: int, invoice_in: InvoiceUpdate, db: Session = Depends(get_db)):
-    """Update partial invoice (payment update oleh finance)."""
+def update_invoice(
+    invoice_id: int,
+    invoice_in: InvoiceUpdate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("finance")),
+):
+    """Verifikasi / update status pembayaran. Finance only."""
     invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not invoice:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Invoice with id {invoice_id} not found",
-        )
-
-    update_data = invoice_in.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Invoice with id {invoice_id} not found")
+    for key, value in invoice_in.model_dump(exclude_unset=True).items():
         setattr(invoice, key, value)
-
     db.commit()
     db.refresh(invoice)
     return invoice
 
 
 @router.delete("/{invoice_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_invoice(invoice_id: int, db: Session = Depends(get_db)):
-    """Hapus invoice."""
+def delete_invoice(
+    invoice_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("admin")),
+):
+    """Hapus invoice. Admin only."""
     invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not invoice:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Invoice with id {invoice_id} not found",
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Invoice with id {invoice_id} not found")
     db.delete(invoice)
     db.commit()
     return None

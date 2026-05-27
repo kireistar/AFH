@@ -45,5 +45,5 @@ class LedgerVerifyResult(BaseModel):
     """Response untuk GET /api/v1/ledger/verify."""
     total_transactions: int
     valid: bool
-    tampered_transaction_ids: list[int] = []
+    tampered_transaction_ids: list[int]
     message: str

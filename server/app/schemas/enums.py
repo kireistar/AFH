@@ -104,6 +104,7 @@ class IncidentStatus(str, Enum):
     CLOSED = "closed"
 
 
+
 class TokenStatus(str, Enum):
     ACTIVE = "active"
     USED = "used"

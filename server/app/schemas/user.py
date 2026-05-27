@@ -43,14 +43,6 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     employee_name: Optional[str] = Field(None, min_length=1, max_length=100)
     email: Optional[EmailStr] = None
-
-    @field_validator('resignation_date', mode='before')
-    @classmethod
-    def convert_empty_string_to_none(cls, v):
-        """Convert empty string ke None untuk optional date fields."""
-        if v == "" or v is None:
-            return None
-        return v
     role: Optional[UserRole] = None
     department: Optional[str] = None
     clearance_level: Optional[int] = Field(None, ge=1, le=5)
@@ -59,6 +51,14 @@ class UserUpdate(BaseModel):
     risk_score: Optional[Decimal] = Field(None, ge=0, le=100)
     risk_score_tier: Optional[RiskTier] = None
     public_key: Optional[str] = None
+
+    @field_validator('resignation_date', mode='before')
+    @classmethod
+    def convert_empty_string_to_none(cls, v):
+        """Convert empty string ke None untuk optional date fields."""
+        if v == "" or v is None:
+            return None
+        return v
 
 
 # ---- Response (output API; NO password_hash) ----

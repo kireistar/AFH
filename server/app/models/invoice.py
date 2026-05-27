@@ -51,4 +51,4 @@ class Invoice(Base):
     verifier = relationship("User", foreign_keys=[verified_by])
 
     def __repr__(self) -> str:
-        return f"<Invoice {self.invoice_code} amount={self.fine_amount} status={self.status}>"
+        return f"<Invoice {self.invoice_code} ({self.status})>"

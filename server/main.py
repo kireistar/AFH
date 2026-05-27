@@ -1,6 +1,5 @@
 """
 FastAPI entry point untuk AFH Backend.
-Router lain (auth, users, requests, dll) akan ditambahkan di Tahap 2+.
 """
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,15 +7,24 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.routers import assets, users
+from app.routers import (
+    auth,
+    assets,
+    users,
+    asset_requests,
+    transactions,
+    incidents,
+    invoices,
+    handover_tokens,
+)
 
 app = FastAPI(
-    title="AFH Backend - Supabase Edition",
-    description="Sistem AI-Assisted IT Lifecycle dengan arsitektur modular resmi",
+    title="AFH Backend - AI-Assisted IT Lifecycle",
+    description="Sistem manajemen aset IT dengan AI Risk Scoring, Immutable Ledger, dan Secure Handover",
     version="1.0.0",
 )
 
-# CORS — saat production ubah allow_origins ke URL spesifik (mis. http://localhost:5173)
+# CORS — saat production ganti allow_origins ke URL spesifik (mis. http://localhost:5173)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -25,31 +33,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register routers (tambah baris baru per router saat Tahap 2+)
+# ── Register routers ──────────────────────────────────────────────────────────
+app.include_router(auth.router)
 app.include_router(assets.router)
 app.include_router(users.router)
+app.include_router(asset_requests.router)
+app.include_router(transactions.router)
+app.include_router(incidents.router)
+app.include_router(invoices.router)
+app.include_router(handover_tokens.router)
 
 
-@app.get("/")
+@app.get("/", tags=["Health"])
 def health_check():
     """Endpoint dasar untuk memeriksa status server berjalan."""
     return {
         "status": "Online",
-        "message": "Backend FastAPI AFH berjalan dengan lancar dari folder server!",
+        "message": "Backend FastAPI AFH berjalan dengan lancar!",
     }
 
 
-@app.get("/api/v1/test-supabase")
+@app.get("/api/v1/test-supabase", tags=["Health"])
 def test_supabase_connection(db: Session = Depends(get_db)):
-    """Endpoint untuk memastikan integrasi ke Cloud Database Supabase sukses."""
+    """Endpoint untuk memastikan koneksi ke Supabase berhasil."""
     try:
         db.execute(text("SELECT 1"))
-        return {
-            "status": "Success",
-            "message": "FastAPI berhasil terhubung ke Cloud Database Supabase!",
-        }
+        return {"status": "Success", "message": "Terhubung ke Supabase!"}
     except Exception as e:
-        return {
-            "status": "Error",
-            "detail": f"Gagal terhubung ke Supabase. Error: {str(e)}",
-        }
+        return {"status": "Error", "message": str(e)}
