@@ -22,7 +22,7 @@ export const loginUser = async (email, password) => {
     formData.append('password', password);
     formData.append('grant_type', 'password');
 
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -62,7 +62,7 @@ export const loginUser = async (email, password) => {
 export const getCurrentUser = async (accessToken) => {
   try {
     // Gunakan apiGet yang auto-add Authorization header
-    const user = await apiGet('/api/auth/me');
+    const user = await apiGet('/api/v1/auth/me');
     return user;
   } catch (error) {
     console.error('Get current user error:', error);
