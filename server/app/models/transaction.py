@@ -53,4 +53,4 @@ class Transaction(Base):
     invoices = relationship("Invoice", back_populates="transaction")
 
     def __repr__(self) -> str:
-        return f"<Transaction {self.transaction_code} action={self.action}>"
+        return f"<Transaction {self.transaction_code}>"

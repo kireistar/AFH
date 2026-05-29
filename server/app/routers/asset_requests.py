@@ -1,6 +1,10 @@
 """
-Asset Request router — CRUD endpoint untuk workflow request asset.
-Updated: import dari struktur baru (app.models, app.schemas).
+Asset Request router — workflow request asset.
+RBAC:
+  - POST   : all authenticated users (buat request, user_id dari JWT)
+  - GET    : admin, manager
+  - PATCH  : admin, manager (approve/reject)
+  - DELETE : admin
 """
 from typing import List
 
@@ -8,7 +12,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models import AssetRequest, Asset, User
+from app.core.dependencies import get_current_user, require_role
+from app.models import Asset, AssetRequest, User
 from app.schemas import AssetRequestCreate, AssetRequestResponse, AssetRequestUpdate
 
 router = APIRouter(
@@ -22,53 +27,48 @@ def get_all_requests(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
+    _: User = Depends(require_role("admin", "manager")),
 ):
-    """Mengambil semua asset request dari database (paginated)."""
+    """Semua request. Admin & Manager only."""
     return db.query(AssetRequest).offset(skip).limit(limit).all()
 
 
 @router.get("/{request_id}", response_model=AssetRequestResponse)
-def get_request(request_id: int, db: Session = Depends(get_db)):
-    """Ambil 1 asset request by id."""
-    request = db.query(AssetRequest).filter(AssetRequest.id == request_id).first()
-    if not request:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Asset request with id {request_id} not found",
-        )
-    return request
+def get_request(
+    request_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("admin", "manager")),
+):
+    """Ambil 1 request by id. Admin & Manager only."""
+    req = db.query(AssetRequest).filter(AssetRequest.id == request_id).first()
+    if not req:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Asset request with id {request_id} not found")
+    return req
 
 
 @router.post("/", response_model=AssetRequestResponse, status_code=status.HTTP_201_CREATED)
-def create_request(request_in: AssetRequestCreate, user_id: str, db: Session = Depends(get_db)):
+def create_request(
+    request_in: AssetRequestCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user), # PERBAIKAN C2: Menggunakan get_current_user
+):
     """
-    Buat asset request baru.
-    TODO: user_id harus di-inject dari JWT token, bukan dari parameter.
-    TODO: risk_score_snapshot dan risk_tier_snapshot harus di-calculate dari AI service.
-    TODO: request_code harus di-generate dengan format tertentu (misal: REQ-2024-0001).
+    Buat request baru. Bisa dilakukan oleh role manapun (User, Admin, Manager, dll).
+    user_id di-inject dari JWT — user tidak bisa request atas nama orang lain.
+
+    TODO (AI scope): generate request_code, hitung risk_score_snapshot dari AI service.
     """
-    # Validate asset exists
     asset = db.query(Asset).filter(Asset.id == request_in.asset_id).first()
     if not asset:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Asset with id {request_in.asset_id} not found",
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Asset with id {request_in.asset_id} not found")
 
-    # Validate user exists
-    user = db.query(User).filter(User.id == user_id).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with id {user_id} not found",
-        )
-
-    # TODO: Generate request_code dan risk snapshot dari service layer
     request_data = request_in.model_dump()
-    request_data["user_id"] = user_id
-    request_data["request_code"] = "REQ-TEMP"  # TODO: Replace dengan generated code
-    request_data["risk_score_snapshot"] = 0  # TODO: Calculate dari user risk profile
-    request_data["risk_tier_snapshot"] = "Low"  # TODO: Calculate dari user risk profile
+    request_data["user_id"] = current_user.id
+    request_data["request_code"] = "REQ-TEMP"       # TODO: generate kode
+    request_data["risk_score_snapshot"] = 0          # TODO: AI risk score
+    request_data["risk_tier_snapshot"] = "Low"       # TODO: AI risk tier
 
     new_request = AssetRequest(**request_data)
     db.add(new_request)
@@ -78,33 +78,35 @@ def create_request(request_in: AssetRequestCreate, user_id: str, db: Session = D
 
 
 @router.patch("/{request_id}", response_model=AssetRequestResponse)
-def update_request(request_id: int, request_in: AssetRequestUpdate, db: Session = Depends(get_db)):
-    """Update partial asset request (approve/reject)."""
-    request = db.query(AssetRequest).filter(AssetRequest.id == request_id).first()
-    if not request:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Asset request with id {request_id} not found",
-        )
-
-    update_data = request_in.model_dump(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(request, key, value)
-
+def update_request(
+    request_id: int,
+    request_in: AssetRequestUpdate,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("admin", "manager")),
+):
+    """Approve / reject request. Admin & Manager only."""
+    req = db.query(AssetRequest).filter(AssetRequest.id == request_id).first()
+    if not req:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Asset request with id {request_id} not found")
+    for key, value in request_in.model_dump(exclude_unset=True).items():
+        setattr(req, key, value)
     db.commit()
-    db.refresh(request)
-    return request
+    db.refresh(req)
+    return req
 
 
 @router.delete("/{request_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_request(request_id: int, db: Session = Depends(get_db)):
-    """Hapus asset request. FK-restrict kalau sudah ada transaction terkait."""
-    request = db.query(AssetRequest).filter(AssetRequest.id == request_id).first()
-    if not request:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Asset request with id {request_id} not found",
-        )
-    db.delete(request)
+def delete_request(
+    request_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("admin")),
+):
+    """Hapus request. Admin only."""
+    req = db.query(AssetRequest).filter(AssetRequest.id == request_id).first()
+    if not req:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Asset request with id {request_id} not found")
+    db.delete(req)
     db.commit()
     return None

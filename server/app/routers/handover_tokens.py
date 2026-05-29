@@ -1,15 +1,25 @@
 """
-Handover Token router — endpoint untuk Secure Handover QR token (Ed25519 signed).
-Updated: import dari struktur baru (app.models, app.schemas).
+Handover Token router — Secure QR Handover (Ed25519).
+RBAC:
+  - GET /               : admin
+  - POST /generate      : admin (issued_by dari JWT)
+  - POST /scan          : all authenticated users (scanned_by dari JWT)
+  - GET  /{id}/verify   : admin
+
+Catatan scope:
+  - Generate token string + Ed25519 signing = TODO Cyber scope.
+  - Verify signature + chain commit = TODO Cyber scope.
 """
 from typing import List
-from uuid import UUID
+
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models import HandoverToken, AssetRequest, User
+from app.core.dependencies import get_current_user, require_role
+from app.models import AssetRequest, HandoverToken, User
 from app.schemas import HandoverTokenCreate, HandoverTokenResponse, HandoverTokenScan
 
 router = APIRouter(
@@ -23,68 +33,50 @@ def get_all_handover_tokens(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
+    _: User = Depends(require_role("admin")),
 ):
-    """Mengambil semua handover tokens dari database (paginated)."""
+    """Semua handover token. Admin only."""
     return db.query(HandoverToken).offset(skip).limit(limit).all()
 
 
 @router.get("/{token_id}", response_model=HandoverTokenResponse)
-def get_handover_token(token_id: int, db: Session = Depends(get_db)):
-    """Ambil 1 handover token by id."""
+def get_handover_token(
+    token_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("admin")),
+):
+    """Ambil 1 token by id. Admin only."""
     token = db.query(HandoverToken).filter(HandoverToken.id == token_id).first()
     if not token:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Handover token with id {token_id} not found",
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Handover token with id {token_id} not found")
     return token
 
 
 @router.post("/generate", response_model=HandoverTokenResponse, status_code=status.HTTP_201_CREATED)
-def generate_handover_token(token_in: HandoverTokenCreate, issued_by: str, db: Session = Depends(get_db)):
+def generate_handover_token(
+    token_in: HandoverTokenCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("admin")),
+):
     """
-    Generate handover token baru (admin endpoint).
-    TODO: issued_by harus di-inject dari JWT token, bukan dari parameter.
-    TODO: token string harus di-generate (random) dan signature dengan Ed25519.
-    TODO: expires_at harus di-calculate dari issued_at + expires_in_minutes.
-    TODO: QR payload harus di-encode dengan token + request_id + asset_code + borrower_employee_id + expires_at.
+    Generate handover token. Admin only.
+    issued_by di-inject dari JWT.
+    TODO (Cyber scope): generate token string, Ed25519 signature, QR payload, expires_at.
     """
-    # Validate request exists
-    request = db.query(AssetRequest).filter(AssetRequest.id == token_in.request_id).first()
-    if not request:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Asset request with id {token_in.request_id} not found",
-        )
+    if not db.query(AssetRequest).filter(AssetRequest.id == token_in.request_id).first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Asset request with id {token_in.request_id} not found")
 
-    # Validate issuer (admin) exists
-    issuer = db.query(User).filter(User.id == issued_by).first()
-    if not issuer:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User (issuer) with id {issued_by} not found",
-        )
-
-    # TODO: Generate token string (random secure token)
-    # token_string = secrets.token_urlsafe(32)
-    
-    # TODO: Calculate expires_at
-    # from datetime import datetime, timedelta
-    # expires_at = datetime.now(timezone.utc) + timedelta(minutes=token_in.expires_in_minutes)
-    
-    # TODO: Create QR payload dan sign dengan Ed25519
-    # qr_payload = HandoverQRPayload(...)
-    # signature = ed25519_sign(qr_payload)
-    
     token_data = {
         "request_id": token_in.request_id,
-        "issued_by": issued_by,
-        "token": "TOKEN-TEMP",  # TODO: Replace dengan generated token
-        "signature": "SIG-TEMP",  # TODO: Replace dengan Ed25519 signature
-        "expires_at": "2024-01-01T00:00:00",  # TODO: Calculate expires_at
+        "issued_by": current_user.id,
+        "token": "TOKEN-TEMP",           # TODO: Cyber scope
+        "signature": "SIG-TEMP",         # TODO: Cyber scope (Ed25519)
+        # PERBAIKAN C3: Menghitung waktu kedaluwarsa secara dinamis
+        "expires_at": datetime.now(timezone.utc) + timedelta(minutes=token_in.expires_in_minutes),
         "status": "active",
     }
-
     new_token = HandoverToken(**token_data)
     db.add(new_token)
     db.commit()
@@ -93,58 +85,47 @@ def generate_handover_token(token_in: HandoverTokenCreate, issued_by: str, db: S
 
 
 @router.post("/scan")
-def scan_handover_token(scan_in: HandoverTokenScan, scanned_by: str, db: Session = Depends(get_db)):
+def scan_handover_token(
+    scan_in: HandoverTokenScan,
+    db: Session = Depends(get_db),
+    # PERBAIKAN C2: Ubah require_role("user") menjadi get_current_user
+    current_user: User = Depends(get_current_user), 
+):
     """
-    Scan handover token QR (user endpoint saat receive asset dari admin).
-    TODO: scanned_by harus di-inject dari JWT token.
-    TODO: Verify token signature dengan Ed25519 public key admin.
-    TODO: Check token status (active, belum expired).
-    TODO: Update token status menjadi "used" dan set scanned_at, scanned_by.
-    TODO: Create transaction entry untuk handover event.
+    Scan QR token saat terima asset. Bisa dilakukan role manapun yang login.
+    scanned_by di-inject dari JWT.
+    TODO (Cyber scope): verify Ed25519 signature, check expiry, update status, create transaction.
     """
-    # Find token by token string
     token = db.query(HandoverToken).filter(HandoverToken.token == scan_in.token).first()
     if not token:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Token tidak valid atau sudah expired",
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail="Token tidak valid atau sudah expired")
 
-    # Validate scanner (user) exists
-    scanner = db.query(User).filter(User.id == scanned_by).first()
-    if not scanner:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User (scanner) with id {scanned_by} not found",
-        )
+    # TODO (Cyber scope): verify signature dengan public key issuer
+    # TODO (Cyber scope): check token expiry
+    # TODO (Cyber scope): update token status ke "used", set scanned_by = current_user.id
+    # TODO (Cyber scope): create transaction entry
 
-    # TODO: Verify signature dengan public key issuer
-    # TODO: Check token expiry
-    # TODO: Update token status ke "used"
-    # TODO: Create transaction entry
-
-    return {
-        "status": "success",
-        "message": "Token scanned successfully (TODO: implement full verification logic)"
-    }
+    return {"status": "success", "message": "Token scanned (TODO: full verification — Cyber scope)"}
 
 
 @router.get("/{token_id}/verify")
-def verify_handover_token(token_id: int, db: Session = Depends(get_db)):
-    """Verify handover token signature dan expiry."""
+def verify_handover_token(
+    token_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("admin")),
+):
+    """
+    Verify token signature & expiry. Admin only.
+    TODO (Cyber scope): implement Ed25519 verification.
+    """
     token = db.query(HandoverToken).filter(HandoverToken.id == token_id).first()
     if not token:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Handover token with id {token_id} not found",
-        )
-
-    # TODO: Implement Ed25519 signature verification
-    # TODO: Check token expiry
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Handover token with id {token_id} not found")
     return {
         "token_id": token_id,
-        "valid": True,  # TODO: Actual verification
+        "valid": True,
         "status": token.status,
-        "message": "Token verification (TODO: implement actual verification logic)"
+        "message": "TODO: Ed25519 verification — Cyber scope",
     }

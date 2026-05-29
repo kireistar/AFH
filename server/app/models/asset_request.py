@@ -58,4 +58,4 @@ class AssetRequest(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<AssetRequest {self.request_code} status={self.status}>"
+        return f"<AssetRequest {self.request_code} ({self.status})>"

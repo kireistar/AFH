@@ -46,4 +46,4 @@ class Incident(Base):
     asset = relationship("Asset", back_populates="incidents")
 
     def __repr__(self) -> str:
-        return f"<Incident {self.incident_code} severity={self.severity} status={self.status}>"
+        return f"<Incident {self.incident_code} ({self.severity})>"

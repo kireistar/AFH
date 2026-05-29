@@ -39,4 +39,4 @@ class HandoverToken(Base):
     scanner = relationship("User", foreign_keys=[scanned_by])
 
     def __repr__(self) -> str:
-        return f"<HandoverToken token={self.token[:8]}... status={self.status}>"
+        return f"<HandoverToken token={self.token[:8]}... ({self.status})>"
