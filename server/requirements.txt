@@ -10,7 +10,6 @@ bcrypt>=4.0.1
 # --- Auth (AI concentration scope) ---
 # Password hashing standar (bcrypt). BUKAN SHA-256 chained ledger (itu ranah cyber-1).
 passlib[bcrypt]>=1.7.4
-bcrypt==3.2.2
 # JWT access token untuk session (RFC 7519). BUKAN Ed25519 handover signing (itu ranah cyber-2).
 python-jose[cryptography]>=3.3.0
 # Wajib untuk parsing OAuth2 form data (dipakai FastAPI OAuth2PasswordRequestForm).
