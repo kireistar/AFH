@@ -24,10 +24,10 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS — saat production ganti allow_origins ke URL spesifik (mis. http://localhost:5173)
+# CORS — Membatasi akses hanya untuk Frontend Vite lokal
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173"], # PERBAIKAN M3: Keamanan CORS yang lebih ketat
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

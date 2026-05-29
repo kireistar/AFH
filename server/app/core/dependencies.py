@@ -32,7 +32,7 @@ from app.models import User
 
 # Skema OAuth2 — FastAPI akan otomatis tambahkan lock icon di Swagger UI
 # tokenUrl harus match dengan endpoint login kita
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 
 
 def get_current_user(

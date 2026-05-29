@@ -3,7 +3,8 @@ Centralized settings — semua environment variables dibaca dari .env di sini.
 Import settings dari modul lain:
     from app.core.config import settings
 """
-from pydantic_settings import BaseSettings
+# PERBAIKAN M2: Import SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -15,9 +16,12 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    # PERBAIKAN M2 & SOLUSI ERROR: Gunakan model_config dan abaikan variabel asing (extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env", 
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 
 
 settings = Settings()

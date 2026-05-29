@@ -1,12 +1,5 @@
 """
 Auth router — endpoint login & session management.
-
-Endpoint:
-  POST /api/auth/login  → verifikasi kredensial, return JWT access token
-
-Catatan scope:
-  - Ini adalah JWT session auth (bcrypt + HS256). BUKAN Ed25519 handover auth (ranah Cyber).
-  - Untuk logout, cukup hapus token di sisi client (stateless JWT).
 """
 from datetime import datetime, timezone
 
@@ -21,7 +14,7 @@ from app.models import User
 from app.schemas import Token, UserResponse
 
 router = APIRouter(
-    prefix="/api/auth",
+    prefix="/api/v1/auth",  # PERBAIKAN M1: Menambahkan /v1 agar seragam dengan router lain
     tags=["Auth"],
 )
 
@@ -33,13 +26,8 @@ def login(
 ):
     """
     Login dengan email + password.
-
-    - **username** : email karyawan (field 'username' adalah konvensi OAuth2 form)
-    - **password** : plain-text password
-
-    Return JWT access token + user profile (agar FE tidak perlu round-trip lagi).
+    Return JWT access token + user profile.
     """
-    # Cari user by email (OAuth2PasswordRequestForm memakai field 'username')
     user = db.query(User).filter(User.email == form_data.username).first()
 
     if not user or not verify_password(form_data.password, user.password_hash):
@@ -50,7 +38,6 @@ def login(
         )
 
     # ── Check employment status (HR lifecycle) ─────────────────────────────────
-    # Hanya Active dan On Leave yang boleh login
     ALLOWED_STATUSES = ["Active", "On Leave"]
     if user.employment_status not in ALLOWED_STATUSES:
         raise HTTPException(
@@ -83,3 +70,13 @@ def get_me(current_user: User = Depends(get_current_user)):
     Berguna untuk FE refresh state tanpa re-login.
     """
     return current_user
+
+
+# PERBAIKAN M5: Menambahkan endpoint Logout
+@router.post("/logout")
+def logout(_: User = Depends(get_current_user)):
+    """
+    Logout user. Karena sistem menggunakan JWT stateless, backend hanya merespon sukses.
+    Penghapusan token sepenuhnya harus dilakukan di sisi frontend.
+    """
+    return {"message": "Logged out successfully. Silakan hapus token di sisi client (Frontend)."}
