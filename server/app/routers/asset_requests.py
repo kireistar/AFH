@@ -1,7 +1,7 @@
 """
 Asset Request router — workflow request asset.
 RBAC:
-  - POST   : user (buat request, user_id dari JWT)
+  - POST   : all authenticated users (buat request, user_id dari JWT)
   - GET    : admin, manager
   - PATCH  : admin, manager (approve/reject)
   - DELETE : admin
@@ -51,10 +51,10 @@ def get_request(
 def create_request(
     request_in: AssetRequestCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role("user")),
+    current_user: User = Depends(get_current_user), # PERBAIKAN C2: Menggunakan get_current_user
 ):
     """
-    Buat request baru. User only.
+    Buat request baru. Bisa dilakukan oleh role manapun (User, Admin, Manager, dll).
     user_id di-inject dari JWT — user tidak bisa request atas nama orang lain.
 
     TODO (AI scope): generate request_code, hitung risk_score_snapshot dari AI service.

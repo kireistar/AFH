@@ -1,7 +1,7 @@
 """
 Incident router — laporan kerusakan / kehilangan.
 RBAC:
-  - POST   : user, admin (reporter_id dari JWT)
+  - POST   : all authenticated users (reporter_id dari JWT)
   - GET    : admin, manager
   - PATCH  : admin (resolve/close)
   - DELETE : admin
@@ -51,10 +51,10 @@ def get_incident(
 def create_incident(
     incident_in: IncidentCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role("user", "admin")),
+    current_user: User = Depends(get_current_user), # PERBAIKAN C2: Menggunakan get_current_user
 ):
     """
-    Laporkan incident. User & Admin.
+    Laporkan incident. Bisa dilakukan oleh role manapun yang sedang login.
     reporter_id di-inject dari JWT.
     TODO: generate incident_code dari service layer.
     """

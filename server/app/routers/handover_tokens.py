@@ -3,7 +3,7 @@ Handover Token router — Secure QR Handover (Ed25519).
 RBAC:
   - GET /               : admin
   - POST /generate      : admin (issued_by dari JWT)
-  - POST /scan          : user (scanned_by dari JWT)
+  - POST /scan          : all authenticated users (scanned_by dari JWT)
   - GET  /{id}/verify   : admin
 
 Catatan scope:
@@ -11,6 +11,8 @@ Catatan scope:
   - Verify signature + chain commit = TODO Cyber scope.
 """
 from typing import List
+
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -71,7 +73,8 @@ def generate_handover_token(
         "issued_by": current_user.id,
         "token": "TOKEN-TEMP",           # TODO: Cyber scope
         "signature": "SIG-TEMP",         # TODO: Cyber scope (Ed25519)
-        "expires_at": "2024-01-01T00:00:00",  # TODO: Cyber scope
+        # PERBAIKAN C3: Menghitung waktu kedaluwarsa secara dinamis
+        "expires_at": datetime.now(timezone.utc) + timedelta(minutes=token_in.expires_in_minutes),
         "status": "active",
     }
     new_token = HandoverToken(**token_data)
@@ -85,10 +88,11 @@ def generate_handover_token(
 def scan_handover_token(
     scan_in: HandoverTokenScan,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role("user")),
+    # PERBAIKAN C2: Ubah require_role("user") menjadi get_current_user
+    current_user: User = Depends(get_current_user), 
 ):
     """
-    Scan QR token saat terima asset. User only.
+    Scan QR token saat terima asset. Bisa dilakukan role manapun yang login.
     scanned_by di-inject dari JWT.
     TODO (Cyber scope): verify Ed25519 signature, check expiry, update status, create transaction.
     """
