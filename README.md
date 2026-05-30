@@ -1,18 +1,32 @@
-AI-Assisted IT Asset Lifecycle with Behavioral Risk Detection
-Sistem ini adalah platform manajemen aset proaktif yang mengintegrasikan Machine Learning dan Cybersecurity untuk mencegah kelalaian pengguna serta meminimalisasi manipulasi data.
+AI-Assisted IT Lifecycle With Behavioral Risk Detection
+This repository hosts a proactive IT Asset Management System designed to transition operational workflows from manual, trust-based processes to automated, data-driven security. By combining Machine Learning and Cybersecurity, this platform mitigates financial risks from user negligence, prevents unauthorized identity use, and ensures strict database integrity.
 
-Sistem konvensional seringkali gagal mendeteksi risiko kerusakan aset atau mencegah pencurian identitas secara real-time. Solusi ini dirancang untuk mengubah alur kerja manajemen IT dari sistem reaktif menjadi proaktif melalui analisis riwayat peminjam dan pengamanan basis data tingkat lanjut.
+Core Features
+AI Behavioral Risk Detection: Utilizes a Random Forest machine learning model to calculate dynamic Risk Scores based on user history, proactively evaluating factors like damage frequency and return timeliness.
 
-Fitur Utama
-AI Behavioral Risk Detection: Menggunakan model Random Forest untuk mengalkulasi skor risiko secara dinamis dengan mempertimbangkan frekuensi kerusakan dan ketepatan waktu pengembalian aset oleh pengguna.
+Digital Handshake (Non-Repudiation): Secures the asset handover process using Cryptographic Signing to verify the user's identity and effectively prevent denial of receipt.
 
-Digital Handshake (Non-Repudiation): Mengamankan proses serah terima barang melalui mekanisme tanda tangan kriptografi, memastikan pengguna tidak dapat menyangkal identitas saat meminjam alat.
+Immutable Audit Trail (Anti-Tampering): Implements Chain-Hashing on transaction logs to automatically detect anomalies and alert administrators if malicious insiders or intruders attempt unauthorized database modifications.
 
-Immutable Audit Trail (Anti-Tampering): Menggunakan sistem hashing berantai (chain-hashing) pada catatan transaksi untuk memberikan notifikasi otomatis jika administrator jahat mencoba menghapus atau memodifikasi log basis data.
+Tech Stack
+Frontend: Built with React 19, Vite, and Tailwind CSS 4 for a highly responsive, role-based user interface.
 
-Teknologi yang Digunakan
-Frontend: Antarmuka klien dibangun dengan React 19, Vite, dan dipoles menggunakan utilitas TailwindCSS 4.
+Backend: Powered by FastAPI (Python) and SQLAlchemy to ensure high-performance API endpoints and robust database interaction.
 
-Backend: Sisi server menggunakan framework FastAPI (Python), dengan pengelolaan basis data relasional melalui SQLAlchemy.
+Security & Database: Utilizes Bcrypt for password hashing, JWT via python-jose for session management, and PostgreSQL (psycopg2-binary) for relational data storage.
 
-Autentikasi & Keamanan: Integrasi session difasilitasi oleh JWT (python-jose), sementara hashing kata sandi standar menggunakan Bcrypt (passlib) [cite: kireistar/afh/AFH-d89058c7
+Project Structure
+client/: Contains the React application, specifically organized into pages for distinct operational roles: User, Admin, Manager, and Finance.
+
+server/: Contains the FastAPI application, housing the core business logic, Pydantic schemas, database models, and the AI models (random_forest.pkl).
+
+docs/: Stores comprehensive project documentation, including activity diagrams, entity-relationship diagrams, and academic proposal forms.
+
+Team Members
+This Capstone Design Project was developed for the Faculty of Computer Science, President University by:
+
+Athaillah Dea Arkananta: Cybersecurity Integration (Anti-Tampering)
+
+Firdaus Hamonangan Manalu: Cybersecurity Integration (Non-Repudiation)
+
+Hafidh Bintang Ramadhan: Artificial Intelligence (Behavioral Risk Detection)
