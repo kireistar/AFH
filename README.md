@@ -1,16 +1,18 @@
-# React + Vite
+AI-Assisted IT Asset Lifecycle with Behavioral Risk Detection
+Sistem ini adalah platform manajemen aset proaktif yang mengintegrasikan Machine Learning dan Cybersecurity untuk mencegah kelalaian pengguna serta meminimalisasi manipulasi data.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistem konvensional seringkali gagal mendeteksi risiko kerusakan aset atau mencegah pencurian identitas secara real-time. Solusi ini dirancang untuk mengubah alur kerja manajemen IT dari sistem reaktif menjadi proaktif melalui analisis riwayat peminjam dan pengamanan basis data tingkat lanjut.
 
-Currently, two official plugins are available:
+Fitur Utama
+AI Behavioral Risk Detection: Menggunakan model Random Forest untuk mengalkulasi skor risiko secara dinamis dengan mempertimbangkan frekuensi kerusakan dan ketepatan waktu pengembalian aset oleh pengguna.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Digital Handshake (Non-Repudiation): Mengamankan proses serah terima barang melalui mekanisme tanda tangan kriptografi, memastikan pengguna tidak dapat menyangkal identitas saat meminjam alat.
 
-## React Compiler
+Immutable Audit Trail (Anti-Tampering): Menggunakan sistem hashing berantai (chain-hashing) pada catatan transaksi untuk memberikan notifikasi otomatis jika administrator jahat mencoba menghapus atau memodifikasi log basis data.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Teknologi yang Digunakan
+Frontend: Antarmuka klien dibangun dengan React 19, Vite, dan dipoles menggunakan utilitas TailwindCSS 4.
 
-## Expanding the ESLint configuration
+Backend: Sisi server menggunakan framework FastAPI (Python), dengan pengelolaan basis data relasional melalui SQLAlchemy.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Autentikasi & Keamanan: Integrasi session difasilitasi oleh JWT (python-jose), sementara hashing kata sandi standar menggunakan Bcrypt (passlib) [cite: kireistar/afh/AFH-d89058c7
