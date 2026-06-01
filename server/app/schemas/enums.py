@@ -93,7 +93,8 @@ class PaymentMethod(str, Enum):
 class IncidentSeverity(str, Enum):
     LOW = "low"
     MEDIUM = "medium"
-    HIGH = "high"
+    SEVERE = "severe"
+    LOST = "lost"
     CRITICAL = "critical"
 
 

@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.core.dependencies import require_role
+from app.core.dependencies import get_current_user, require_role
 from app.core.security import hash_password
 from app.models import User
 from app.schemas import UserCreate, UserResponse, UserUpdate
@@ -21,16 +21,18 @@ router = APIRouter(
 
 
 @router.get("/me", response_model=UserResponse)
-def get_current_user(current_user_id: str, db: Session = Depends(get_db)):
+def get_current_user(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)):
     """
     Get current logged-in user profile.
     TODO: current_user_id harus di-inject dari JWT token, bukan dari parameter.
     """
-    user = db.query(User).filter(User.id == UUID(current_user_id)).first()
+    user = db.query(User).filter(User.id == current_user.id).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with id {current_user_id} not found",
+            detail=f"User with id {current_user.id} not found",
         )
     return user
 
