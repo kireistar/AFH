@@ -9,6 +9,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.enums import InvoiceStatus, PaymentMethod
+from app.schemas.user import UserResponse
 
 
 class InvoiceBase(BaseModel):
@@ -42,5 +43,7 @@ class InvoiceResponse(InvoiceBase):
     verified_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+
+    user: Optional[UserResponse] = None
 
     model_config = ConfigDict(from_attributes=True)

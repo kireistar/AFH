@@ -9,6 +9,8 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.schemas.enums import RequestStatus, RiskTier
+from app.schemas.asset import AssetResponse
+from app.schemas.user import UserResponse
 
 
 class AssetRequestBase(BaseModel):
@@ -48,5 +50,8 @@ class AssetRequestResponse(AssetRequestBase):
     rejection_reason: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+
+    asset: Optional[AssetResponse] = None
+    user: Optional[UserResponse] = None
 
     model_config = ConfigDict(from_attributes=True)

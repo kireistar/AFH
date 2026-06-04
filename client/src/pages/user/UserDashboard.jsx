@@ -3,21 +3,27 @@ import DashboardLayout from '../../components/DashboardLayout';
 import UserAssets from './UserAssets';
 import UserRequests from './UserRequests';
 import UserIncidents from './UserIncidents';
-// Import komponen Modal yang telah kamu buat
+// Import komponen Modal
 import NewRequestModal from './NewRequestModal';
 import ReportIncidentModal from './ReportIncidentModal';
+import { useAuth } from '../../hooks/useAuth';
+import useRequests from '../../hooks/useRequests';
 
 const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
+  const { user } = useAuth();
+
+  // Fetch user requests
+  const { requests, loading, refresh } = useRequests('mine');
 
   // Profile metadata for Employee
   const userProfile = {
-    name: 'Budi Santoso',
-    subTitle: 'IT Engineering Staff',
-    email: 'budi.santoso@president.ac.id',
-    avatarLetter: 'B'
+    name: user?.employee_name || 'User',
+    subTitle: user?.department || '',
+    email: user?.email || '',
+    avatarLetter: (user?.employee_name || 'U')[0].toUpperCase(),
   };
 
   // Flat sidebar menu items for Employee Portal
@@ -37,26 +43,25 @@ const UserDashboard = () => {
               <div>
                 <h3 className="text-xl font-bold text-slate-800">Need a Device for Work?</h3>
                 <p className="text-slate-500 text-sm mt-2 leading-relaxed">
-                  Submit an automated application for laptops, peripherals, or hardware infrastructure. 
+                  Submit an automated application for laptops, peripherals, or hardware infrastructure.
                   Our system evaluates risk scoring instantaneously.
                 </p>
               </div>
-              <button 
+              <button
                 onClick={() => setIsRequestModalOpen(true)}
                 className="mt-6 w-full py-3 bg-[#1E3A8A] text-white font-bold rounded-xl text-sm hover:bg-blue-900 transition-all text-center"
               >
                 Request Asset Now
               </button>
             </div>
-
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
               <div>
                 <h3 className="text-xl font-bold text-slate-800">Found Hardware Issues?</h3>
                 <p className="text-slate-500 text-sm mt-2 leading-relaxed">
-                  Report immediate device breakdowns, accidental asset damages, or hardware malfunctions to prevent processing penalization.
+                  Report immediate device breakdowns, accidental asset damages, or hardware malfunctions.
                 </p>
               </div>
-              <button 
+              <button
                 onClick={() => setIsIncidentModalOpen(true)}
                 className="mt-6 w-full py-3 bg-[#B91C1C] text-white font-bold rounded-xl text-sm hover:bg-red-800 transition-all text-center"
               >
@@ -65,13 +70,13 @@ const UserDashboard = () => {
             </div>
           </div>
         );
-      case 'Assets': 
-        return <UserAssets />;
-      case 'Requests': 
-        return <UserRequests onOpenRequestModal={() => setIsRequestModalOpen(true)} />;
-      case 'Incidents': 
+      case 'Assets':
+        return <UserAssets requests={requests} loading={loading} />;
+      case 'Requests':
+        return <UserRequests requests={requests} loading={loading} onOpenRequestModal={() => setIsRequestModalOpen(true)} />;
+      case 'Incidents':
         return <UserIncidents onOpenIncidentModal={() => setIsIncidentModalOpen(true)} />;
-      default: 
+      default:
         return null;
     }
   };
@@ -87,16 +92,14 @@ const UserDashboard = () => {
       pageHeaderSubtitle={activeTab === 'Dashboard' ? 'Manage your corporate devices and submit asset forms securely.' : `View status of your current ${activeTab.toLowerCase()}.`}
     >
       {renderContent()}
-
-      {/* Komponen Modal yang Terintegrasi Penuh */}
-      <NewRequestModal 
-        isOpen={isRequestModalOpen} 
-        onClose={() => setIsRequestModalOpen(false)} 
+      <NewRequestModal
+        isOpen={isRequestModalOpen}
+        onClose={() => setIsRequestModalOpen(false)}
+        onSuccess={refresh}  // refresh list setelah submit berhasil
       />
-      
-      <ReportIncidentModal 
-        isOpen={isIncidentModalOpen} 
-        onClose={() => setIsIncidentModalOpen(false)} 
+      <ReportIncidentModal
+        isOpen={isIncidentModalOpen}
+        onClose={() => setIsIncidentModalOpen(false)}
       />
     </DashboardLayout>
   );
