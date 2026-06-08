@@ -32,11 +32,6 @@ const UserAssets = ({ requests = [], loading = false }) => {
                   <td className="p-4 text-sm font-medium text-slate-800">{req.asset}</td>
                   <td className="p-4 text-sm text-slate-600">{req.startDate}</td>
                   <td className="p-4 text-sm text-slate-500">{req.endDate}</td>
-                  <td className="p-4 text-sm">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
-                      {req.condition}
-                    </span>
-                  </td>
                 </tr>
               ))}
             </tbody>

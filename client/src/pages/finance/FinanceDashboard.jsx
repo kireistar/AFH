@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import FinanceOverview from './FinanceOverview';
 import FinanceFines from './FinanceFines';
@@ -12,9 +12,13 @@ const FinanceDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const { user } = useAuth();
 
-  const { invoices: fines, loading, markAsPaid } = useInvoices();
+  // Single fetch, semua invoice (split di client)
+  const { invoices, loading, markAsPaid } = useInvoices();
 
-  const unpaidCount = fines.filter(f => f._status === 'unpaid').length;
+  const fines = useMemo(() => invoices.filter(i => i._status === 'unpaid'), [invoices]);
+  const paidInvoices = useMemo(() => invoices.filter(i => i._status === 'paid'), [invoices]);
+  
+  const unpaidCount = fines.length;
 
   const handleMarkAsPaid = async (fine) => {
     if (window.confirm("Confirm payment received for this fine?")) {
@@ -44,7 +48,7 @@ const FinanceDashboard = () => {
       case 'Fines':
         return <FinanceFines fines={fines} loading={loading} handleMarkAsPaid={handleMarkAsPaid} />;
       case 'Invoices':
-        return <FinanceInvoices invoices={[]} />;
+        return <FinanceInvoices invoices={paidInvoices} loading={loading} />;
       case 'Payments':
         return <FinancePayments payments={[]} />;
       case 'Reports':

@@ -49,7 +49,7 @@ const ManagerDashboard = () => {
     pendingApprovals: pendingApprovalCount,
     activeAssets: 0,      // Akan diisi dengan AI jobdesk
     monthlyIncidents: 0,  // Akan diisi dengan AI jobdesk
-  }
+  };
 
   const renderContent = () => {
     switch (activeTab) {
