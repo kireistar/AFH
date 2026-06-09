@@ -21,7 +21,25 @@ const FinanceDashboard = () => {
   
   const unpaidCount = fines.length;
 
+  // Hitung total collected fines daripaid invoices
+  const collectedFines = useMemo(() => {
+    const total = paidInvoices.reduce((sum, inv) => sum + Number(inv._rawAmount || 0), 0);
+    return 'Rp ' + total.toLocaleString('id-ID');
+  }, [paidInvoices]);
+
   const { transactions, loading: loadingTransactions } = useTransactions();
+
+  // Map 5 transaksi terbaru untuk overview
+  const recentTransactions = useMemo(() => {
+    return transactions.slice(0, 5).map(trx => ({
+      id: trx.id,
+      description: `${trx.action} - ${trx.asset}`,
+      user: trx.party,
+      time: trx.date,
+      type: trx._action === 'fine_paid' ? 'Income' : 'Expense',
+      amount: trx.amount,
+    }));
+  }, [transactions]);
 
   const handleMarkAsPaid = async (fine) => {
     if (window.confirm("Confirm payment received for this fine?")) {
@@ -47,7 +65,7 @@ const FinanceDashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'Dashboard':
-        return <FinanceOverview financeStats={{ collectedFines: '-', pendingInvoices: unpaidCount, unpaidFines: unpaidCount }} recentTransactions={[]} alerts={[]} />;
+        return <FinanceOverview financeStats={{ collectedFines, pendingInvoices: unpaidCount, unpaidFines: unpaidCount }} recentTransactions={recentTransactions} alerts={[]} />;
       case 'Fines':
         return <FinanceFines fines={fines} loading={loading} handleMarkAsPaid={handleMarkAsPaid} />;
       case 'Invoices':
