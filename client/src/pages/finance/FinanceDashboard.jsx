@@ -7,6 +7,7 @@ import FinancePayments from './FinancePayments';
 import FinanceReports from './FinanceReports';
 import { useAuth } from '../../hooks/useAuth';
 import useInvoices from '../../hooks/useInvoices';
+import useTransactions from '../../hooks/useTransactions';
 
 const FinanceDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
@@ -19,6 +20,8 @@ const FinanceDashboard = () => {
   const paidInvoices = useMemo(() => invoices.filter(i => i._status === 'paid'), [invoices]);
   
   const unpaidCount = fines.length;
+
+  const { transactions, loading: loadingTransactions } = useTransactions();
 
   const handleMarkAsPaid = async (fine) => {
     if (window.confirm("Confirm payment received for this fine?")) {
@@ -50,7 +53,7 @@ const FinanceDashboard = () => {
       case 'Invoices':
         return <FinanceInvoices invoices={paidInvoices} loading={loading} />;
       case 'Payments':
-        return <FinancePayments payments={[]} />;
+        return <FinancePayments payments={transactions} loading={loadingTransactions} />;
       case 'Reports':
         return <FinanceReports />;
       default:
