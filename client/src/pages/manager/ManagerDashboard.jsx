@@ -6,6 +6,8 @@ import ManagerRiskAssessment from './ManagerRiskAssessment';
 import ManagerReports from './ManagerReports';
 import { useAuth } from '../../hooks/useAuth';
 import useRequests from '../../hooks/useRequests';
+import useAssets from '../../hooks/useAssets';
+import useIncidents from '../../hooks/useIncidents';
 
 const ManagerDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
@@ -15,6 +17,12 @@ const ManagerDashboard = () => {
   const { requests: approvals, loading, approve, reject } = useRequests('all', 'pending_manager');
 
   const pendingApprovalCount = approvals.length;
+
+  const { assets } = useAssets();
+  const { incidents } = useIncidents();
+
+  const activeAssetCount = assets.filter(a => a.status === 'Borrowed').length;
+  const incidentCount = incidents.length;
 
   const handleApprove = async (req) => {
     if (window.confirm("Approve this high-risk request?")) {
@@ -47,8 +55,8 @@ const ManagerDashboard = () => {
 
   const metrics = {
     pendingApprovals: pendingApprovalCount,
-    activeAssets: 0,      // Akan diisi dengan AI jobdesk
-    monthlyIncidents: 0,  // Akan diisi dengan AI jobdesk
+    activeAssets: activeAssetCount,      // Bisa dienhance dengan AI jobdesk
+    monthlyIncidents: incidentCount,  // Bisa dienhance dengan AI jobdesk
   };
 
   const renderContent = () => {
