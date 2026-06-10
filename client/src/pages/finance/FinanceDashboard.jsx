@@ -73,7 +73,7 @@ const FinanceDashboard = () => {
       case 'Payments':
         return <FinancePayments payments={transactions} loading={loadingTransactions} />;
       case 'Reports':
-        return <FinanceReports />;
+        return <FinanceReports invoices={invoices} transactions={transactions} />;
       default:
         return null;
     }

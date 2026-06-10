@@ -66,7 +66,7 @@ const ManagerDashboard = () => {
       case 'Dashboard': return <ManagerOverview metrics={metrics} />;
       case 'Approvals': return <ManagerApprovals approvals={approvals} loading={loading} handleApprove={handleApprove} handleReject={handleReject} />;
       case 'Risk Assessment': return <ManagerRiskAssessment riskLogs={allRequests} loading={allRequestsLoading} />;
-      case 'Reports': return <ManagerReports />;
+      case 'Reports': return <ManagerReports requests={allRequests} incidents={incidents} />;
       default: return null;
     }
   };

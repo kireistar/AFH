@@ -80,7 +80,7 @@ const AdminDashboard = () => {
       case 'Users':
         return <AdminUsers users={users} loading={loadingUsers} />;
       case 'Reports':
-        return <AdminReports />;
+        return <AdminReports transactions={transactions} incidents={incidents} />;
       default:
         return null;
     }
