@@ -9,6 +9,8 @@ import { useAuth } from '../../hooks/useAuth';
 import useAssets from '../../hooks/useAssets';
 import useUsers from '../../hooks/useUsers';
 import useRequests from '../../hooks/useRequests';
+import useIncidents from '../../hooks/useIncidents';
+import useTransactions from '../../hooks/useTransactions';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
@@ -19,6 +21,9 @@ const AdminDashboard = () => {
   // Request yang sudah approved dan siap dihandover
   const { requests: handovers, loading: loadingHandovers, refresh: refreshHandovers } = useRequests('all', 'approved');
 
+  const { incidents } = useIncidents();
+  const { transactions } = useTransactions();
+
   // Hitung stats dari real data
   const assetStats = {
     available: assets.filter(a => a.status === 'Available').length,
@@ -28,6 +33,26 @@ const AdminDashboard = () => {
   };
 
   const pendingHandoverCount = handovers.length;
+
+  const activeIncidentCount = incidents.filter(i => i._status === 'open' || i._status === 'investigating').length;
+
+  const recentActivities = transactions.slice(0, 5).map(txn => ({
+    id: txn.id,
+    user: txn.party,
+    action: txn.action.toLowerCase().includes('handover') ? 'handed over' :
+            txn.action.toLowerCase().includes('return') ? 'returned' :
+            'reported on',
+    asset: txn.asset,
+    time: txn.date,
+    status: txn.status,
+  }));
+
+  const systemAlerts = incidents.filter(i => i._status === 'open' || i._status === 'investigating').slice(0, 3).map(inc => ({
+    id: inc.id,
+    type: `${inc.severity} Incident`,
+    message:`${inc.asset} - ${inc.description}`,
+    urgency: inc._severity === 'high' || inc._severity === 'critical' ? 'High' : 'Medium',
+  }));
 
   const adminProfile = {
     name: user?.employee_name || 'Administrator',
@@ -47,7 +72,7 @@ const AdminDashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'Dashboard':
-        return <AdminOverview assetStats={assetStats} pendingHandoverCount={pendingHandoverCount} recentActivities={[]} systemAlerts={[]} />;
+        return <AdminOverview assetStats={assetStats} pendingHandoverCount={pendingHandoverCount} recentActivities={recentActivities} systemAlerts={systemAlerts} activeIncidentCount={activeIncidentCount} />;
       case 'Assets':
         return <AdminAssets assets={assets} loading={loadingAssets} />;
       case 'Handover':
