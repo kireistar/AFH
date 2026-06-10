@@ -1,5 +1,11 @@
 import React from 'react';
 
+const TIER_STYLES = {
+  Low: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  Medium: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+  High: 'bg-red-50 text-[#B91C1C] border-red-200',
+};
+
 const ManagerApprovals = ({ approvals = [], loading = false, handleApprove, handleReject }) => {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
@@ -19,7 +25,8 @@ const ManagerApprovals = ({ approvals = [], loading = false, handleApprove, hand
                 <th className="p-4 font-semibold">ID</th>
                 <th className="p-4 font-semibold">Requester</th>
                 <th className="p-4 font-semibold">Asset</th>
-                <th className="p-4 font-semibold">Reason</th>
+                <th className="p-4 font-semibold">Risk Tier</th>
+                <th className="p-4 font-semibold">AI Reason</th>
                 <th className="p-4 font-semibold">Status</th>
                 <th className="p-4 font-semibold text-right">Action</th>
               </tr>
@@ -30,7 +37,12 @@ const ManagerApprovals = ({ approvals = [], loading = false, handleApprove, hand
                   <td className="p-4 text-sm font-semibold text-slate-700">{req.id}</td>
                   <td className="p-4 text-sm font-medium text-slate-800">{req.user}</td>
                   <td className="p-4 text-sm text-slate-600">{req.asset}</td>
-                  <td className="p-4 text-sm text-slate-600">{req.reason}</td>
+                  <td className="p-4 text-sm">
+                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${TIER_STYLES[req.urgency] || TIER_STYLES.Low}`}>
+                      {req.urgency}
+                    </span>
+                  </td>
+                  <td className="p-4 text-sm text-slate-600 max-w-xs truncate">{req.aiReason}</td>
                   <td className="p-4 text-sm">
                     <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
                       req.status === 'Approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :

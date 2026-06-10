@@ -15,6 +15,7 @@ const mapRequest = (raw) => ({
   startDate: formatDate(raw.requested_start),
   endDate: formatDate(raw.requested_end),
   urgency: raw.risk_tier_snapshot,       // 'Low' / 'Medium' / 'High'
+  riskScore: raw.risk_score_snapshot,    // angka risk score
   status: formatStatus(raw.status),      // 'pending_admin' → 'Pending Admin'
   aiReason: raw.ai_decision_reason || '-',
   _id: raw.id,                           // integer id asli untuk API call
