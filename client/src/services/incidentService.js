@@ -1,4 +1,4 @@
-import { apiGet } from './apiClient';
+import { apiGet, apiPost } from './apiClient';
 import { formatStatus, formatDate } from '../utils/formatters';
 
 const mapIncident = (raw) => ({
@@ -17,4 +17,9 @@ const mapIncident = (raw) => ({
 export const fetchAllIncidents = async () => {
     const data = await apiGet('/api/v1/incidents/');
     return data.map(mapIncident);
+};
+
+export const createIncident = async (payload) => {
+  const data = await apiPost('/api/v1/incidents/', payload);
+  return mapIncident(data);
 };

@@ -2,7 +2,7 @@ import { apiGet, apiPost, apiPatch } from './apiClient';
 import { formatStatus, formatDate } from '../utils/formatters';
 
 /**
- * Mapper: backend AssetRequest object → format yang dipakai komponen
+ * Mapper: backend AssetRequest object -> format yang dipakai komponen
  * Memanfaatkan nested 'asset' dan 'user' yang sudah ditambahkan di schema.
  */
 const mapRequest = (raw) => ({
@@ -12,8 +12,8 @@ const mapRequest = (raw) => ({
   department: raw.user?.department || '-',
   reason: raw.reason,
   date: formatDate(raw.created_at),
-  startDate: raw.requested_start,
-  endDate: raw.requested_end,
+  startDate: formatDate(raw.requested_start),
+  endDate: formatDate(raw.requested_end),
   urgency: raw.risk_tier_snapshot,       // 'Low' / 'Medium' / 'High'
   status: formatStatus(raw.status),      // 'pending_admin' → 'Pending Admin'
   aiReason: raw.ai_decision_reason || '-',

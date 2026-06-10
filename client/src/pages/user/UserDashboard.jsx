@@ -8,6 +8,7 @@ import NewRequestModal from './NewRequestModal';
 import ReportIncidentModal from './ReportIncidentModal';
 import { useAuth } from '../../hooks/useAuth';
 import useRequests from '../../hooks/useRequests';
+import useIncidents from '../../hooks/useIncidents';
 
 const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
@@ -17,6 +18,8 @@ const UserDashboard = () => {
 
   // Fetch user requests
   const { requests, loading, refresh } = useRequests('mine');
+
+  const { incidents, loading: incidentsLoading, refresh: refreshIncidents } = useIncidents();
 
   // Profile metadata for Employee
   const userProfile = {
@@ -75,7 +78,7 @@ const UserDashboard = () => {
       case 'Requests':
         return <UserRequests requests={requests} loading={loading} onOpenRequestModal={() => setIsRequestModalOpen(true)} />;
       case 'Incidents':
-        return <UserIncidents onOpenIncidentModal={() => setIsIncidentModalOpen(true)} />;
+        return <UserIncidents incidents={incidents} loading={incidentsLoading} onOpenIncidentModal={() => setIsIncidentModalOpen(true)} />;
       default:
         return null;
     }
@@ -100,6 +103,7 @@ const UserDashboard = () => {
       <ReportIncidentModal
         isOpen={isIncidentModalOpen}
         onClose={() => setIsIncidentModalOpen(false)}
+        onSuccess={refreshIncidents}
       />
     </DashboardLayout>
   );
