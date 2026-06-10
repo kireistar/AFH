@@ -1,6 +1,6 @@
 import React from 'react';
 
-const AdminHandover = ({ handovers, handleCompleteHandover }) => {
+const AdminHandover = ({ handovers = [], handleCompleteHandover = () => {}, loading = false }) => {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="p-6 border-b border-slate-100 bg-slate-50/50">
@@ -8,44 +8,45 @@ const AdminHandover = ({ handovers, handleCompleteHandover }) => {
         <p className="text-sm text-slate-500 mt-1">Assets below have been approved and are ready to be handed over to the borrower.</p>
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-              <th className="p-4 font-semibold">ID</th>
-              <th className="p-4 font-semibold">Borrower</th>
-              <th className="p-4 font-semibold">Asset</th>
-              <th className="p-4 font-semibold">Approved By</th>
-              <th className="p-4 font-semibold">Status</th>
-              <th className="p-4 font-semibold text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50">
-            {handovers.map(h => (
-              <tr key={h.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="p-4 text-sm font-semibold text-slate-700">{h.id}</td>
-                <td className="p-4 text-sm">
-                  <div className="font-semibold text-slate-800">{h.user}</div>
-                  <div className="text-xs text-slate-500">{h.department}</div>
-                </td>
-                <td className="p-4 text-sm text-slate-600 font-medium">{h.asset}</td>
-                <td className="p-4 text-sm text-slate-500">{h.approvedBy}</td>
-                <td className="p-4 text-sm">
-                  <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                    h.status === 'Pending Handover' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 
-                    'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  }`}>{h.status}</span>
-                </td>
-                <td className="p-4 text-sm text-right">
-                  {h.status === 'Pending Handover' ? (
-                    <button onClick={() => handleCompleteHandover(h.id)} className="px-4 py-1.5 bg-[#1E3A8A] text-white shadow-sm hover:bg-blue-900 rounded-lg transition-all font-semibold text-xs">
+        {loading ? (
+          <div className="p-8 text-center text-slate-400 text-sm">Loading...</div>
+        ) : handovers.length === 0 ? (
+          <div className="p-8 text-center text-slate-400 text-sm">No pending handovers.</div>
+        ) : (
+          <table className="w-full text-left">
+            <thead>
+              <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
+                <th className="p-4 font-semibold">ID</th>
+                <th className="p-4 font-semibold">Borrower</th>
+                <th className="p-4 font-semibold">Asset</th>
+                <th className="p-4 font-semibold">Status</th>
+                <th className="p-4 font-semibold text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-50">
+              {handovers.map(h => (
+                <tr key={h.id} className="hover:bg-slate-50/50 transition-colors">
+                  <td className="p-4 text-sm font-semibold text-slate-700">{h.id}</td>
+                  <td className="p-4 text-sm">
+                    <div className="font-semibold text-slate-800">{h.user}</div>
+                    <div className="text-xs text-slate-500">{h.department}</div>
+                  </td>
+                  <td className="p-4 text-sm text-slate-600 font-medium">{h.asset}</td>
+                  <td className="p-4 text-sm">
+                    <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-yellow-50 text-yellow-700 border-yellow-200">
+                      {h.status}
+                    </span>
+                  </td>
+                  <td className="p-4 text-sm text-right">
+                    <button onClick={() => handleCompleteHandover(h._id)} className="px-4 py-1.5 bg-[#1E3A8A] text-white shadow-sm hover:bg-blue-900 rounded-lg transition-all font-semibold text-xs">
                       Handover Asset
                     </button>
-                  ) : <span className="text-xs font-medium text-slate-400 mr-2">Completed</span>}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
