@@ -9,6 +9,8 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.enums import TransactionAction, TransactionStatus
+from app.schemas.user import UserResponse
+from app.schemas.asset import AssetResponse
 
 
 class TransactionBase(BaseModel):
@@ -37,6 +39,9 @@ class TransactionResponse(TransactionBase):
     status: TransactionStatus
     occurred_at: datetime
     created_at: datetime
+
+    borrower: Optional[UserResponse] = None
+    asset: Optional[AssetResponse] = None
 
     model_config = ConfigDict(from_attributes=True)
 

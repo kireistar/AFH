@@ -4,44 +4,47 @@ import ManagerOverview from './ManagerOverview';
 import ManagerApprovals from './ManagerApprovals';
 import ManagerRiskAssessment from './ManagerRiskAssessment';
 import ManagerReports from './ManagerReports';
+import { useAuth } from '../../hooks/useAuth';
+import useRequests from '../../hooks/useRequests';
+import useAssets from '../../hooks/useAssets';
+import useIncidents from '../../hooks/useIncidents';
 
 const ManagerDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
+  const { user } = useAuth();
 
-  // --- MOCKUP DATA ---
-  const metrics = { pendingApprovals: 2, activeAssets: 115, monthlyIncidents: 4 };
+  // Hanya fetch request yang perlu review manager
+  const { requests: approvals, loading, approve, reject } = useRequests('all', 'pending_manager');
 
-  const [approvals, setApprovals] = useState([
-    { id: 'REQ-013', user: 'Dewi Lestari', asset: 'iPad Pro', reason: 'Field Work Client Meeting', risk: 'High', status: 'Pending' },
-    { id: 'REQ-014', user: 'Agus Pratama', asset: 'Server Rack', reason: 'Data Center Expansion', risk: 'High', status: 'Pending' }
-  ]);
+  const { requests: allRequests, loading: allRequestsLoading } = useRequests('all');
 
-  const riskLogs = [
-    { id: 'LOG-991', reqId: 'REQ-012', decision: 'Auto-Approved', score: 15, reason: 'Standard Peripheral Request' },
-    { id: 'LOG-992', reqId: 'REQ-013', decision: 'Escalated', score: 85, reason: 'High-Value Asset & Field Work' },
-    { id: 'LOG-993', reqId: 'REQ-014', decision: 'Escalated', score: 90, reason: 'Infrastructure Modification' }
-  ];
+  const pendingApprovalCount = approvals.length;
 
-  const pendingApprovalCount = approvals.filter(req => req.status === 'Pending').length;
+  const { assets } = useAssets();
+  const { incidents } = useIncidents();
 
-  const handleApprove = (id) => {
+  const activeAssetCount = assets.filter(a => a.status === 'Borrowed').length;
+  const incidentCount = incidents.length;
+
+  const handleApprove = async (req) => {
     if (window.confirm("Approve this high-risk request?")) {
-      setApprovals(approvals.map(req => req.id === id ? { ...req, status: 'Approved' } : req));
+      await approve(req._id); // _id = integer id asli
     }
   };
 
-  const handleReject = (id) => {
-    if (window.confirm("Reject this high-risk request?")) {
-      setApprovals(approvals.map(req => req.id === id ? { ...req, status: 'Rejected' } : req));
+  const handleReject = async (req) => {
+    const reason = window.prompt("Enter rejection reason:");
+    if (reason) {
+      await reject(req._id, reason);
     }
   };
 
   // Profile configuration for Manager
   const managerProfile = {
-    name: 'Operations Manager',
-    subTitle: 'Management',
-    email: 'manager@afh.com',
-    avatarLetter: 'M'
+    name: user?.employee_name || 'Manager',
+    subTitle: user?.department || 'Management',
+    email: user?.email || '',
+    avatarLetter: (user?.employee_name || 'M')[0].toUpperCase(),
   };
 
   // Flat sidebar menu items for Manager
@@ -52,12 +55,18 @@ const ManagerDashboard = () => {
     { name: 'Reports', badge: null },
   ];
 
+  const metrics = {
+    pendingApprovals: pendingApprovalCount,
+    activeAssets: activeAssetCount,      // Bisa dienhance dengan AI jobdesk
+    monthlyIncidents: incidentCount,  // Bisa dienhance dengan AI jobdesk
+  };
+
   const renderContent = () => {
     switch (activeTab) {
       case 'Dashboard': return <ManagerOverview metrics={metrics} />;
-      case 'Approvals': return <ManagerApprovals approvals={approvals} handleApprove={handleApprove} handleReject={handleReject} />;
-      case 'Risk Assessment': return <ManagerRiskAssessment riskLogs={riskLogs} />;
-      case 'Reports': return <ManagerReports />;
+      case 'Approvals': return <ManagerApprovals approvals={approvals} loading={loading} handleApprove={handleApprove} handleReject={handleReject} />;
+      case 'Risk Assessment': return <ManagerRiskAssessment riskLogs={allRequests} loading={allRequestsLoading} />;
+      case 'Reports': return <ManagerReports requests={allRequests} incidents={incidents} />;
       default: return null;
     }
   };

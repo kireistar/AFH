@@ -1,6 +1,6 @@
 import React from 'react';
 
-const AdminOverview = ({ assetStats, pendingHandoverCount, recentActivities, systemAlerts }) => {
+const AdminOverview = ({ assetStats, pendingHandoverCount, recentActivities, systemAlerts, activeIncidentCount }) => {
   return (
     <div className="space-y-8">
       {/* Key Metrics */}
@@ -19,10 +19,8 @@ const AdminOverview = ({ assetStats, pendingHandoverCount, recentActivities, sys
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
           <h3 className="text-slate-500 text-sm font-medium">Active Incidents</h3>
-          <p className="text-3xl font-bold text-slate-800 mt-2">3</p>
-          <div className="mt-4 text-xs text-[#B91C1C] font-semibold">
-            ▲ +2 <span className="text-slate-400 font-normal ml-1">today</span>
-          </div>
+          <p className="text-3xl font-bold text-slate-800 mt-2">{activeIncidentCount}</p>
+          <div className="mt-4 text-xs text-slate-400 font-medium">Open & investigating</div>
         </div>
       </div>
 
@@ -51,20 +49,24 @@ const AdminOverview = ({ assetStats, pendingHandoverCount, recentActivities, sys
             <button className="text-xs font-bold text-[#1E3A8A] hover:underline">See All</button>
           </div>
           <div className="p-4">
-            <div className="space-y-4">
-              {recentActivities.map((act) => (
-                <div key={act.id} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-colors">
-                  <div className="flex items-center space-x-4">
-                    <div className={`w-2 h-2 rounded-full ${act.status === 'Declined' ? 'bg-[#B91C1C]' : 'bg-emerald-500'}`}></div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-800">{act.user} <span className="font-normal text-slate-500">{act.action}</span> {act.asset}</p>
-                      <p className="text-xs text-slate-400">{act.time}</p>
+            {recentActivities.length === 0 ? (
+              <div className="p-4 text-center text-slate-400 text-sm">No recent activities.</div>
+            ) : (
+              <div className="space-y-4">
+                {recentActivities.map((act) => (
+                  <div key={act.id} className="flex items-center justify-between p-3 hover:bg-slate-50 rounded-xl transition-colors">
+                    <div className="flex items-center space-x-4">
+                      <div className={`w-2 h-2 rounded-full ${act.status === 'Declined' ? 'bg-[#B91C1C]' : 'bg-emerald-500'}`}></div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-800">{act.user} <span className="font-normal text-slate-500">{act.action}</span> {act.asset}</p>
+                        <p className="text-xs text-slate-400">{act.time}</p>
+                      </div>
                     </div>
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">{act.status}</span>
                   </div>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-slate-300">{act.status}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -106,12 +108,16 @@ const AdminOverview = ({ assetStats, pendingHandoverCount, recentActivities, sys
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <h3 className="font-bold text-slate-800 mb-4">System Alerts</h3>
             <div className="space-y-3">
-              {systemAlerts.map(alert => (
-                <div key={alert.id} className={`p-3 rounded-xl border-l-4 ${alert.urgency === 'High' ? 'bg-red-50 border-[#B91C1C]' : 'bg-orange-50 border-orange-500'}`}>
-                  <p className="text-xs font-bold text-slate-800">{alert.type}</p>
-                  <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">{alert.message}</p>
-                </div>
-              ))}
+              {systemAlerts.length === 0 ? (
+                <p className="text-sm text-slate-400">No active alerts.</p>
+              ) : (
+                systemAlerts.map(alert => (
+                  <div key={alert.id} className={`p-3 rounded-xl border-l-4 ${alert.urgency === 'High' ? 'bg-red-50 border-[#B91C1C]' : 'bg-orange-50 border-orange-500'}`}>
+                    <p className="text-xs font-bold text-slate-800">{alert.type}</p>
+                    <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">{alert.message}</p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

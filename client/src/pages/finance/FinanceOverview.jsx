@@ -1,6 +1,6 @@
 import React from 'react';
 
-const FinanceOverview = ({ financeStats, recentTransactions, alerts }) => {
+const FinanceOverview = ({ financeStats = {}, recentTransactions = [], alerts = [] }) => {
   return (
     <div className="space-y-8">
       {/* Key Metrics */}
@@ -30,7 +30,7 @@ const FinanceOverview = ({ financeStats, recentTransactions, alerts }) => {
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4">Quick Access</h3>
         <div className="flex flex-wrap gap-4">
-          <button className="flex-1 . py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center">
+          <button className="flex-1 min-w-[150px] py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center">
             Create Invoice
           </button>
           <button className="flex-1 min-w-37.5 py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center">
@@ -73,12 +73,16 @@ const FinanceOverview = ({ financeStats, recentTransactions, alerts }) => {
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
             <h3 className="font-bold text-slate-800 mb-4">Financial Alerts</h3>
             <div className="space-y-3">
-              {alerts.map(alert => (
-                <div key={alert.id} className={`p-3 rounded-xl border-l-4 ${alert.urgency === 'High' ? 'bg-red-50 border-[#B91C1C]' : 'bg-orange-50 border-orange-500'}`}>
-                  <p className="text-xs font-bold text-slate-800">{alert.type}</p>
-                  <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">{alert.message}</p>
-                </div>
-              ))}
+              {alerts.length === 0 ? (
+                <p className="text-sm text-slate-400">No active alerts.</p>
+              ) : (
+                alerts.map(alert => (
+                  <div key={alert.id} className={`p-3 rounded-xl border-l-4 ${alert.urgency === 'High' ? 'bg-red-50 border-[#B91C1C]' : 'bg-orange-50 border-orange-500'}`}>
+                    <p className="text-xs font-bold text-slate-800">{alert.type}</p>
+                    <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">{alert.message}</p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>

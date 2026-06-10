@@ -8,6 +8,8 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.schemas.enums import IncidentSeverity, IncidentStatus
+from app.schemas.user import UserResponse
+from app.schemas.asset import AssetResponse
 
 
 class IncidentBase(BaseModel):
@@ -38,5 +40,8 @@ class IncidentResponse(IncidentBase):
     reported_at: datetime
     created_at: datetime
     updated_at: datetime
+
+    reporter: Optional[UserResponse] = None
+    asset: Optional[AssetResponse] = None
 
     model_config = ConfigDict(from_attributes=True)

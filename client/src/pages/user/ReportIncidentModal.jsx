@@ -1,42 +1,50 @@
 import React, { useState } from 'react';
+import { createIncident } from '../../services/incidentService';
+import useAssets from '../../hooks/useAssets';
 
-function ReportIncidentModal({ isOpen, onClose }) {
+function ReportIncidentModal({ isOpen, onClose, onSuccess }) {
+  const { assets, loading: assetsLoading } = useAssets();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
-    asset: '',
-    issueType: '',
-    severity: '',
+    asset_id: '',
+    severity: 'medium',
     description: '',
-    attachments: null
   });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleFileChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      attachments: e.target.files
-    }));
+  const resetForm = () => {
+    setFormData({ asset_id: '', severity: 'medium', description: '' });
+    setError(null);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // TODO: API call untuk submit incident report
-    console.log('Incident report submitted:', formData);
-    // Reset form
-    setFormData({
-      asset: '',
-      issueType: '',
-      severity: '',
-      description: '',
-      attachments: null
-    });
+  const handleClose = () => {
+    resetForm();
     onClose();
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      await createIncident({
+        asset_id: Number(formData.asset_id),
+        severity: formData.severity,
+        description: formData.description,
+      });
+      resetForm();
+      onClose();
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      setError(err.message || 'Failed to submit incident report.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -51,48 +59,33 @@ function ReportIncidentModal({ isOpen, onClose }) {
 
         {/* MODAL BODY */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* ERROR BANNER */}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
           {/* SELECT ASSET */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-2">
               Asset
             </label>
             <select
-              name="asset"
-              value={formData.asset}
+              name="asset_id"
+              value={formData.asset_id}
               onChange={handleChange}
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Choose an asset...</option>
-              <option value="macbook-m3">MacBook Pro M3</option>
-              <option value="dell-monitor">Dell Monitor 27"</option>
-              <option value="logitech-mouse">Logitech Mouse</option>
-              <option value="usb-hub">USB-C Hub</option>
-              <option value="keyboard">Logitech Keyboard</option>
-              <option value="headset">Wireless Headset</option>
-            </select>
-          </div>
-
-          {/* ISSUE TYPE */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Issue Type
-            </label>
-            <select
-              name="issueType"
-              value={formData.issueType}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select issue type...</option>
-              <option value="screen-damage">Screen Damage</option>
-              <option value="power-issue">Power Issue</option>
-              <option value="battery">Battery Not Charging</option>
-              <option value="port">Port Malfunction</option>
-              <option value="lost">Lost</option>
-              <option value="software">Software Issue</option>
-              <option value="other">Other</option>
+              <option value="">
+                {assetsLoading ? 'Loading assets...' : 'Choose an asset...'}
+              </option>
+              {assets.map(a => (
+                <option key={a._id} value={a._id}>
+                  {a.name} — {a.category}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -108,7 +101,6 @@ function ReportIncidentModal({ isOpen, onClose }) {
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">Select severity...</option>
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
@@ -125,43 +117,29 @@ function ReportIncidentModal({ isOpen, onClose }) {
               name="description"
               value={formData.description}
               onChange={handleChange}
-              placeholder="Describe the incident in detail..."
+              placeholder="Describe the incident in detail (e.g. screen damage, power issue, lost device)..."
               rows="3"
               required
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
           </div>
 
-          {/* ATTACHMENTS */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Attachments (Photos/Evidence)
-            </label>
-            <input
-              type="file"
-              name="attachments"
-              onChange={handleFileChange}
-              multiple
-              accept="image/*"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <p className="text-xs text-gray-500 mt-1">Upload photos as evidence (optional)</p>
-          </div>
-
           {/* FORM ACTIONS */}
           <div className="flex gap-3 pt-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
+              disabled={submitting}
               className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition font-semibold"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition font-semibold"
+              disabled={submitting}
+              className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition font-semibold disabled:opacity-50"
             >
-              Submit Report
+              {submitting ? 'Submitting...' : 'Submit Report'}
             </button>
           </div>
         </form>

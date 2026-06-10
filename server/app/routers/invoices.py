@@ -11,8 +11,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
+from app.core.dependencies import get_current_user, require_role
 from app.models import Invoice, Transaction, User
 from app.schemas import InvoiceCreate, InvoiceResponse, InvoiceUpdate
+from app.schemas.enums import PaymentMethod
 from app.services.code_generator import generate_invoice_code
 from app.services.behavior_service import record_fine_paid
 
@@ -29,6 +31,7 @@ def get_all_invoices(
     status_filter: Optional[str] = None,
     user_id: Optional[str] = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Mengambil semua invoice dari database (paginated).
@@ -48,7 +51,11 @@ def get_all_invoices(
 
 
 @router.get("/{invoice_id}", response_model=InvoiceResponse)
-def get_invoice(invoice_id: int, db: Session = Depends(get_db)):
+def get_invoice(
+    invoice_id: int, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     """Ambil 1 invoice by id."""
     invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not invoice:
@@ -60,7 +67,11 @@ def get_invoice(invoice_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/", response_model=InvoiceResponse, status_code=status.HTTP_201_CREATED)
-def create_invoice(invoice_in: InvoiceCreate, db: Session = Depends(get_db)):
+def create_invoice(
+    invoice_in: InvoiceCreate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("finance", "admin")),
+):
     """
     Buat invoice baru (otomatis di-generate saat return damage/late).
     TODO: Dipanggil dari invoice_service atau routers yang trigger fine.
@@ -81,17 +92,6 @@ def create_invoice(invoice_in: InvoiceCreate, db: Session = Depends(get_db)):
             detail=f"User with id {invoice_in.user_id} not found",
         )
 
-    # Generate invoice_code (format: INV-YYYYMMDD-XXXX)
-    now = datetime.now(timezone.utc)
-    date_part = now.strftime("%Y%m%d")
-    
-    # Count invoices hari ini untuk sequence number
-    today_count = db.query(Invoice).filter(
-        Invoice.invoice_code.like(f"INV-{date_part}%")
-    ).count() + 1
-    
-    invoice_code = f"INV-{date_part}-{today_count:04d}"
-
     invoice_data = invoice_in.model_dump()
     invoice_data["invoice_code"] = generate_invoice_code(db)  # Use code generator service
     invoice_data["status"] = "unpaid"  # Initial status
@@ -104,7 +104,12 @@ def create_invoice(invoice_in: InvoiceCreate, db: Session = Depends(get_db)):
 
 
 @router.patch("/{invoice_id}", response_model=InvoiceResponse)
-def update_invoice(invoice_id: int, invoice_in: InvoiceUpdate, db: Session = Depends(get_db)):
+def update_invoice(
+    invoice_id: int, 
+    invoice_in: InvoiceUpdate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("finance", "admin")),
+):
     """Update partial invoice (payment update oleh finance)."""
     invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not invoice:
@@ -124,7 +129,11 @@ def update_invoice(invoice_id: int, invoice_in: InvoiceUpdate, db: Session = Dep
     return invoice
 
 @router.delete("/{invoice_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_invoice(invoice_id: int, db: Session = Depends(get_db)):
+def delete_invoice(
+    invoice_id: int, 
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("admin")),
+    ):
     """Hapus invoice."""
     invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
     if not invoice:
@@ -140,14 +149,14 @@ def delete_invoice(invoice_id: int, db: Session = Depends(get_db)):
 @router.patch("/{invoice_id}/verify-payment", response_model=InvoiceResponse)
 def verify_payment(
     invoice_id: int,
-    verified_by_id: str,
-    payment_method: str = "transfer",
+    payment_method: PaymentMethod = PaymentMethod.BANK_TRANSFER,
     payment_notes: Optional[str] = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("finance")), # Inject dari JWT
 ):
     """
     Finance verify payment & mark invoice as paid.
-    TODO: verified_by_id harus di-inject dari JWT token, bukan dari parameter.
+    verified_by_id harus di-inject dari JWT token, bukan dari parameter.
     TODO: Call behavior_stats_service.update_user_behavior_stats() untuk update unpaid_fines.
     """
     invoice = db.query(Invoice).filter(Invoice.id == invoice_id).first()
@@ -163,16 +172,8 @@ def verify_payment(
             detail="Invoice already paid",
         )
     
-    # Validate verifier (finance user) exists
-    verifier = db.query(User).filter(User.id == UUID(verified_by_id)).first()
-    if not verifier:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Finance user with id {verified_by_id} not found",
-        )
-    
     invoice.status = "paid"
-    invoice.verified_by = UUID(verified_by_id)
+    invoice.verified_by = current_user.id # Inject dari JWT
     invoice.payment_method = payment_method
     invoice.verified_at = datetime.now(timezone.utc)
     
@@ -180,9 +181,10 @@ def verify_payment(
     if payment_notes:
         invoice.notes = payment_notes if not invoice.notes else f"{invoice.notes}\nPayment: {payment_notes}"
     
+    # Update user behavior stats: unpaid_fines turun
+    record_fine_paid(db, invoice.user_id, invoice.fine_amount)
+    
     db.commit()
     db.refresh(invoice)
-    
-    # TODO: Update user behavior stats (unpaid_fines decreased)
     
     return invoice
