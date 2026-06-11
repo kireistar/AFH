@@ -52,9 +52,12 @@ export const apiCall = async (endpoint, options = {}) => {
       throw new Error(message);
     }
 
-    // Parse dan return response
-    const data = await response.json();
-    return data;
+    // Parse dan return response safely (handle 204 No Content or empty bodies)
+    if (response.status === 204) {
+      return null;
+    }
+    const text = await response.text();
+    return text ? JSON.parse(text) : null;
   } catch (error) {
     console.error(`API call failed [${endpoint}]:`, error);
     throw error;

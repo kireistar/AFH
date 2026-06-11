@@ -2,7 +2,7 @@
 Asset router — CRUD endpoint untuk inventory asset.
 RBAC: read = semua role, write = admin only.
 """
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -11,6 +11,7 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_role
 from app.models import Asset, User
 from app.schemas import AssetCreate, AssetResponse, AssetUpdate
+from app.services.code_generator import generate_asset_code
 
 router = APIRouter(
     prefix="/api/v1/assets",
@@ -22,11 +23,15 @@ router = APIRouter(
 def get_all_assets(
     skip: int = 0,
     limit: int = 100,
+    status_filter: Optional[str] = None,
     db: Session = Depends(get_db),
     _: User = Depends(get_current_user),
 ):
     """Mengambil semua aset (semua role yang login)."""
-    return db.query(Asset).offset(skip).limit(limit).all()
+    query = db.query(Asset)
+    if status_filter:
+        query = query.filter(Asset.status == status_filter)
+    return query.offset(skip).limit(limit).all()
 
 
 @router.get("/{asset_id}", response_model=AssetResponse)
@@ -50,11 +55,13 @@ def create_asset(
     _: User = Depends(require_role("admin")),
 ):
     """Buat asset baru. Admin only."""
-    existing = db.query(Asset).filter(Asset.asset_code == asset_in.asset_code).first()
-    if existing:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
-                            detail=f"Asset code '{asset_in.asset_code}' already exists")
-    new_asset = Asset(**asset_in.model_dump())
+    # Generate asset_code automatically based on category
+    asset_code = generate_asset_code(db, asset_in.category.value)
+    
+    asset_data = asset_in.model_dump()
+    asset_data["asset_code"] = asset_code
+    
+    new_asset = Asset(**asset_data)
     db.add(new_asset)
     db.commit()
     db.refresh(new_asset)

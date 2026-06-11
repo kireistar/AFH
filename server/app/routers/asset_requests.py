@@ -61,7 +61,7 @@ def get_request(request_id: int, db: Session = Depends(get_db), current_user: Us
     return request
 
 @router.post("/", response_model=AssetRequestResponse, status_code=status.HTTP_201_CREATED)
-def create_request(request_in: AssetRequestCreate, db: Session = Depends(get_db), current_user: User = Depends(require_role("user"))): # hanya user yang bisa request
+def create_request(request_in: AssetRequestCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     Buat asset request baru.
     user_id harus di-inject dari JWT token, bukan dari parameter.

@@ -14,10 +14,11 @@ import useTransactions from '../../hooks/useTransactions';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
+  const [autoOpenAddAsset, setAutoOpenAddAsset] = useState(false);
   const { user } = useAuth();
 
-  const { assets, loading: loadingAssets } = useAssets();
-  const { users, loading: loadingUsers } = useUsers();
+  const { assets, loading: loadingAssets, refresh: refreshAssets } = useAssets();
+  const { users, loading: loadingUsers, refresh: refreshUsers } = useUsers();
   // Request yang sudah approved dan siap dihandover
   const { requests: handovers, loading: loadingHandovers, refresh: refreshHandovers } = useRequests('all', 'approved');
 
@@ -72,13 +73,33 @@ const AdminDashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'Dashboard':
-        return <AdminOverview assetStats={assetStats} pendingHandoverCount={pendingHandoverCount} recentActivities={recentActivities} systemAlerts={systemAlerts} activeIncidentCount={activeIncidentCount} />;
+        return (
+          <AdminOverview
+            assetStats={assetStats}
+            pendingHandoverCount={pendingHandoverCount}
+            recentActivities={recentActivities}
+            systemAlerts={systemAlerts}
+            activeIncidentCount={activeIncidentCount}
+            onAddAssetClick={() => {
+              setActiveTab('Assets');
+              setAutoOpenAddAsset(true);
+            }}
+          />
+        );
       case 'Assets':
-        return <AdminAssets assets={assets} loading={loadingAssets} />;
+        return (
+          <AdminAssets
+            assets={assets}
+            loading={loadingAssets}
+            onRefresh={refreshAssets}
+            autoOpenAdd={autoOpenAddAsset}
+            onAddModalClosed={() => setAutoOpenAddAsset(false)}
+          />
+        );
       case 'Handover':
         return <AdminHandover handovers={handovers} loading={loadingHandovers} onRefresh={refreshHandovers} />;
       case 'Users':
-        return <AdminUsers users={users} loading={loadingUsers} />;
+        return <AdminUsers users={users} loading={loadingUsers} onRefresh={refreshUsers} />;
       case 'Reports':
         return <AdminReports transactions={transactions} incidents={incidents} />;
       default:

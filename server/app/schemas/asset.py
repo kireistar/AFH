@@ -24,7 +24,7 @@ class AssetBase(BaseModel):
 
 
 class AssetCreate(AssetBase):
-    pass
+    asset_code: Optional[str] = Field(None, max_length=20)
 
 
 class AssetUpdate(BaseModel):

@@ -1,6 +1,13 @@
 import React from 'react';
 
-const AdminOverview = ({ assetStats, pendingHandoverCount, recentActivities, systemAlerts, activeIncidentCount }) => {
+const AdminOverview = ({ 
+  assetStats, 
+  pendingHandoverCount, 
+  recentActivities, 
+  systemAlerts, 
+  activeIncidentCount,
+  onAddAssetClick
+}) => {
   return (
     <div className="space-y-8">
       {/* Key Metrics */}
@@ -28,14 +35,14 @@ const AdminOverview = ({ assetStats, pendingHandoverCount, recentActivities, sys
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4">Quick Access</h3>
         <div className="flex flex-wrap gap-4">
-          <button className="flex-1 min-w-37.5 py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center">
+          <button className="flex-1 min-w-37.5 py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center cursor-pointer">
             Scan Handover QR
           </button>
-          <button className="flex-1 min-w-37.5 py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center">
+          <button 
+            onClick={onAddAssetClick}
+            className="flex-1 min-w-37.5 py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center cursor-pointer"
+          >
             Add New Asset
-          </button>
-          <button className="flex-1 min-w-37.5 py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center">
-            Print Report
           </button>
         </div>
       </div>

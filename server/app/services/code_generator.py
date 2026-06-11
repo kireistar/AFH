@@ -46,3 +46,36 @@ def generate_invoice_code(db: Session) -> str:
 def generate_transaction_code(db: Session) -> str:
     # Generate kode transaction
     return _generate_code(db, Transaction, "transaction_code", "TXN")
+
+def generate_asset_code(db: Session, category: str) -> str:
+    # Generate kode asset dengan format PREFIX (3 digit) + SEQUENCE (9 digit)
+    from app.models.asset import Asset
+    category_prefixes = {
+        "desktop": "001",
+        "laptop": "002",
+        "mobile": "003",
+        "peripheral": "004",
+        "projector": "005",
+        "server": "006",
+        "network": "007",
+        "other": "008"
+    }
+    prefix = category_prefixes.get(category.lower(), "008")
+    existing_codes = (
+        db.query(Asset.asset_code)
+        .filter(Asset.category == category)
+        .filter(Asset.asset_code.like(f"{prefix}%"))
+        .all()
+    )
+    max_number = 0
+    for code_tuple in existing_codes:
+        code_str = code_tuple[0]
+        if len(code_str) >= 12:
+            try:
+                num_part = int(code_str[3:])
+                if num_part > max_number:
+                    max_number = num_part
+            except ValueError:
+                continue
+    next_number = max_number + 1
+    return f"{prefix}{next_number:09d}"

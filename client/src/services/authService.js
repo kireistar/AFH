@@ -59,7 +59,7 @@ export const loginUser = async (email, password) => {
  * @returns {Promise<{user object}>}
  * @throws {Error} Jika token invalid/expired atau network error
  */
-export const getCurrentUser = async (accessToken) => {
+export const getCurrentUser = async () => {
   try {
     // Gunakan apiGet yang auto-add Authorization header
     const user = await apiGet('/api/v1/auth/me');

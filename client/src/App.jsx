@@ -24,7 +24,7 @@ function App() {
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
 
-            <Route element={<ProtectedRoute allowedRoles={['user']} />}>
+            <Route element={<ProtectedRoute allowedRoles={['user', 'admin', 'manager', 'finance']} />}>
               <Route path="/user/*" element={<UserDashboard />} />
             </Route>
 

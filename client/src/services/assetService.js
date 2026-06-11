@@ -1,4 +1,4 @@
-import { apiGet } from './apiClient';
+import { apiGet, apiPost, apiPatch } from './apiClient';
 import { formatStatus, formatCondition } from '../utils/formatters';
 
 /**
@@ -16,6 +16,9 @@ const mapAsset = (raw) => ({
   status: formatStatus(raw.status),
   notes: raw.notes || '',
   _id: raw.id,  // integer id asli, dibutuhkan saat kirim ke API
+  _status: raw.status,
+  _category: raw.category,
+  _condition: raw.current_condition,
 });
 
 export const fetchAssets = async () => {
@@ -26,4 +29,14 @@ export const fetchAssets = async () => {
 export const fetchAvailableAssets = async () => {
   const data = await apiGet('/api/v1/assets/?status_filter=available');
   return data.map(mapAsset);
+};
+
+export const createAsset = async (assetData) => {
+  const data = await apiPost('/api/v1/assets/', assetData);
+  return mapAsset(data);
+};
+
+export const updateAsset = async (assetId, assetData) => {
+  const data = await apiPatch(`/api/v1/assets/${assetId}`, assetData);
+  return mapAsset(data);
 };

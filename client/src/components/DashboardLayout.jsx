@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FiLogOut } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 
 const DashboardLayout = ({ 
@@ -12,7 +13,15 @@ const DashboardLayout = ({
   pageHeaderSubtitle, 
   children 
 }) => {
-  const { logout } = useAuth(); 
+  const { logout, userRole } = useAuth(); 
+  const navigate = useNavigate();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const roleLabels = {
+    admin: 'Admin',
+    manager: 'Manager',
+    finance: 'Finance',
+  };
 
   return (
     <div className="flex h-screen bg-slate-50">
@@ -44,23 +53,76 @@ const DashboardLayout = ({
           ))}
         </nav>
 
-        {/* User Profile & Logout */}
-        <div className="p-4 border-t border-slate-100">
-          <div className="flex items-center gap-3 px-2 py-3 mb-2">
-            <div className="w-10 h-10 rounded-full bg-blue-100 text-[#1E3A8A] flex items-center justify-center font-bold">
+        {/* User Profile & Dropdown */}
+        <div className="p-4 border-t border-slate-100 relative">
+          {/* Backdrop for closing dropdown */}
+          {dropdownOpen && (
+            <div 
+              className="fixed inset-0 z-10 cursor-default"
+              onClick={() => setDropdownOpen(false)}
+            />
+          )}
+
+          {/* Floating Dropdown Menu */}
+          {dropdownOpen && (
+            <div className="absolute bottom-20 left-4 right-4 bg-white border border-slate-100 rounded-2xl shadow-xl p-2.5 z-20 space-y-1 animate-in fade-in slide-in-from-bottom-2 duration-150">
+              {/* Switch View Button for Admin/Manager/Finance */}
+              {userRole && userRole !== 'user' && (
+                roleTitle === 'Portal' ? (
+                  <button
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      navigate(`/${userRole}`);
+                    }}
+                    className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-xs font-bold text-blue-700 hover:bg-blue-50 rounded-xl transition-all cursor-pointer text-left"
+                  >
+                    <span>⚙️</span>
+                    <span>Back to {roleLabels[userRole] || userRole}</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      navigate('/user');
+                    }}
+                    className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition-all cursor-pointer text-left"
+                  >
+                    <span>👤</span>
+                    <span>Switch to Employee Portal</span>
+                  </button>
+                )
+              )}
+
+              {/* Logout Button */}
+              <button 
+                onClick={() => {
+                  setDropdownOpen(false);
+                  logout();
+                }}
+                className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-xs font-bold text-red-650 hover:bg-red-50 rounded-xl transition-colors cursor-pointer text-left"
+              >
+                <FiLogOut size={14} className="text-red-500" />
+                <span>Logout</span>
+              </button>
+            </div>
+          )}
+
+          {/* Clickable Profile Card */}
+          <button 
+            type="button"
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className="flex items-center gap-3 w-full px-2 py-3 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer text-left focus:outline-none relative z-10"
+          >
+            <div className="w-10 h-10 rounded-full bg-blue-100 text-[#1E3A8A] flex items-center justify-center font-bold shrink-0">
               {userProfile.avatarLetter}
             </div>
-            <div className="text-left flex-1 overflow-hidden">
+            <div className="flex-1 min-w-0">
               <p className="text-sm font-bold text-slate-800 truncate">{userProfile.name}</p>
               <p className="text-xs text-slate-500 truncate">{userProfile.email}</p>
             </div>
-          </div>
-          <button 
-            onClick={logout}
-            className="flex items-center gap-2 w-full px-4 py-2.5 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-          >
-            <FiLogOut size={16} />
-            Logout
+            <span className={`text-[10px] text-slate-400 transition-transform duration-200 ${dropdownOpen ? 'rotate-180' : ''}`}>
+              ▲
+            </span>
           </button>
         </div>
       </aside>
