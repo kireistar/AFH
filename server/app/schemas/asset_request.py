@@ -41,7 +41,7 @@ class AssetRequestResponse(AssetRequestBase):
     id: int
     request_code: str
     user_id: UUID
-    risk_score_snapshot: Decimal = Field(..., ge=0, le=100)
+    risk_score_snapshot: Decimal = Field(..., ge=0, le=10)
     risk_tier_snapshot: RiskTier
     ai_decision_reason: Optional[str] = None
     status: RequestStatus

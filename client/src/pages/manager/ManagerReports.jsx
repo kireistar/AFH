@@ -67,7 +67,7 @@ const ManagerReports = ({ requests = [], incidents = [] }) => {
                         {r.urgency}
                       </span>
                     </td>
-                    <td className="p-4 text-sm font-bold text-slate-700">{r.riskScore}/100</td>
+                    <td className="p-4 text-sm font-bold text-slate-700">{r.riskScore}/10</td>
                     <td className="p-4 text-sm text-slate-600 max-w-xs truncate">{r.aiReason}</td>
                     <td className="p-4 text-sm text-slate-600">{r.status}</td>
                     <td className="p-4 text-sm text-slate-500">{r.date}</td>
