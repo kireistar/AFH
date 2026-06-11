@@ -35,12 +35,17 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 to-slate-200 p-6">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 p-8 space-y-8">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 via-slate-100 to-blue-50 p-6 relative overflow-hidden">
+      
+      {/* Decorative Glowing Radial Blobs */}
+      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
+      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/5 rounded-full blur-3xl pointer-events-none"></div>
+
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 p-8 space-y-8 relative z-10">
         
         {/* Header Section */}
         <div className="text-center">
-          <div className="w-14 h-14 bg-linear-to-tr from-blue-700 to-blue-500 rounded-xl mx-auto flex items-center justify-center shadow-lg shadow-blue-500/30 mb-4">
+          <div className="w-14 h-14 bg-linear-to-tr from-blue-600 to-indigo-600 rounded-xl mx-auto flex items-center justify-center shadow-lg shadow-blue-500/20 mb-4">
             <span className="text-white font-extrabold text-2xl tracking-wider">AFH</span>
           </div>
           <h2 className="text-2xl font-bold text-slate-800">Login ke Sistem</h2>
@@ -88,17 +93,19 @@ function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 px-4 text-white font-semibold bg-linear-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-700 hover:to-blue-800 focus:ring-4 focus:ring-blue-500/30 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none"
+            className="w-full py-3 px-4 text-white font-semibold bg-linear-to-r from-blue-600 to-indigo-600 rounded-xl hover:from-blue-700 hover:to-indigo-700 focus:ring-4 focus:ring-blue-500/30 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none cursor-pointer"
           >
             {loading ? 'Loading...' : 'Masuk ke Dashboard'}
           </button>
         </form>
 
         {/* Demo Credentials Info */}
-        <div className="pt-4 border-t border-slate-200">
-          <p className="text-xs text-slate-500 text-center">
-            Demo: admin@afh.com / password123
-          </p>
+        <div className="pt-4 border-t border-slate-100">
+          <div className="p-3 bg-blue-50/80 rounded-xl border border-blue-100/30 text-center">
+            <p className="text-xs text-slate-500 font-medium">
+              Demo: <span className="font-semibold text-blue-700">admin@afh.com</span> / <span className="font-semibold text-blue-700">password123</span>
+            </p>
+          </div>
         </div>
       </div>
     </div>
