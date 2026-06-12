@@ -3,6 +3,7 @@ import { updateAsset } from '../services/assetService';
 
 function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
   const [formData, setFormData] = useState({
+    brand: '',
     asset_name: '',
     category: '',
     status: '',
@@ -18,6 +19,7 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
   useEffect(() => {
     if (asset) {
       setFormData({
+        brand: asset.brand === '-' ? '' : asset.brand,
         asset_name: asset.name || '',
         category: asset._category || '',
         status: asset._status || '',
@@ -40,6 +42,10 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
     setError('');
 
     // Basic validation
+    if (!formData.brand.trim()) {
+      setError('Brand is required.');
+      return;
+    }
     if (!formData.asset_name.trim()) {
       setError('Device Name is required.');
       return;
@@ -56,6 +62,7 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
     setSubmitting(true);
     try {
       await updateAsset(asset._id, {
+        brand: formData.brand.trim(),
         asset_name: formData.asset_name.trim(),
         category: formData.category,
         status: formData.status,
@@ -134,9 +141,24 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
 
           {/* Grid Layout for Fields */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Brand */}
+            <div className="space-y-1.5 md:col-span-2">
+              <label className="block text-sm font-semibold text-slate-700">Brand</label>
+              <input
+                type="text"
+                name="brand"
+                value={formData.brand}
+                onChange={handleChange}
+                placeholder="e.g., Apple, Lenovo, Logitech"
+                required
+                disabled={submitting}
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50"
+              />
+            </div>
+
             {/* Device Name */}
             <div className="space-y-1.5 md:col-span-2">
-              <label className="block text-sm font-semibold text-slate-700">Device Name</label>
+              <label className="block text-sm font-semibold text-slate-700">Device Name (Type)</label>
               <input
                 type="text"
                 name="asset_name"

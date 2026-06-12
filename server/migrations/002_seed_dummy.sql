@@ -41,15 +41,15 @@ WHERE NOT EXISTS (
 -- ASSETS
 -- ---------------------------------------------------------------------
 INSERT INTO public.assets
-    (asset_code, asset_name, category, model, serial_number, purchase_value,
+    (asset_code, asset_name, category, brand, serial_number, purchase_value,
      location, current_condition, status)
 VALUES
-('AST-0101', 'MacBook Pro M2',      'laptop',     'MacBook Pro 14" M2',   'SN-MBP-001', 35000000, 'IT Storage A', 'good', 'available'),
-('AST-0102', 'Lenovo ThinkPad X1',  'laptop',     'ThinkPad X1 Carbon',   'SN-LTP-002', 28000000, 'IT Storage A', 'good', 'borrowed'),
-('AST-0205', 'Wireless Mouse',      'peripheral', 'Logitech MX Master 3', 'SN-LMX-005',  1200000, 'IT Storage B', 'good', 'borrowed'),
-('AST-0310', 'Epson Projector',     'projector',  'Epson EB-X06',         'SN-EPS-010',  8500000, 'Meeting Rm 1', 'good', 'available'),
-('AST-0420', 'iPad Pro',            'mobile',     'iPad Pro 12.9" 6th',   'SN-IPD-020', 18000000, 'IT Storage A', 'good', 'available'),
-('AST-0530', 'Dell PowerEdge R740', 'server',     'PowerEdge R740',       'SN-DPE-030', 95000000, 'Data Center',  'good', 'available');
+('AST-0101', 'MacBook Pro M2',      'laptop',     'Apple',    'SN-MBP-001', 35000000, 'IT Storage A', 'good', 'available'),
+('AST-0102', 'Lenovo ThinkPad X1',  'laptop',     'Lenovo',   'SN-LTP-002', 28000000, 'IT Storage A', 'good', 'borrowed'),
+('AST-0205', 'Wireless Mouse',      'peripheral', 'Logitech', 'SN-LMX-005',  1200000, 'IT Storage B', 'good', 'borrowed'),
+('AST-0310', 'Epson Projector',     'projector',  'Epson',    'SN-EPS-010',  8500000, 'Meeting Rm 1', 'good', 'available'),
+('AST-0420', 'iPad Pro',            'mobile',     'Apple',    'SN-IPD-020', 18000000, 'IT Storage A', 'good', 'available'),
+('AST-0530', 'Dell PowerEdge R740', 'server',     'Dell',     'SN-DPE-030', 95000000, 'Data Center',  'good', 'available');
 
 -- ---------------------------------------------------------------------
 -- ASSET REQUEST + LEDGER (DEMO FLOW)

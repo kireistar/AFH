@@ -3,6 +3,7 @@ import { createAsset } from '../services/assetService';
 
 function AddAssetModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({
+    brand: '',
     asset_name: '',
     category: ''
   });
@@ -19,6 +20,10 @@ function AddAssetModal({ isOpen, onClose, onSuccess }) {
     setError('');
     
     // Validasi basic
+    if (!formData.brand.trim()) {
+      setError('Brand is required.');
+      return;
+    }
     if (!formData.asset_name.trim()) {
       setError('Device Name is required.');
       return;
@@ -32,9 +37,9 @@ function AddAssetModal({ isOpen, onClose, onSuccess }) {
     try {
       await createAsset({
         asset_name: formData.asset_name.trim(),
+        brand: formData.brand.trim(),
         category: formData.category,
         // Optional default fields for backend validation:
-        model: '',
         serial_number: null,
         purchase_value: 0,
         location: '',
@@ -44,7 +49,7 @@ function AddAssetModal({ isOpen, onClose, onSuccess }) {
       });
       
       // Reset form
-      setFormData({ asset_name: '', category: '' });
+      setFormData({ asset_name: '', brand: '', category: '' });
       onClose();
       if (onSuccess) onSuccess();
     } catch (err) {
@@ -99,9 +104,24 @@ function AddAssetModal({ isOpen, onClose, onSuccess }) {
 
 
 
+          {/* Brand */}
+          <div className="space-y-1.5">
+            <label className="block text-sm font-semibold text-slate-700">Brand</label>
+            <input
+              type="text"
+              name="brand"
+              value={formData.brand}
+              onChange={handleChange}
+              placeholder="e.g., Apple, Lenovo, Logitech"
+              required
+              disabled={submitting}
+              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50"
+            />
+          </div>
+
           {/* Device Name */}
           <div className="space-y-1.5">
-            <label className="block text-sm font-semibold text-slate-700">Device Name</label>
+            <label className="block text-sm font-semibold text-slate-700">Device Name (Type)</label>
             <input
               type="text"
               name="asset_name"

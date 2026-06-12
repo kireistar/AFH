@@ -130,7 +130,7 @@ CREATE TABLE public.assets (
     asset_code          VARCHAR(20)         UNIQUE NOT NULL,   -- AST-0101
     asset_name          VARCHAR(150)        NOT NULL,
     category            asset_category      NOT NULL,
-    model               VARCHAR(100),
+    brand               VARCHAR(100),
     serial_number       VARCHAR(100)        UNIQUE,
     purchase_value      NUMERIC(15,2)       NOT NULL DEFAULT 0
                         CHECK (purchase_value >= 0),

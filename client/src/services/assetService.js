@@ -8,7 +8,7 @@ const mapAsset = (raw) => ({
   id: raw.asset_code,
   name: raw.asset_name,
   category: raw.category.charAt(0).toUpperCase() + raw.category.slice(1),
-  model: raw.model || '-',
+  brand: raw.brand || '-',
   serialNumber: raw.serial_number || '-',
   purchaseValue: raw.purchase_value,
   location: raw.location || '-',

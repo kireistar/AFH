@@ -14,7 +14,7 @@ class AssetBase(BaseModel):
     asset_code: str = Field(..., min_length=1, max_length=20, examples=["AST-0101"])
     asset_name: str = Field(..., min_length=1, max_length=150)
     category: AssetCategory
-    model: Optional[str] = Field(None, max_length=100)
+    brand: Optional[str] = Field(None, max_length=100)
     serial_number: Optional[str] = Field(None, max_length=100)
     purchase_value: Decimal = Field(default=Decimal(0), ge=0)
     location: Optional[str] = Field(None, max_length=100)
@@ -30,7 +30,7 @@ class AssetCreate(AssetBase):
 class AssetUpdate(BaseModel):
     asset_name: Optional[str] = Field(None, min_length=1, max_length=150)
     category: Optional[AssetCategory] = None
-    model: Optional[str] = None
+    brand: Optional[str] = None
     serial_number: Optional[str] = None
     purchase_value: Optional[Decimal] = Field(None, ge=0)
     location: Optional[str] = None
