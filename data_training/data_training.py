@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split,cross_val_score, GridSearch
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 # --- 0. LOAD DATA ---
-df = pd.read_csv('behavior_dataset.csv')
+df = pd.read_csv('C:\\Users\\starlr\\Documents\\CAPSTONE\\AFH\\data_training\\behavior_dataset.csv')
 
 FEATURES = [
     'total_borrows', 'total_returns', 'on_time_returns', 'late_returns', 'damage_count', 'lost_count', 'total_fines', 'unpaid_fines'
