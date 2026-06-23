@@ -24,8 +24,10 @@ lost_count = np.random.randint(0, 6, N)
 
 # Financial features (in Rupiah)
 base_fine = (late_returns * 50000) + (damage_count * 200000) + (lost_count * 500000)
-fine_noise = np.random.uniform(0.8, 1.2, N)
-total_fines = (base_fine * fine_noise).astype(int)
+random_fine = np.random.uniform(0, 300000, N)
+total_fines = np.clip(
+    base_fine * np.random.uniform(0.3, 1.5, N) + random_fine, 0, None
+).astype(int)
 
 unpaid_fines = np.array([
     np.random.randint(0, tf + 1) if tf > 0 else 0
@@ -39,7 +41,7 @@ def safe_normalize(arr):
         return np.zeros_like(arr, dtype=float)
     return arr / max_val
 
-late_ratio = np.where(total_returns > 0, late_returns / total_returns, 0)
+late_ratio = np.divide(late_returns, total_returns, out=np.zeros(N, dtype=float), where=total_returns > 0)
 damage_norm = safe_normalize(damage_count)
 lost_norm = safe_normalize(lost_count)
 unpaid_norm = safe_normalize(unpaid_fines)
