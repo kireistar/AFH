@@ -15,6 +15,7 @@ from app.models import AssetRequest, Asset, User, Transaction, Invoice
 from app.schemas import AssetRequestCreate, AssetRequestResponse, AssetRequestUpdate, TransactionCreate
 from app.services.code_generator import generate_request_code, generate_transaction_code, generate_invoice_code
 from app.services.behavior_service import record_return, record_fine_issued
+from app.services.risk_service import calculate_and_update_risk
 
 router = APIRouter(
     prefix="/api/v1/asset-requests",
@@ -81,14 +82,15 @@ def create_request(request_in: AssetRequestCreate, db: Session = Depends(get_db)
         )
 
     request_data = request_in.model_dump()
+    score, tier = calculate_and_update_risk(db, current_user.id)
     request_data["user_id"] = current_user.id # Inject dari JWT
     request_data["request_code"] = generate_request_code(db)
-    request_data["risk_score_snapshot"] = current_user.risk_score
-    request_data["risk_tier_snapshot"] = current_user.risk_score_tier
-    request_data["ai_decision_reason"] = f"User risk tier: {current_user.risk_score_tier}"
+    request_data["risk_score_snapshot"] = score
+    request_data["risk_tier_snapshot"] = tier
+    request_data["ai_decision_reason"] = f"AI prediction: risk_score={score}, tier={tier}"
     
     # Routing berdasarkan risk tier
-    if current_user.risk_score_tier in ["High", "Critical"]:
+    if tier == "High":
         request_data["status"] = "pending_manager"  # Harus review manager
     else:
         request_data["status"] = "pending_admin" # Review admin

@@ -18,7 +18,7 @@ class Asset(Base):
     # Enum values divalidasi DB CHECK + Pydantic schema:
     # laptop / desktop / mobile / peripheral / projector / server / network / other
     category = Column(String(20), nullable=False, index=True)
-    model = Column(String(100), nullable=True)
+    brand = Column(String(100), nullable=True)
     serial_number = Column(String(100), unique=True, nullable=True)
     purchase_value = Column(Numeric(15, 2), nullable=False, default=0)
     location = Column(String(100), nullable=True)

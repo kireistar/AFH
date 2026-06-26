@@ -42,7 +42,7 @@ const ManagerRiskAssessment = ({ riskLogs = [], loading = false }) => {
                       {log.urgency}
                     </span>
                   </td>
-                  <td className="p-4 text-sm font-bold text-slate-700">{log.riskScore}/100</td>
+                  <td className="p-4 text-sm font-bold text-slate-700">{log.riskScore}/10</td>
                   <td className="p-4 text-sm text-slate-600 max-w-xs truncate">{log.aiReason}</td>
                   <td className="p-4 text-sm text-slate-500">{log.date}</td>
                 </tr>

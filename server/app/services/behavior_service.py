@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.models import AssetRequest, UserBehaviorStats
+from app.services.risk_service import calculate_and_update_risk
 
 def _get_or_create_stats(db: Session, user_id: UUID) -> UserBehaviorStats:
     """
@@ -47,6 +48,7 @@ def record_return(
             stats.on_time_returns += 1
     
     stats.last_calculated_at = datetime.now(timezone.utc)
+    calculate_and_update_risk(db, user_id)
 
 def record_damage(db: Session, user_id: UUID) -> None:
     """
@@ -56,6 +58,7 @@ def record_damage(db: Session, user_id: UUID) -> None:
     stats = _get_or_create_stats(db, user_id)
     stats.damage_count += 1
     stats.last_calculated_at = datetime.now(timezone.utc)
+    calculate_and_update_risk(db, user_id)
 
 def record_lost(db: Session, user_id: UUID) -> None:
     """
@@ -65,6 +68,7 @@ def record_lost(db: Session, user_id: UUID) -> None:
     stats = _get_or_create_stats(db, user_id)
     stats.lost_count += 1
     stats.last_calculated_at = datetime.now(timezone.utc)
+    calculate_and_update_risk(db, user_id)
 
 def record_fine_issued(db: Session, user_id: UUID, amount: Decimal) -> None:
     """
@@ -75,6 +79,7 @@ def record_fine_issued(db: Session, user_id: UUID, amount: Decimal) -> None:
     stats.total_fines += amount
     stats.unpaid_fines += amount
     stats.last_calculated_at = datetime.now(timezone.utc)
+    calculate_and_update_risk(db, user_id)
     
 def record_fine_paid(db: Session, user_id: UUID, amount: Decimal) -> None:
     """
@@ -84,12 +89,14 @@ def record_fine_paid(db: Session, user_id: UUID, amount: Decimal) -> None:
     stats = _get_or_create_stats(db, user_id)
     stats.unpaid_fines = max(Decimal(0), stats.unpaid_fines - amount)
     stats.last_calculated_at = datetime.now(timezone.utc)
+    calculate_and_update_risk(db, user_id)
 
 def record_handover(db: Session, user_id: UUID, request_id: int) -> None:
     """
     Dipanggil saat handover token di-scan (asset diserahkan ke user).
-    total_handovers naik 1.
+    total_borrows naik 1.
     """
     stats = _get_or_create_stats(db, user_id)
-    stats.total_handovers += 1
+    stats.total_borrows += 1
     stats.last_calculated_at = datetime.now(timezone.utc)
+    calculate_and_update_risk(db, user_id)
