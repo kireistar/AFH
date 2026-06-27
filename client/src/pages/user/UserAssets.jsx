@@ -1,7 +1,7 @@
 import React from 'react';
 
 const UserAssets = ({ requests = [], loading = false }) => {
-  // Mockup data for currently borrowed items
+  // Filter currently borrowed assets from active requests
   const borrowedAssets = requests.filter(req => req._status === 'handed_over');
 
   return (

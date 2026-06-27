@@ -87,17 +87,11 @@ const AdminOverview = ({
                   <span className="text-emerald-600 uppercase">Available</span>
                   <span>{assetStats.available}</span>
                 </div>
-                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500" style={{ width: `${(assetStats.available / assetStats.total) * 100}%` }}></div>
-                </div>
               </div>
               <div>
                 <div className="flex justify-between text-xs font-bold mb-1">
                   <span className="text-[#1E3A8A] uppercase">Borrowed</span>
                   <span>{assetStats.borrowed}</span>
-                </div>
-                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#1E3A8A]" style={{ width: `${(assetStats.borrowed / assetStats.total) * 100}%` }}></div>
                 </div>
               </div>
               <div>
@@ -105,8 +99,11 @@ const AdminOverview = ({
                   <span className="text-[#B91C1C] uppercase">Maintenance</span>
                   <span>{assetStats.maintenance}</span>
                 </div>
-                <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-[#B91C1C]" style={{ width: `${(assetStats.maintenance / assetStats.total) * 100}%` }}></div>
+              </div>
+              <div className="pt-2 border-t border-slate-100">
+                <div className="flex justify-between text-xs font-bold mb-1">
+                  <span className="text-slate-500 uppercase">Total Assets</span>
+                  <span>{assetStats.total}</span>
                 </div>
               </div>
             </div>

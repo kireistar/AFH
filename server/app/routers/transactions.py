@@ -14,6 +14,7 @@ from app.core.database import get_db
 from app.models import Transaction, Asset, User
 from app.schemas import TransactionCreate, TransactionResponse, LedgerVerifyResult
 from app.services.code_generator import generate_transaction_code
+from app.services import ledger_service
 from app.services.behavior_service import (
     record_handover,
     record_return,
@@ -107,33 +108,43 @@ def create_transaction(transaction_in: TransactionCreate, db: Session = Depends(
     
     transaction_code = f"TXN-{date_part}-{today_count:04d}"
 
-    # TODO: Get previous_hash dari transaction terakhir
+    # Get previous_hash from the last transaction
     last_txn = db.query(Transaction).order_by(Transaction.id.desc()).first()
     previous_hash = last_txn.current_hash if last_txn else None
+    
+    occurred_at = datetime.now(timezone.utc)
+    
+    # Calculate deterministic hash
+    current_hash = ledger_service.calculate_transaction_hash(
+        previous_hash=previous_hash,
+        payload=transaction_in.payload,
+        occurred_at=occurred_at
+    )
     
     transaction_data = transaction_in.model_dump()
     transaction_data["transaction_code"] = generate_transaction_code(db)  # Use code generator service
     transaction_data["previous_hash"] = previous_hash
-    transaction_data["current_hash"] = "0" * 64  # TODO: Compute SHA-256 hash dari ledger_service
-    transaction_data["signature"] = None  # TODO: Sign dengan Ed25519 dari ledger_service
+    transaction_data["current_hash"] = current_hash
+    transaction_data["occurred_at"] = occurred_at
+    transaction_data["signature"] = None  # Signature added during scan if cryptographic handover is active
 
     new_transaction = Transaction(**transaction_data)
     db.add(new_transaction)
 
     if transaction_in.action == "handover":
-        record_handover(db, transaction_in.borrower_id)
+        record_handover(db, transaction_in.borrower_id, transaction_in.request_id)
 
     elif transaction_in.action == "return":
         record_return(
             db,
             user_id=transaction_in.borrower_id,
             request_id=transaction_in.request_id,
-            occured_at=new_transaction.occured_at or datetime.now(timezone.utc),
+            occured_at=new_transaction.occurred_at or datetime.now(timezone.utc),
         )
 
     elif transaction_in.action == "fine_issued":
         amount = transaction_in.payload.get("fine_amount", 0)
-        record_fine_issued(db, transaction_in.borrwer_id, Decimal(str(amount)))
+        record_fine_issued(db, transaction_in.borrower_id, Decimal(str(amount)))
     db.commit()
     db.refresh(new_transaction)
     return new_transaction
@@ -143,7 +154,6 @@ def create_transaction(transaction_in: TransactionCreate, db: Session = Depends(
 def verify_ledger(db: Session = Depends(get_db)):
     """
     Verify integritas seluruh ledger (check chained hashing).
-    TODO: Implement verification logic menggunakan SHA-256 chain validation dari ledger_service.
     """
     transactions = db.query(Transaction).order_by(Transaction.id.asc()).all()
     
@@ -155,14 +165,7 @@ def verify_ledger(db: Session = Depends(get_db)):
             message="Ledger kosong"
         )
     
-    # TODO: Call ledger_service.verify_ledger_integrity(transactions)
-    # Placeholder: semua valid sampai ledger_service implemented
-    tampered = []
-    for txn in transactions:
-        # TODO: Validate chained hashes
-        # if computed_hash != txn.current_hash:
-        #     tampered.append(txn.id)
-        pass
+    tampered = ledger_service.verify_ledger_integrity(transactions)
     
     return LedgerVerifyResult(
         total_transactions=len(transactions),

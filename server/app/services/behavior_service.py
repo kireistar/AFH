@@ -88,8 +88,8 @@ def record_fine_paid(db: Session, user_id: UUID, amount: Decimal) -> None:
 def record_handover(db: Session, user_id: UUID, request_id: int) -> None:
     """
     Dipanggil saat handover token di-scan (asset diserahkan ke user).
-    total_handovers naik 1.
+    total_borrows naik 1.
     """
     stats = _get_or_create_stats(db, user_id)
-    stats.total_handovers += 1
+    stats.total_borrows += 1
     stats.last_calculated_at = datetime.now(timezone.utc)

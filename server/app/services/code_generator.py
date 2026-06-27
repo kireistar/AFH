@@ -44,8 +44,28 @@ def generate_invoice_code(db: Session) -> str:
     return _generate_code(db, Invoice, "invoice_code", "INV")
 
 def generate_transaction_code(db: Session) -> str:
-    # Generate kode transaction
-    return _generate_code(db, Transaction, "transaction_code", "TXN")
+    # Generate purely numeric code: YYYYNNNNNN (e.g. 2026000001)
+    year = datetime.now(timezone.utc).year
+    pattern = f"{year}%"
+    col = Transaction.transaction_code
+    last = (
+        db.query(col)
+        .filter(col.like(pattern))
+        .order_by(col.desc())
+        .first()
+    )
+    if last is None:
+        next_number = 1
+    else:
+        last_code = last[0]
+        try:
+            # Extract sequence number after the 4-digit year
+            num_part = last_code[4:]
+            next_number = int(num_part) + 1
+        except ValueError:
+            next_number = 1
+            
+    return f"{year}{next_number:06d}"
 
 def generate_asset_code(db: Session, category: str) -> str:
     # Generate kode asset dengan format PREFIX (3 digit) + SEQUENCE (9 digit)

@@ -1,0 +1,202 @@
+import React, { useState, useEffect } from 'react';
+import { verifyLedger } from '../../services/transactionService';
+
+const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefreshTransactions }) => {
+  const [integrityData, setIntegrityData] = useState(null);
+  const [checking, setChecking] = useState(false);
+  const [error, setError] = useState(null);
+
+  const runIntegrityCheck = async () => {
+    setChecking(true);
+    setError(null);
+    try {
+      const result = await verifyLedger();
+      setIntegrityData(result);
+    } catch (err) {
+      console.error('Failed to run integrity check:', err);
+      setError('Failed to run ledger verification. Please check server logs.');
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  useEffect(() => {
+    runIntegrityCheck();
+  }, []);
+
+  const formatHash = (hash) => {
+    if (!hash) return 'GENESIS (NULL)';
+    return `${hash.slice(0, 8)}...${hash.slice(-8)}`;
+  };
+
+  return (
+    <div className="space-y-8">
+      {/* Integrity Summary Card */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div className="flex items-center gap-4">
+            <div className={`p-4 rounded-full ${
+              checking 
+                ? 'bg-blue-50 text-blue-600 animate-pulse'
+                : integrityData?.valid 
+                  ? 'bg-emerald-50 text-emerald-600' 
+                  : 'bg-rose-50 text-rose-600 animate-bounce'
+            }`}>
+              {checking ? (
+                <svg className="w-8 h-8 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.75 8.25dec" />
+                </svg>
+              ) : integrityData?.valid ? (
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+              ) : (
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              )}
+            </div>
+            <div>
+              <h3 className="text-slate-800 font-bold text-lg">Immutable Ledger Verification</h3>
+              {checking ? (
+                <p className="text-sm text-slate-500 mt-1">Analyzing SHA-256 block hash chains...</p>
+              ) : error ? (
+                <p className="text-sm text-rose-600 mt-1">{error}</p>
+              ) : integrityData?.valid ? (
+                <p className="text-sm text-emerald-600 font-semibold mt-1">
+                  Ledger secure. No unauthorized database changes detected.
+                </p>
+              ) : (
+                <p className="text-sm text-rose-600 font-semibold mt-1">
+                  WARNING: Tampering detected! Ledger chain links are broken.
+                </p>
+              )}
+            </div>
+          </div>
+          <button
+            onClick={runIntegrityCheck}
+            disabled={checking}
+            className="px-5 py-2.5 bg-[#1E3A8A] text-white font-semibold text-sm rounded-xl hover:bg-blue-900 transition-colors shadow-sm disabled:opacity-50 cursor-pointer whitespace-nowrap"
+          >
+            {checking ? 'Scanning...' : 'Scan Integrity'}
+          </button>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+          <h3 className="text-slate-500 text-sm font-medium">Secured Transactions</h3>
+          <p className="text-3xl font-bold text-slate-800 mt-2">
+            {checking ? '...' : integrityData?.total_transactions || 0}
+          </p>
+          <div className="mt-4 flex items-center text-xs text-slate-400 font-semibold">
+            <span>SHA-256 chained audit logs</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Transactions Chained Visual Table */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800">Chained Hash Ledger Logs</h3>
+            <p className="text-sm text-slate-500 mt-1">
+              Verify sequential cryptographically-linked transaction blocks.
+            </p>
+          </div>
+          <button 
+            onClick={onRefreshTransactions}
+            disabled={loadingTransactions}
+            className="px-3 py-1.5 border border-slate-200 text-slate-600 font-semibold text-xs rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
+          >
+            Refresh Log List
+          </button>
+        </div>
+
+        <div className="overflow-x-auto">
+          {loadingTransactions || checking ? (
+            <div className="p-12 text-center text-slate-400 text-sm">
+              <svg className="w-6 h-6 animate-spin mx-auto mb-2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.75 8.25dec" />
+              </svg>
+              Verifying blocks...
+            </div>
+          ) : transactions.length === 0 ? (
+            <div className="p-8 text-center text-slate-400 text-sm">No transaction blocks written to the ledger yet.</div>
+          ) : (
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
+                  <th className="p-4 font-semibold">Block Code</th>
+                  <th className="p-4 font-semibold">Action</th>
+                  <th className="p-4 font-semibold">Payload Snapshot</th>
+                  <th className="p-4 font-semibold">Previous Hash</th>
+                  <th className="p-4 font-semibold">Current Hash</th>
+                  <th className="p-4 font-semibold text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {transactions.map((t, idx) => {
+                  const isTampered = integrityData?.tampered_transaction_ids?.includes(t._id);
+                  return (
+                    <tr 
+                      key={t._id} 
+                      className={`transition-colors ${
+                        isTampered 
+                          ? 'bg-rose-50/50 hover:bg-rose-50' 
+                          : 'hover:bg-slate-50/30'
+                      }`}
+                    >
+                      <td className="p-4 text-sm font-semibold text-slate-800">
+                        <div className="flex flex-col">
+                          <span className={isTampered ? 'text-rose-800' : 'text-slate-700'}>{t.id}</span>
+                          <span className="text-[10px] text-slate-400 font-normal">{t.date}</span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm">
+                        <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${
+                          t._action === 'handover' ? 'bg-blue-50 text-[#1E3A8A]' :
+                          t._action === 'return' ? 'bg-emerald-50 text-emerald-700' :
+                          'bg-amber-50 text-amber-700'
+                        }`}>
+                          {t.action}
+                        </span>
+                      </td>
+                      <td className="p-4 text-sm text-slate-500 font-medium">
+                        <div className="max-w-[200px] truncate text-xs bg-slate-50 px-2 py-1 rounded border border-slate-100 font-mono">
+                          {t.amount !== '-' ? `Fine: ${t.amount}` : `Asset: ${t.asset}`}
+                        </div>
+                      </td>
+                      <td className="p-4 text-xs font-mono text-slate-400">
+                        {formatHash(t.previous_hash)}
+                      </td>
+                      <td className="p-4 text-xs font-mono text-slate-500 font-semibold">
+                        <div className="flex items-center gap-2">
+                          <span className={isTampered ? 'text-rose-600' : 'text-slate-600'}>
+                            {formatHash(t.current_hash)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm text-center">
+                        {isTampered ? (
+                          <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-rose-50 text-rose-700 border-rose-200 inline-flex items-center gap-1 shadow-sm">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping"></span>
+                            Tampered
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
+                            Verified
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AdminSecurity;

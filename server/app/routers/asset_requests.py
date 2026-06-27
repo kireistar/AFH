@@ -88,7 +88,7 @@ def create_request(request_in: AssetRequestCreate, db: Session = Depends(get_db)
     request_data["ai_decision_reason"] = f"User risk tier: {current_user.risk_score_tier}"
     
     # Routing berdasarkan risk tier
-    if current_user.risk_score_tier in ["High", "Critical"]:
+    if current_user.risk_score_tier == "High":
         request_data["status"] = "pending_manager"  # Harus review manager
     else:
         request_data["status"] = "pending_admin" # Review admin

@@ -16,9 +16,15 @@ const mapTransaction = (raw) => ({
     _id: raw.id,
     _action: raw.action,
     _status: raw.status,
+    previous_hash: raw.previous_hash,
+    current_hash: raw.current_hash,
 });
 
 export const fetchAllTransactions = async () => {
     const data = await apiGet('/api/v1/transactions/');
     return data.map(mapTransaction);
+};
+
+export const verifyLedger = async () => {
+    return await apiGet('/api/v1/transactions/verify/ledger');
 };
