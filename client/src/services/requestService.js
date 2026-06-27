@@ -20,6 +20,8 @@ const mapRequest = (raw) => ({
   aiReason: raw.ai_decision_reason || '-',
   _id: raw.id,                           // integer id asli untuk API call
   _status: raw.status,                   // status raw untuk logic kondisional
+  _assetId: raw.asset_id,
+  _borrowerId: raw.user_id,
 });
 
 export const fetchAllRequests = async (statusFilter = null) => {
@@ -52,5 +54,13 @@ export const rejectRequest = async (requestId, rejectionReason) => {
   const data = await apiPatch(
     `/api/v1/asset-requests/${requestId}/reject?rejection_reason=${encodeURIComponent(rejectionReason)}`
   );
+  return mapRequest(data);
+};
+
+export const returnRequest = async (requestId, conditionNotes = "") => {
+  const url = conditionNotes
+    ? `/api/v1/asset-requests/${requestId}/return?condition_notes=${encodeURIComponent(conditionNotes)}`
+    : `/api/v1/asset-requests/${requestId}/return`;
+  const data = await apiPatch(url);
   return mapRequest(data);
 };

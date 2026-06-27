@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { createIncident } from '../../services/incidentService';
-import useAssets from '../../hooks/useAssets';
 
-function ReportIncidentModal({ isOpen, onClose, onSuccess }) {
-  const { assets, loading: assetsLoading } = useAssets();
+function ReportIncidentModal({ isOpen, onClose, onSuccess, requests = [], requestsLoading = false }) {
+  // Filter to only currently borrowed assets (handed_over status)
+  const borrowedAssets = useMemo(
+    () => requests.filter(req => req._status === 'handed_over'),
+    [requests]
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     asset_id: '',
-    severity: 'medium',
     description: '',
   });
 
@@ -18,7 +20,7 @@ function ReportIncidentModal({ isOpen, onClose, onSuccess }) {
   };
 
   const resetForm = () => {
-    setFormData({ asset_id: '', severity: 'medium', description: '' });
+    setFormData({ asset_id: '', description: '' });
     setError(null);
   };
 
@@ -34,7 +36,6 @@ function ReportIncidentModal({ isOpen, onClose, onSuccess }) {
     try {
       await createIncident({
         asset_id: Number(formData.asset_id),
-        severity: formData.severity,
         description: formData.description,
       });
       resetForm();
@@ -79,32 +80,13 @@ function ReportIncidentModal({ isOpen, onClose, onSuccess }) {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">
-                {assetsLoading ? 'Loading assets...' : 'Choose an asset...'}
+                {requestsLoading ? 'Loading assets...' : borrowedAssets.length === 0 ? 'No borrowed assets' : 'Choose an asset...'}
               </option>
-              {assets.map(a => (
-                <option key={a._id} value={a._id}>
-                  {a.name} — {a.category}
+              {borrowedAssets.map(req => (
+                <option key={req._assetId} value={req._assetId}>
+                  {req.asset}
                 </option>
               ))}
-            </select>
-          </div>
-
-          {/* SEVERITY */}
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">
-              Severity
-            </label>
-            <select
-              name="severity"
-              value={formData.severity}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
             </select>
           </div>
 

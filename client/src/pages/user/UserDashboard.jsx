@@ -104,6 +104,8 @@ const UserDashboard = () => {
         isOpen={isIncidentModalOpen}
         onClose={() => setIsIncidentModalOpen(false)}
         onSuccess={refreshIncidents}
+        requests={requests}
+        requestsLoading={loading}
       />
     </DashboardLayout>
   );

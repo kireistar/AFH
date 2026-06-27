@@ -36,8 +36,8 @@ export const apiCall = async (endpoint, options = {}) => {
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
-    // Handle 401/403 — token might be expired or invalid
-    if (response.status === 401 || response.status === 403) {
+    // Handle 401 — token might be expired or invalid
+    if (response.status === 401) {
       // Clear auth state — component yang pake hook akan auto-redirect ke login
       localStorage.removeItem('accessToken');
       localStorage.removeItem('user');
@@ -78,14 +78,15 @@ export const apiGet = (endpoint, options = {}) => {
  * POST request
  */
 export const apiPost = (endpoint, body, options = {}) => {
+  const { headers, ...restOptions } = options;
   return apiCall(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...headers,
     },
     body: JSON.stringify(body),
-    ...options,
+    ...restOptions,
   });
 };
 
@@ -93,14 +94,15 @@ export const apiPost = (endpoint, body, options = {}) => {
  * PUT request
  */
 export const apiPut = (endpoint, body, options = {}) => {
+  const { headers, ...restOptions } = options;
   return apiCall(endpoint, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...headers,
     },
     body: JSON.stringify(body),
-    ...options,
+    ...restOptions,
   });
 };
 
@@ -108,14 +110,15 @@ export const apiPut = (endpoint, body, options = {}) => {
  * PATCH request
  */
 export const apiPatch = (endpoint, body, options = {}) => {
+  const { headers, ...restOptions } = options;
   return apiCall(endpoint, {
     method: 'PATCH',
     headers: {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...headers,
     },
     body: JSON.stringify(body),
-    ...options,
+    ...restOptions,
   });
 };
 

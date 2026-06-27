@@ -233,6 +233,20 @@ def process_return(
     last_txn = db.query(Transaction).order_by(Transaction.id.desc()).first()
     previous_hash = last_txn.current_hash if last_txn else None
 
+    payload_data = {
+        "days_late": days_late,
+        "is_late": is_late,
+        "condition_notes": condition_notes or "",
+        "return_date": return_date.isoformat(),
+    }
+
+    from app.services import ledger_service
+    current_hash = ledger_service.calculate_transaction_hash(
+        previous_hash=previous_hash,
+        payload=payload_data,
+        occurred_at=now,
+    )
+
     transaction = Transaction(
         transaction_code=generate_transaction_code(db),
         request_id=request.id,
@@ -240,15 +254,11 @@ def process_return(
         borrower_id=request.user_id,
         admin_id=current_user.id,
         action="return",
-        payload={
-            "days_late": days_late,
-            "is_late": is_late,
-            "condition_notes": condition_notes or "",
-            "return_date": return_date.isoformat(),
-        },
+        payload=payload_data,
         previous_hash=previous_hash,
-        current_hash="0" * 64, # Placeholder (diisi ledger_service pada step berikutnya)
+        current_hash=current_hash,
         status="committed",
+        occurred_at=now,
     )
     db.add(transaction)
     db.flush() # Flush agar transaction.id tersedia untuk invoice

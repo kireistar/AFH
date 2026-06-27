@@ -10,7 +10,7 @@ from uuid import UUID
 
 from app.core.database import get_db
 from app.core.dependencies import verify_non_repudiation
-from app.models import Asset, Transaction, User
+from app.models import Asset, Transaction, User, AssetRequest
 from app.schemas import LedgerVerifyResult, TransactionCreate, TransactionResponse
 from app.services import ledger_service
 from app.services.behavior_service import (
@@ -107,6 +107,17 @@ def create_transaction(
     transaction_data["current_hash"] = current_hash
     transaction_data["occurred_at"] = occurred_at
     transaction_data["signature"] = request.headers.get("x-ed25519-signature")
+
+    # Update request and asset status for handovers
+    if transaction_in.action == "handover":
+        if transaction_in.request_id is not None:
+            req_obj = db.query(AssetRequest).filter(AssetRequest.id == transaction_in.request_id).first()
+            if req_obj:
+                req_obj.status = "handed_over"
+        
+        asset_obj = db.query(Asset).filter(Asset.id == transaction_in.asset_id).first()
+        if asset_obj:
+            asset_obj.status = "borrowed"
 
     new_transaction = Transaction(**transaction_data)
     db.add(new_transaction)

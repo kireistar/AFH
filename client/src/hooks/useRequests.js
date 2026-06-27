@@ -4,6 +4,7 @@ import {
   fetchMyRequests,
   approveRequest,
   rejectRequest,
+  returnRequest,
 } from '../services/requestService';
 
 const useRequests = (mode = 'all', statusFilter = null) => {
@@ -49,7 +50,16 @@ const useRequests = (mode = 'all', statusFilter = null) => {
     }
   };
 
-  return { requests, loading, error, refresh: load, approve, reject };
+  const returnAsset = async (requestId, conditionNotes = "") => {
+    try {
+      await returnRequest(requestId, conditionNotes);
+      await load();
+    } catch (err) {
+      setError(err.message || 'Gagal memproses pengembalian asset.');
+    }
+  };
+
+  return { requests, loading, error, refresh: load, approve, reject, returnAsset };
 };
 
 export default useRequests;

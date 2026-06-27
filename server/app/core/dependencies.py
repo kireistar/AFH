@@ -77,16 +77,18 @@ async def verify_non_repudiation(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> User:
-    # 1. TOFU (Trust On First Use)
+    # 1. TOFU (Trust On First Use) - Determine public key to verify
+    is_new_key = False
     if current_user.public_key is None:
         if not x_ed25519_public_key:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Public key required for initial registration.",
             )
-        current_user.public_key = x_ed25519_public_key  # type: ignore
-        db.commit()
-        db.refresh(current_user)
+        public_key_str = x_ed25519_public_key
+        is_new_key = True
+    else:
+        public_key_str = cast(str, current_user.public_key)
 
     # 2. Prevent Replay Attacks
     raw_body = await request.body()
@@ -101,9 +103,6 @@ async def verify_non_repudiation(
 
     # 3. Cryptographic Verification
     try:
-        # Cast ke string agar Pylance tahu ini adalah data string, bukan Column object
-        public_key_str = cast(str, current_user.public_key)
-
         public_key_bytes = base64.b64decode(public_key_str)
         signature_bytes = base64.b64decode(x_ed25519_signature)
 
@@ -113,5 +112,11 @@ async def verify_non_repudiation(
         raise HTTPException(
             status_code=403, detail=f"Signature verification failed: {str(e)}"
         )
+
+    # Save registered public key only after successful verification
+    if is_new_key:
+        current_user.public_key = public_key_str  # type: ignore
+        db.commit()
+        db.refresh(current_user)
 
     return current_user

@@ -6,13 +6,14 @@ import AdminHandover from './AdminHandover';
 import AdminUsers from './AdminUsers';
 import AdminReports from './AdminReports';
 import AdminSecurity from './AdminSecurity';
+import AdminApprovals from './AdminApprovals';
 import { useAuth } from '../../hooks/useAuth';
 import useAssets from '../../hooks/useAssets';
 import useUsers from '../../hooks/useUsers';
 import useRequests from '../../hooks/useRequests';
 import useIncidents from '../../hooks/useIncidents';
 import useTransactions from '../../hooks/useTransactions';
-import { verifyLedger } from '../../services/transactionService';
+import { verifyLedger, submitTransaction } from '../../services/transactionService';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
@@ -21,8 +22,15 @@ const AdminDashboard = () => {
 
   const { assets, loading: loadingAssets, refresh: refreshAssets } = useAssets();
   const { users, loading: loadingUsers, refresh: refreshUsers } = useUsers();
+  
+  // Requests pending admin review
+  const { requests: approvals, loading: loadingApprovals, refresh: refreshApprovals, approve, reject } = useRequests('all', 'pending_admin');
+
   // Request yang sudah approved dan siap dihandover
   const { requests: handovers, loading: loadingHandovers, refresh: refreshHandovers } = useRequests('all', 'approved');
+
+  // Active loans (currently borrowed assets)
+  const { requests: activeLoans, loading: loadingLoans, refresh: refreshLoans, returnAsset } = useRequests('all', 'handed_over');
 
   const { incidents } = useIncidents();
   const { transactions, loading: loadingTransactions, refresh: refreshTransactions } = useTransactions();
@@ -36,6 +44,63 @@ const AdminDashboard = () => {
   };
 
   const pendingHandoverCount = handovers.length;
+  const pendingApprovalCount = approvals.length;
+
+  const handleApprove = async (req) => {
+    if (window.confirm("Approve this asset request?")) {
+      await approve(req._id);
+      refreshHandovers();
+      refreshApprovals();
+    }
+  };
+
+  const handleReject = async (req) => {
+    const reason = window.prompt("Enter rejection reason:");
+    if (reason) {
+      await reject(req._id, reason);
+      refreshApprovals();
+    }
+  };
+
+  const handleCompleteHandover = async (requestId) => {
+    const req = handovers.find(h => h._id === requestId);
+    if (!req) return;
+
+    if (window.confirm(`Complete the handover of ${req.asset} to ${req.user}?`)) {
+      try {
+        await submitTransaction({
+          action: 'handover',
+          asset_id: req._assetId,
+          borrower_id: req._borrowerId,
+          request_id: req._id,
+          admin_id: user.id,
+          payload: { notes: "Handover executed via Admin Dashboard" }
+        });
+        alert("Handover completed successfully!");
+        refreshHandovers();
+        refreshTransactions();
+      } catch (err) {
+        alert("Failed to complete handover: " + err.message);
+      }
+    }
+  };
+
+  const handleProcessReturn = async (requestId) => {
+    const req = activeLoans.find(h => h._id === requestId);
+    if (!req) return;
+
+    const conditionNotes = window.prompt("Enter device return condition notes (optional):", "Good condition");
+    if (conditionNotes !== null) {
+      try {
+        await returnAsset(req._id, conditionNotes);
+        alert("Asset return processed successfully!");
+        refreshLoans();
+        refreshTransactions();
+      } catch (err) {
+        alert("Failed to process return: " + err.message);
+      }
+    }
+  };
 
   const activeIncidentCount = incidents.filter(i => i._status === 'open' || i._status === 'investigating').length;
 
@@ -84,6 +149,7 @@ const AdminDashboard = () => {
   const adminMenuItems = [
     { name: 'Dashboard', badge: null },
     { name: 'Assets', badge: null },
+    { name: 'Approvals', badge: pendingApprovalCount > 0 ? `${pendingApprovalCount} Pending` : null, badgeColor: 'bg-orange-100 text-orange-700' },
     { name: 'Handover', badge: pendingHandoverCount > 0 ? `${pendingHandoverCount} Pending` : null, badgeColor: 'bg-blue-100 text-[#1E3A8A]' },
     { name: 'Users', badge: null },
     { name: 'Reports', badge: null },
@@ -120,8 +186,26 @@ const AdminDashboard = () => {
             onAddModalClosed={() => setAutoOpenAddAsset(false)}
           />
         );
+      case 'Approvals':
+        return (
+          <AdminApprovals
+            approvals={approvals}
+            loading={loadingApprovals}
+            handleApprove={handleApprove}
+            handleReject={handleReject}
+          />
+        );
       case 'Handover':
-        return <AdminHandover handovers={handovers} loading={loadingHandovers} onRefresh={refreshHandovers} />;
+        return (
+          <AdminHandover
+            handovers={handovers}
+            activeLoans={activeLoans}
+            handleCompleteHandover={handleCompleteHandover}
+            handleProcessReturn={handleProcessReturn}
+            loadingHandovers={loadingHandovers}
+            loadingLoans={loadingLoans}
+          />
+        );
       case 'Users':
         return <AdminUsers users={users} loading={loadingUsers} onRefresh={refreshUsers} />;
       case 'Reports':

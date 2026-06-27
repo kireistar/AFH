@@ -88,6 +88,20 @@ def create_incident(
         last_txn = db.query(Transaction).order_by(Transaction.id.desc()).first()
         previous_hash = last_txn.current_hash if last_txn else None
 
+        now = datetime.now(timezone.utc)
+        payload_data = {
+            "incident_id": new_incident.id,
+            "severity": severity,
+            "description": incident_in.description if hasattr(incident_in, 'description') else "",
+        }
+
+        from app.services import ledger_service
+        current_hash = ledger_service.calculate_transaction_hash(
+            previous_hash=previous_hash,
+            payload=payload_data,
+            occurred_at=now,
+        )
+
         transaction = Transaction(
             transaction_code=generate_transaction_code(db),
             request_id=None, # Incident tidak selalu punya request
@@ -95,14 +109,11 @@ def create_incident(
             borrower_id=current_user.id,
             admin_id=None,
             action="incident_report",
-            payload={
-                "incident_id": new_incident.id,
-                "severity": severity,
-                "description": incident_in.description if hasattr(incident_in, 'description') else "",
-            },
+            payload=payload_data,
             previous_hash=previous_hash,
-            current_hash="0" * 64, # Placeholder - Step 4
+            current_hash=current_hash,
             status="committed",
+            occurred_at=now,
         )
         db.add(transaction)
         db.flush()
