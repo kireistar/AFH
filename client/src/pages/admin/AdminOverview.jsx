@@ -1,13 +1,37 @@
 import React from 'react';
 
 const AdminOverview = ({ 
-  assetStats, 
-  pendingHandoverCount, 
-  recentActivities, 
-  systemAlerts, 
-  activeIncidentCount,
-  onAddAssetClick
+  assetStats = {}, 
+  pendingHandoverCount = 0, 
+  recentActivities = [], 
+  systemAlerts = [], 
+  activeIncidentCount = 0,
+  onAddAssetClick,
+  setActiveTab
 }) => {
+  const getGrowthElement = () => {
+    const pct = assetStats.assetGrowth || 0;
+    if (pct > 0) {
+      return (
+        <span className="text-emerald-600 font-semibold">
+          ▲ +{pct.toFixed(1)}% <span className="text-slate-400 font-normal ml-1">from last month</span>
+        </span>
+      );
+    } else if (pct < 0) {
+      return (
+        <span className="text-[#B91C1C] font-semibold">
+          ▼ {pct.toFixed(1)}% <span className="text-slate-400 font-normal ml-1">from last month</span>
+        </span>
+      );
+    } else {
+      return (
+        <span className="text-slate-400 font-semibold">
+          No change <span className="text-slate-400 font-normal ml-1">from last month</span>
+        </span>
+      );
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Key Metrics */}
@@ -15,8 +39,8 @@ const AdminOverview = ({
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
           <h3 className="text-slate-500 text-sm font-medium">Total Assets</h3>
           <p className="text-3xl font-bold text-slate-800 mt-2">{assetStats.total}</p>
-          <div className="mt-4 flex items-center text-xs text-emerald-600 font-semibold">
-            ▲ +12% <span className="text-slate-400 font-normal ml-1">from last month</span>
+          <div className="mt-4 flex items-center text-xs">
+            {getGrowthElement()}
           </div>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
@@ -35,12 +59,12 @@ const AdminOverview = ({
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4">Quick Access</h3>
         <div className="flex flex-wrap gap-4">
-          <button className="flex-1 min-w-37.5 py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center cursor-pointer">
+          <button className="flex-1 min-w-[150px] py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center cursor-pointer">
             Scan Handover QR
           </button>
           <button 
             onClick={onAddAssetClick}
-            className="flex-1 min-w-37.5 py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center cursor-pointer"
+            className="flex-1 min-w-[150px] py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center cursor-pointer"
           >
             Add New Asset
           </button>
@@ -53,7 +77,12 @@ const AdminOverview = ({
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
           <div className="p-6 border-b border-slate-100 flex justify-between items-center">
             <h3 className="font-bold text-slate-800">Recent Activities</h3>
-            <button className="text-xs font-bold text-[#1E3A8A] hover:underline">See All</button>
+            <button 
+              onClick={() => setActiveTab('Reports')}
+              className="text-xs font-bold text-[#1E3A8A] hover:underline cursor-pointer"
+            >
+              See All
+            </button>
           </div>
           <div className="p-4">
             {recentActivities.length === 0 ? (

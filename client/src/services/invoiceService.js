@@ -1,4 +1,4 @@
-import { apiGet, apiPatch } from './apiClient';
+import { apiGet, apiPatch, apiPost } from './apiClient';
 import { formatStatus, formatCurrency, formatDate } from '../utils/formatters';
 
 /**
@@ -29,5 +29,10 @@ export const verifyPayment = async (invoiceId, paymentMethod = 'bank_transfer') 
   const data = await apiPatch(
     `/api/v1/invoices/${invoiceId}/verify-payment?payment_method=${paymentMethod}`
   );
+  return mapInvoice(data);
+};
+
+export const createInvoice = async (invoiceData) => {
+  const data = await apiPost('/api/v1/invoices/', invoiceData);
   return mapInvoice(data);
 };

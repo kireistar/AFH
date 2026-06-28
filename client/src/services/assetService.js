@@ -19,6 +19,7 @@ const mapAsset = (raw) => ({
   _status: raw.status,
   _category: raw.category,
   _condition: raw.current_condition,
+  _createdAt: raw.created_at,
 });
 
 export const fetchAssets = async () => {

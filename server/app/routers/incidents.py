@@ -14,6 +14,7 @@ from app.core.dependencies import get_current_user, require_role
 from app.models import Incident, Asset, User, Transaction, Invoice
 from app.schemas import IncidentCreate, IncidentResponse, IncidentUpdate
 from app.services.code_generator import generate_incident_code, generate_transaction_code, generate_invoice_code
+from app.services import ledger_service
 from app.services.behavior_service import record_damage, record_lost, record_fine_issued
 
 router = APIRouter(
@@ -85,6 +86,9 @@ def create_incident(
         fine_amount = Decimal(str(asset.purchase_value)) * Decimal("2")
 
         # Buat Transaction record dulu (Invoice butuh transaction_id)
+        # Acquire exclusive advisory lock on the ledger chain to serialize concurrent updates
+        ledger_service.acquire_ledger_lock(db)
+        
         last_txn = db.query(Transaction).order_by(Transaction.id.desc()).first()
         previous_hash = last_txn.current_hash if last_txn else None
 

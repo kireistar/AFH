@@ -5,9 +5,21 @@ Handles block hash computation and integrity verification.
 import hashlib
 import json
 import logging
+import zlib
 from datetime import datetime
+from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
+
+
+def acquire_ledger_lock(db: Session) -> None:
+    """
+    Acquires a transaction-level exclusive Postgres advisory lock on the ledger chain.
+    Prevents forks in the hash chain under concurrent traffic.
+    """
+    lock_id = zlib.crc32(b"ledger_chain_lock")
+    db.execute(text("SELECT pg_advisory_xact_lock(:lock_id)"), {"lock_id": lock_id})
 
 
 def calculate_transaction_hash(previous_hash: str | None, payload: dict, occurred_at: datetime) -> str:

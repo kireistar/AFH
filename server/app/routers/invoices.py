@@ -118,11 +118,12 @@ def update_invoice(
             detail=f"Invoice with id {invoice_id} not found",
         )
 
+    old_status = invoice.status
     update_data = invoice_in.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(invoice, key, value)
 
-    if invoice_in.status == "paid" and invoice.status != "paid":
+    if invoice_in.status == "paid" and old_status != "paid":
         record_fine_paid(db, invoice.user_id, invoice.fine_amount)
     db.commit()
     db.refresh(invoice)

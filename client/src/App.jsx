@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
+import { ToastProvider } from './components/Toast';
 import ProtectedRoute from './components/ProtectedRoute';
 
 const Login = lazy(() => import('./pages/auth/Login'));
@@ -18,11 +19,12 @@ const PageLoader = () => (
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<Login />} />
+      <ToastProvider>
+        <Router>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/login" element={<Login />} />
 
             <Route element={<ProtectedRoute allowedRoles={['user', 'admin', 'manager', 'finance']} />}>
               <Route path="/user/*" element={<UserDashboard />} />
@@ -44,6 +46,7 @@ function App() {
           </Routes>
         </Suspense>
       </Router>
+     </ToastProvider>
     </AuthProvider>
   );
 }

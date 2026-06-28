@@ -8,13 +8,30 @@ import FinanceReports from './FinanceReports';
 import { useAuth } from '../../hooks/useAuth';
 import useInvoices from '../../hooks/useInvoices';
 import useTransactions from '../../hooks/useTransactions';
+import useUsers from '../../hooks/useUsers';
+import NewInvoiceModal from '../../components/NewInvoiceModal';
+import { useToast } from '../../components/Toast';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const FinanceDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const { user } = useAuth();
+  const toast = useToast();
+  const { users } = useUsers();
+  const [isNewInvoiceModalOpen, setIsNewInvoiceModalOpen] = useState(false);
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    isDanger: false,
+    onConfirm: () => {},
+  });
 
   // Single fetch, semua invoice (split di client)
-  const { invoices, loading, markAsPaid } = useInvoices();
+  const { invoices, loading, markAsPaid, refresh: refreshInvoices } = useInvoices();
 
   const fines = useMemo(() => invoices.filter(i => i._status === 'unpaid'), [invoices]);
   const paidInvoices = useMemo(() => invoices.filter(i => i._status === 'paid'), [invoices]);
@@ -27,7 +44,33 @@ const FinanceDashboard = () => {
     return 'Rp ' + total.toLocaleString('id-ID');
   }, [paidInvoices]);
 
-  const { transactions, loading: loadingTransactions } = useTransactions();
+  const finesPercentChange = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const thisMonthFines = paidInvoices.filter(inv => {
+      if (!inv.paidAt) return false;
+      const d = new Date(inv.paidAt);
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
+
+    const lastMonthFines = paidInvoices.filter(inv => {
+      if (!inv.paidAt) return false;
+      const d = new Date(inv.paidAt);
+      const targetMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      const targetYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+      return d.getMonth() === targetMonth && d.getFullYear() === targetYear;
+    });
+
+    const thisMonthTotal = thisMonthFines.reduce((sum, inv) => sum + Number(inv._rawAmount || 0), 0);
+    const lastMonthTotal = lastMonthFines.reduce((sum, inv) => sum + Number(inv._rawAmount || 0), 0);
+
+    if (lastMonthTotal === 0) return thisMonthTotal > 0 ? 100 : 0;
+    return ((thisMonthTotal - lastMonthTotal) / lastMonthTotal) * 100;
+  }, [paidInvoices]);
+
+  const { transactions, loading: loadingTransactions, refresh: refreshTransactions } = useTransactions();
 
   // Map 5 transaksi terbaru untuk overview
   const recentTransactions = useMemo(() => {
@@ -41,10 +84,23 @@ const FinanceDashboard = () => {
     }));
   }, [transactions]);
 
-  const handleMarkAsPaid = async (fine) => {
-    if (window.confirm("Confirm payment received for this fine?")) {
-      await markAsPaid(fine._id);  // _id = integer id asli
-    }
+  const handleMarkAsPaid = (fine) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Confirm Payment',
+      message: `Confirm that payment of ${fine.amount} from ${fine.user} has been physically received?`,
+      confirmText: 'Mark as Paid',
+      isDanger: false,
+      onConfirm: async () => {
+        try {
+          await markAsPaid(fine._id);
+          toast.success("Payment marked as paid successfully!");
+        } catch (err) {
+          toast.error("Failed to mark as paid: " + err.message);
+        }
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
   const financeProfile = {
@@ -65,13 +121,28 @@ const FinanceDashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'Dashboard':
-        return <FinanceOverview financeStats={{ collectedFines, pendingInvoices: unpaidCount, unpaidFines: unpaidCount }} recentTransactions={recentTransactions} alerts={[]} />;
+        return (
+          <FinanceOverview 
+            financeStats={{ 
+              collectedFines, 
+              pendingInvoices: unpaidCount, 
+              unpaidFines: unpaidCount, 
+              finesPercentChange 
+            }} 
+            recentTransactions={recentTransactions} 
+            alerts={[]} 
+            setActiveTab={setActiveTab}
+            setIsNewInvoiceModalOpen={setIsNewInvoiceModalOpen}
+          />
+        );
       case 'Fines':
         return <FinanceFines fines={fines} loading={loading} handleMarkAsPaid={handleMarkAsPaid} />;
       case 'Invoices':
-        return <FinanceInvoices invoices={paidInvoices} loading={loading} />;
-      case 'Payments':
-        return <FinancePayments payments={transactions} loading={loadingTransactions} />;
+        return <FinanceInvoices invoices={paidInvoices} loading={loading} onOpenNewInvoiceModal={() => setIsNewInvoiceModalOpen(true)} />;
+      case 'Payments': {
+        const paymentTransactions = transactions.filter(t => t._action === 'fine_issued' || t._action === 'fine_paid');
+        return <FinancePayments payments={paymentTransactions} loading={loadingTransactions} />;
+      }
       case 'Reports':
         return <FinanceReports invoices={invoices} transactions={transactions} />;
       default:
@@ -90,6 +161,26 @@ const FinanceDashboard = () => {
       pageHeaderSubtitle={activeTab === 'Dashboard' ? 'Monitor company financial activities.' : `Manage financial ${activeTab.toLowerCase()} records here.`}
     >
       {renderContent()}
+      <ConfirmModal
+        isOpen={confirmConfig.isOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        confirmText={confirmConfig.confirmText}
+        cancelText={confirmConfig.cancelText}
+        isDanger={confirmConfig.isDanger}
+        onConfirm={confirmConfig.onConfirm}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+      />
+      <NewInvoiceModal
+        isOpen={isNewInvoiceModalOpen}
+        onClose={() => setIsNewInvoiceModalOpen(false)}
+        onSuccess={() => {
+          refreshInvoices();
+          refreshTransactions();
+        }}
+        users={users}
+        transactions={transactions}
+      />
     </DashboardLayout>
   );
 };

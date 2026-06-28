@@ -1,6 +1,5 @@
 import { apiGet, apiPost } from "./apiClient";
 import { formatStatus, formatCurrency, formatDate } from "../utils/formatters";
-import nacl from "tweetnacl";
 import util from "tweetnacl-util";
 import { getOrGenerateKeyPair, getPublicKeyBase64 } from "../utils/crypto";
 
@@ -21,6 +20,8 @@ const mapTransaction = (raw) => ({
   _id: raw.id,
   _action: raw.action,
   _status: raw.status,
+  _borrowerId: raw.borrower_id,
+  _assetId: raw.asset_id,
   previous_hash: raw.previous_hash,
   current_hash: raw.current_hash,
 });
@@ -40,7 +41,7 @@ export const verifyLedger = async () => {
  * Space Complexity: O(N) for message byte array allocation + 64 bytes constant for the signature.
  */
 export const submitTransaction = async (transactionPayload) => {
-  const keyPair = getOrGenerateKeyPair();
+  const keyPair = await getOrGenerateKeyPair();
 
   // Inject timestamp for anti-replay verification on the backend
   const securePayload = {
@@ -52,14 +53,20 @@ export const submitTransaction = async (transactionPayload) => {
   const payloadString = JSON.stringify(securePayload);
   const messageUint8 = util.decodeUTF8(payloadString);
 
-  // Generate the EdDSA signature
-  const signatureUint8 = nacl.sign.detached(messageUint8, keyPair.secretKey);
+  // Generate the Ed25519 signature using SubtleCrypto
+  const signatureBuffer = await window.crypto.subtle.sign(
+    { name: "Ed25519" },
+    keyPair.privateKey,
+    messageUint8
+  );
+  const signatureUint8 = new Uint8Array(signatureBuffer);
+  const publicKeyBase64 = await getPublicKeyBase64(keyPair.publicKey);
 
   // Execute POST request with cryptographic headers
   const data = await apiPost("/api/v1/transactions/", securePayload, {
     headers: {
       "x-ed25519-signature": util.encodeBase64(signatureUint8),
-      "x-ed25519-public-key": getPublicKeyBase64(),
+      "x-ed25519-public-key": publicKeyBase64,
     },
   });
 

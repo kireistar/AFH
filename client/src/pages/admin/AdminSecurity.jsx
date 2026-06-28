@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { verifyLedger } from '../../services/transactionService';
+import TableSkeleton from '../../components/TableSkeleton';
+import Pagination from '../../components/Pagination';
 
 const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefreshTransactions }) => {
   const [integrityData, setIntegrityData] = useState(null);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const runIntegrityCheck = async () => {
     setChecking(true);
@@ -24,10 +28,31 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
     runIntegrityCheck();
   }, []);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   const formatHash = (hash) => {
     if (!hash) return 'GENESIS (NULL)';
     return `${hash.slice(0, 8)}...${hash.slice(-8)}`;
   };
+
+  const filteredTransactions = transactions.filter(t => 
+    !searchQuery.trim() || 
+    t.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    t.date.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    t.action.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (t.asset && t.asset.toLowerCase().includes(searchQuery.toLowerCase())) || 
+    (t.previous_hash && t.previous_hash.toLowerCase().includes(searchQuery.toLowerCase())) || 
+    (t.current_hash && t.current_hash.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
+  // Pagination calculation
+  const itemsPerPage = 10;
+  const totalItems = filteredTransactions.length;
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentTransactions = filteredTransactions.slice(indexOfFirstItem, indexOfLastItem);
 
   return (
     <div className="space-y-8">
@@ -95,20 +120,36 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
 
       {/* Transactions Chained Visual Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h3 className="text-lg font-bold text-slate-800">Chained Hash Ledger Logs</h3>
             <p className="text-sm text-slate-500 mt-1">
               Verify sequential cryptographically-linked transaction blocks.
             </p>
           </div>
-          <button 
-            onClick={onRefreshTransactions}
-            disabled={loadingTransactions}
-            className="px-3 py-1.5 border border-slate-200 text-slate-600 font-semibold text-xs rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
-          >
-            Refresh Log List
-          </button>
+          
+          <div className="flex flex-wrap items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+            <div className="flex flex-col gap-1 min-w-[200px] w-full md:w-auto">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Search Ledger</span>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search code, hash, action..."
+                className="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all placeholder-slate-400"
+              />
+            </div>
+            
+            <div className="pt-4 md:pt-0">
+              <button 
+                onClick={onRefreshTransactions}
+                disabled={loadingTransactions}
+                className="px-3 py-2 border border-slate-200 text-slate-600 font-semibold text-xs rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                Refresh Log List
+              </button>
+            </div>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -119,79 +160,87 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
               </svg>
               Verifying blocks...
             </div>
-          ) : transactions.length === 0 ? (
+          ) : filteredTransactions.length === 0 ? (
             <div className="p-8 text-center text-slate-400 text-sm">No transaction blocks written to the ledger yet.</div>
           ) : (
-            <table className="w-full text-left">
-              <thead>
-                <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-4 font-semibold">Block Code</th>
-                  <th className="p-4 font-semibold">Action</th>
-                  <th className="p-4 font-semibold">Payload Snapshot</th>
-                  <th className="p-4 font-semibold">Previous Hash</th>
-                  <th className="p-4 font-semibold">Current Hash</th>
-                  <th className="p-4 font-semibold text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {transactions.map((t, idx) => {
-                  const isTampered = integrityData?.tampered_transaction_ids?.includes(t._id);
-                  return (
-                    <tr 
-                      key={t._id} 
-                      className={`transition-colors ${
-                        isTampered 
-                          ? 'bg-rose-50/50 hover:bg-rose-50' 
-                          : 'hover:bg-slate-50/30'
-                      }`}
-                    >
-                      <td className="p-4 text-sm font-semibold text-slate-800">
-                        <div className="flex flex-col">
-                          <span className={isTampered ? 'text-rose-800' : 'text-slate-700'}>{t.id}</span>
-                          <span className="text-[10px] text-slate-400 font-normal">{t.date}</span>
-                        </div>
-                      </td>
-                      <td className="p-4 text-sm">
-                        <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${
-                          t._action === 'handover' ? 'bg-blue-50 text-[#1E3A8A]' :
-                          t._action === 'return' ? 'bg-emerald-50 text-emerald-700' :
-                          'bg-amber-50 text-amber-700'
-                        }`}>
-                          {t.action}
-                        </span>
-                      </td>
-                      <td className="p-4 text-sm text-slate-500 font-medium">
-                        <div className="max-w-[200px] truncate text-xs bg-slate-50 px-2 py-1 rounded border border-slate-100 font-mono">
-                          {t.amount !== '-' ? `Fine: ${t.amount}` : `Asset: ${t.asset}`}
-                        </div>
-                      </td>
-                      <td className="p-4 text-xs font-mono text-slate-400">
-                        {formatHash(t.previous_hash)}
-                      </td>
-                      <td className="p-4 text-xs font-mono text-slate-500 font-semibold">
-                        <div className="flex items-center gap-2">
-                          <span className={isTampered ? 'text-rose-600' : 'text-slate-600'}>
-                            {formatHash(t.current_hash)}
+            <>
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
+                    <th className="p-4 font-semibold">Block Code</th>
+                    <th className="p-4 font-semibold">Action</th>
+                    <th className="p-4 font-semibold">Payload Snapshot</th>
+                    <th className="p-4 font-semibold">Previous Hash</th>
+                    <th className="p-4 font-semibold">Current Hash</th>
+                    <th className="p-4 font-semibold text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {currentTransactions.map((t, idx) => {
+                    const isTampered = integrityData?.tampered_transaction_ids?.includes(t._id);
+                    return (
+                      <tr 
+                        key={t._id} 
+                        className={`transition-colors ${
+                          isTampered 
+                            ? 'bg-rose-50/50 hover:bg-rose-50' 
+                            : 'hover:bg-slate-50/30'
+                        }`}
+                      >
+                        <td className="p-4 text-sm font-semibold text-slate-800">
+                          <div className="flex flex-col">
+                            <span className={isTampered ? 'text-rose-800' : 'text-slate-700'}>{t.id}</span>
+                            <span className="text-[10px] text-slate-400 font-normal">{t.date}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-sm">
+                          <span className={`px-2 py-0.5 rounded-md text-xs font-semibold ${
+                            t._action === 'handover' ? 'bg-blue-50 text-[#1E3A8A]' :
+                            t._action === 'return' ? 'bg-emerald-50 text-emerald-700' :
+                            'bg-amber-50 text-amber-700'
+                          }`}>
+                            {t.action}
                           </span>
-                        </div>
-                      </td>
-                      <td className="p-4 text-sm text-center">
-                        {isTampered ? (
-                          <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-rose-50 text-rose-700 border-rose-200 inline-flex items-center gap-1 shadow-sm">
-                            <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping"></span>
-                            Tampered
-                          </span>
-                        ) : (
-                          <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
-                            Verified
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                        </td>
+                        <td className="p-4 text-sm text-slate-500 font-medium">
+                          <div className="max-w-[200px] truncate text-xs bg-slate-50 px-2 py-1 rounded border border-slate-100 font-mono">
+                            {t.amount !== '-' ? `Fine: ${t.amount}` : `Asset: ${t.asset}`}
+                          </div>
+                        </td>
+                        <td className="p-4 text-xs font-mono text-slate-400">
+                          {formatHash(t.previous_hash)}
+                        </td>
+                        <td className="p-4 text-xs font-mono text-slate-500 font-semibold">
+                          <div className="flex items-center gap-2">
+                            <span className={isTampered ? 'text-rose-600' : 'text-slate-600'}>
+                              {formatHash(t.current_hash)}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-sm text-center">
+                          {isTampered ? (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-rose-50 text-rose-700 border-rose-200 inline-flex items-center gap-1 shadow-sm">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping"></span>
+                              Tampered
+                            </span>
+                          ) : (
+                            <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
+                              Verified
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <Pagination
+                currentPage={currentPage}
+                totalItems={totalItems}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+              />
+            </>
           )}
         </div>
       </div>

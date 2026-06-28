@@ -9,7 +9,7 @@ from typing import List, Optional, cast
 from uuid import UUID
 
 from app.core.database import get_db
-from app.core.dependencies import verify_non_repudiation
+from app.core.dependencies import verify_non_repudiation, get_current_user
 from app.models import Asset, Transaction, User, AssetRequest
 from app.schemas import LedgerVerifyResult, TransactionCreate, TransactionResponse
 from app.services import ledger_service
@@ -35,24 +35,39 @@ def get_all_transactions(
     asset_id: Optional[int] = None,
     borrower_id: Optional[str] = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     query = db.query(Transaction)
+    
+    # Regular users can only retrieve their own transactions
+    if current_user.role == "user":
+        query = query.filter(Transaction.borrower_id == current_user.id)
+    elif borrower_id:
+        query = query.filter(Transaction.borrower_id == UUID(borrower_id))
+
     if asset_id:
         query = query.filter(Transaction.asset_id == asset_id)
-
-    if borrower_id:
-        query = query.filter(Transaction.borrower_id == UUID(borrower_id))
 
     return query.offset(skip).limit(limit).all()
 
 
 @router.get("/{transaction_id}", response_model=TransactionResponse)
-def get_transaction(transaction_id: int, db: Session = Depends(get_db)):
+def get_transaction(
+    transaction_id: int, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     if not transaction:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Transaction with id {transaction_id} not found",
+        )
+    # Check authorization
+    if current_user.role == "user" and transaction.borrower_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to view this transaction.",
         )
     return transaction
 
@@ -90,6 +105,9 @@ def create_transaction(
             raise HTTPException(status_code=404, detail="Admin not found")
 
     # 3. Ledger Logic
+    # Acquire exclusive advisory lock on the ledger chain to serialize concurrent updates
+    ledger_service.acquire_ledger_lock(db)
+    
     last_txn = db.query(Transaction).order_by(Transaction.id.desc()).first()
     previous_hash = cast(Optional[str], last_txn.current_hash) if last_txn else None
 

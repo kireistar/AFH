@@ -14,11 +14,27 @@ import useRequests from '../../hooks/useRequests';
 import useIncidents from '../../hooks/useIncidents';
 import useTransactions from '../../hooks/useTransactions';
 import { verifyLedger, submitTransaction } from '../../services/transactionService';
+import { useToast } from '../../components/Toast';
+import ConfirmModal from '../../components/ConfirmModal';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [autoOpenAddAsset, setAutoOpenAddAsset] = useState(false);
   const { user } = useAuth();
+  const toast = useToast();
+
+  const [confirmConfig, setConfirmConfig] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    showInput: false,
+    inputPlaceholder: '',
+    defaultValue: '',
+    confirmText: 'Confirm',
+    cancelText: 'Cancel',
+    isDanger: false,
+    onConfirm: () => {},
+  });
 
   const { assets, loading: loadingAssets, refresh: refreshAssets } = useAssets();
   const { users, loading: loadingUsers, refresh: refreshUsers } = useUsers();
@@ -35,71 +51,150 @@ const AdminDashboard = () => {
   const { incidents } = useIncidents();
   const { transactions, loading: loadingTransactions, refresh: refreshTransactions } = useTransactions();
 
+  const assetGrowth = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    const thisMonthAssets = assets.filter(a => {
+      if (!a._createdAt) return false;
+      const d = new Date(a._createdAt);
+      return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+    });
+
+    const lastMonthAssets = assets.filter(a => {
+      if (!a._createdAt) return false;
+      const d = new Date(a._createdAt);
+      const targetMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      const targetYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+      return d.getMonth() === targetMonth && d.getFullYear() === targetYear;
+    });
+
+    const thisMonthCount = thisMonthAssets.length;
+    const lastMonthCount = lastMonthAssets.length;
+
+    if (lastMonthCount === 0) return thisMonthCount > 0 ? 100 : 0;
+    return ((thisMonthCount - lastMonthCount) / lastMonthCount) * 100;
+  }, [assets]);
+
   // Hitung stats dari real data
   const assetStats = {
     available: assets.filter(a => a.status === 'Available').length,
     borrowed: assets.filter(a => a.status === 'Borrowed').length,
     maintenance: assets.filter(a => a.status === 'Maintenance').length,
     total: assets.length,
+    assetGrowth: assetGrowth,
   };
 
   const pendingHandoverCount = handovers.length;
   const pendingApprovalCount = approvals.length;
 
-  const handleApprove = async (req) => {
-    if (window.confirm("Approve this asset request?")) {
-      await approve(req._id);
-      refreshHandovers();
-      refreshApprovals();
-    }
+  const handleApprove = (req) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Approve Request',
+      message: `Are you sure you want to approve the asset request for "${req.asset}" by ${req.user}?`,
+      showInput: false,
+      confirmText: 'Approve',
+      isDanger: false,
+      onConfirm: async () => {
+        try {
+          await approve(req._id);
+          toast.success("Request approved successfully!");
+          refreshHandovers();
+          refreshApprovals();
+        } catch (err) {
+          toast.error("Failed to approve request: " + err.message);
+        }
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
-  const handleReject = async (req) => {
-    const reason = window.prompt("Enter rejection reason:");
-    if (reason) {
-      await reject(req._id, reason);
-      refreshApprovals();
-    }
+  const handleReject = (req) => {
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Reject Request',
+      message: `Provide a reason for rejecting the request for "${req.asset}" by ${req.user}:`,
+      showInput: true,
+      inputPlaceholder: 'Reason for rejection...',
+      defaultValue: '',
+      confirmText: 'Reject',
+      isDanger: true,
+      onConfirm: async (reason) => {
+        if (!reason.trim()) {
+          toast.error("Rejection reason cannot be empty");
+          return;
+        }
+        try {
+          await reject(req._id, reason);
+          toast.success("Request rejected successfully!");
+          refreshApprovals();
+        } catch (err) {
+          toast.error("Failed to reject request: " + err.message);
+        }
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+      }
+    });
   };
 
-  const handleCompleteHandover = async (requestId) => {
+  const handleCompleteHandover = (requestId) => {
     const req = handovers.find(h => h._id === requestId);
     if (!req) return;
 
-    if (window.confirm(`Complete the handover of ${req.asset} to ${req.user}?`)) {
-      try {
-        await submitTransaction({
-          action: 'handover',
-          asset_id: req._assetId,
-          borrower_id: req._borrowerId,
-          request_id: req._id,
-          admin_id: user.id,
-          payload: { notes: "Handover executed via Admin Dashboard" }
-        });
-        alert("Handover completed successfully!");
-        refreshHandovers();
-        refreshTransactions();
-      } catch (err) {
-        alert("Failed to complete handover: " + err.message);
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Complete Handover',
+      message: `Are you sure you want to complete the handover of "${req.asset}" to ${req.user}?`,
+      showInput: false,
+      confirmText: 'Handover',
+      isDanger: false,
+      onConfirm: async () => {
+        try {
+          await submitTransaction({
+            action: 'handover',
+            asset_id: req._assetId,
+            borrower_id: req._borrowerId,
+            request_id: req._id,
+            admin_id: user.id,
+            payload: { notes: "Handover executed via Admin Dashboard" }
+          });
+          toast.success("Handover completed successfully!");
+          refreshHandovers();
+          refreshTransactions();
+        } catch (err) {
+          toast.error("Failed to complete handover: " + err.message);
+        }
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
       }
-    }
+    });
   };
 
-  const handleProcessReturn = async (requestId) => {
+  const handleProcessReturn = (requestId) => {
     const req = activeLoans.find(h => h._id === requestId);
     if (!req) return;
 
-    const conditionNotes = window.prompt("Enter device return condition notes (optional):", "Good condition");
-    if (conditionNotes !== null) {
-      try {
-        await returnAsset(req._id, conditionNotes);
-        alert("Asset return processed successfully!");
-        refreshLoans();
-        refreshTransactions();
-      } catch (err) {
-        alert("Failed to process return: " + err.message);
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Process Return',
+      message: `Provide condition notes for returning "${req.asset}" from ${req.user}:`,
+      showInput: true,
+      inputPlaceholder: 'Device return condition notes (optional)...',
+      defaultValue: 'Good condition',
+      confirmText: 'Process Return',
+      isDanger: false,
+      onConfirm: async (conditionNotes) => {
+        try {
+          await returnAsset(req._id, conditionNotes || "Good condition");
+          toast.success("Asset return processed successfully!");
+          refreshLoans();
+          refreshTransactions();
+        } catch (err) {
+          toast.error("Failed to process return: " + err.message);
+        }
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
       }
-    }
+    });
   };
 
   const activeIncidentCount = incidents.filter(i => i._status === 'open' || i._status === 'investigating').length;
@@ -174,6 +269,7 @@ const AdminDashboard = () => {
               setActiveTab('Assets');
               setAutoOpenAddAsset(true);
             }}
+            setActiveTab={setActiveTab}
           />
         );
       case 'Assets':
@@ -253,6 +349,19 @@ const AdminDashboard = () => {
         </div>
       )}
       {renderContent()}
+      <ConfirmModal
+        isOpen={confirmConfig.isOpen}
+        title={confirmConfig.title}
+        message={confirmConfig.message}
+        showInput={confirmConfig.showInput}
+        inputPlaceholder={confirmConfig.inputPlaceholder}
+        defaultValue={confirmConfig.defaultValue}
+        confirmText={confirmConfig.confirmText}
+        cancelText={confirmConfig.cancelText}
+        isDanger={confirmConfig.isDanger}
+        onConfirm={confirmConfig.onConfirm}
+        onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+      />
     </DashboardLayout>
   );
 };

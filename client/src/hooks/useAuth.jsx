@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { logoutUser } from '../services/authService';
 
 const AuthContext = createContext(null);
 
@@ -71,8 +72,10 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // ── Logout: clear token + user ────────────────────────────────────────────
   const logout = useCallback(() => {
+    // Call backend API (non-blocking)
+    logoutUser();
+
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
     
@@ -97,6 +100,17 @@ export const AuthProvider = ({ children }) => {
     const interval = setInterval(checkTokenExpiry, 60000);
     return () => clearInterval(interval);
   }, [accessToken, logout]);
+
+  // ── Handle auth-expired events dispatched by the API client ───────────────
+  useEffect(() => {
+    const handleExpired = () => {
+      console.warn('Session expired event received, logging out...');
+      logout();
+    };
+
+    window.addEventListener('auth-expired', handleExpired);
+    return () => window.removeEventListener('auth-expired', handleExpired);
+  }, [logout]);
 
   const value = {
     // State

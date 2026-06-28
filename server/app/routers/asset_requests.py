@@ -230,6 +230,9 @@ def process_return(
         asset.status = "available"
 
     # 4. Buat Transaction record (immutable ledger)
+    from app.services import ledger_service
+    ledger_service.acquire_ledger_lock(db)
+
     last_txn = db.query(Transaction).order_by(Transaction.id.desc()).first()
     previous_hash = last_txn.current_hash if last_txn else None
 
@@ -240,7 +243,6 @@ def process_return(
         "return_date": return_date.isoformat(),
     }
 
-    from app.services import ledger_service
     current_hash = ledger_service.calculate_transaction_hash(
         previous_hash=previous_hash,
         payload=payload_data,

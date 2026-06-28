@@ -1,6 +1,29 @@
 import React from 'react';
 
-const ManagerOverview = ({ metrics }) => {
+const ManagerOverview = ({ metrics = {}, setActiveTab }) => {
+  const getIncidentDiffText = () => {
+    const diff = metrics.incidentDiff || 0;
+    if (diff > 0) {
+      return (
+        <span className="text-rose-600 font-semibold">
+          ▲ +{diff} <span className="text-slate-400 font-normal ml-1">from last month</span>
+        </span>
+      );
+    } else if (diff < 0) {
+      return (
+        <span className="text-emerald-600 font-semibold">
+          ▼ {diff} <span className="text-slate-400 font-normal ml-1">from last month</span>
+        </span>
+      );
+    } else {
+      return (
+        <span className="text-slate-400 font-semibold">
+          No change <span className="text-slate-400 font-normal ml-1">from last month</span>
+        </span>
+      );
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Key Metrics */}
@@ -8,7 +31,7 @@ const ManagerOverview = ({ metrics }) => {
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
           <h3 className="text-slate-500 text-sm font-medium">Pending Approvals</h3>
           <p className="text-3xl font-bold text-slate-800 mt-2">{metrics.pendingApprovals}</p>
-          <div className="mt-4 text-xs text-orange-600 font-semibold">High Risk Requests</div>
+          <div className="mt-4 text-xs text-orange-655 font-semibold">High Risk Requests</div>
         </div>
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
           <h3 className="text-slate-500 text-sm font-medium">Total Active Assets</h3>
@@ -18,7 +41,9 @@ const ManagerOverview = ({ metrics }) => {
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
           <h3 className="text-slate-500 text-sm font-medium">Monthly Incidents</h3>
           <p className="text-3xl font-bold text-slate-800 mt-2">{metrics.monthlyIncidents}</p>
-          <div className="mt-4 text-xs text-emerald-600 font-semibold">▼ -1 from last month</div>
+          <div className="mt-4 text-xs">
+            {getIncidentDiffText()}
+          </div>
         </div>
       </div>
 
@@ -26,13 +51,22 @@ const ManagerOverview = ({ metrics }) => {
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4">Manager Actions</h3>
         <div className="flex flex-wrap gap-4">
-          <button className="flex-1 min-w-37.5 py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center">
+          <button 
+            onClick={() => setActiveTab('Approvals')}
+            className="flex-1 min-w-[150px] py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center cursor-pointer"
+          >
             Review Pending Requests
           </button>
-          <button className="flex-1 min-w-37.5 py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center">
+          <button 
+            onClick={() => setActiveTab('Risk Assessment')}
+            className="flex-1 min-w-[150px] py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center cursor-pointer"
+          >
             View Risk Analytics
           </button>
-          <button className="flex-1 min-w-37.5 py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center">
+          <button 
+            onClick={() => setActiveTab('Reports')}
+            className="flex-1 min-w-[150px] py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center cursor-pointer"
+          >
             Generate Executive Report
           </button>
         </div>

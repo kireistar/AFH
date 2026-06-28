@@ -1,14 +1,28 @@
 # Format: PREFIX-YYYY-NNNN
 
+import zlib
 from datetime import datetime, timezone
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from app.models import Incident, AssetRequest, Transaction, Invoice
+
+def _acquire_advisory_lock(db: Session, lock_name: str) -> None:
+    """
+    Acquires a transaction-level exclusive Postgres advisory lock on a given lock name.
+    Automatically released when the current transaction commits or rolls back.
+    """
+    # Generate 32-bit CRC32 checksum as lock ID
+    lock_id = zlib.crc32(lock_name.encode('utf-8'))
+    db.execute(text("SELECT pg_advisory_xact_lock(:lock_id)"), {"lock_id": lock_id})
 
 def _generate_code(db: Session, model, code_field: str, prefix: str) -> str:
     """
     Helper internal
     """
     year = datetime.now(timezone.utc).year
+    # Serialize code generation for the same prefix and year
+    _acquire_advisory_lock(db, f"code_gen_{prefix}_{year}")
+    
     pattern = f"{prefix}-{year}-%"
 
     # Ambil kode terakhir di tahun ini, diurutkan descending
@@ -46,6 +60,9 @@ def generate_invoice_code(db: Session) -> str:
 def generate_transaction_code(db: Session) -> str:
     # Generate purely numeric code: YYYYNNNNNN (e.g. 2026000001)
     year = datetime.now(timezone.utc).year
+    # Serialize transaction code generation for the year
+    _acquire_advisory_lock(db, f"code_gen_TXN_{year}")
+    
     pattern = f"{year}%"
     col = Transaction.transaction_code
     last = (
@@ -70,6 +87,9 @@ def generate_transaction_code(db: Session) -> str:
 def generate_asset_code(db: Session, category: str) -> str:
     # Generate kode asset dengan format PREFIX (3 digit) + SEQUENCE (9 digit)
     from app.models.asset import Asset
+    # Serialize asset code generation for this category
+    _acquire_advisory_lock(db, f"code_gen_ASSET_{category.lower()}")
+    
     category_prefixes = {
         "desktop": "001",
         "laptop": "002",

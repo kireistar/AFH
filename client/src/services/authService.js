@@ -3,7 +3,7 @@
  * Base URL: http://localhost:8000 (atau dari .env)
  */
 
-import { apiGet } from './apiClient';
+import { apiGet, apiPost } from './apiClient';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
@@ -89,15 +89,15 @@ export const validateSession = async (accessToken) => {
 };
 
 /**
- * Logout (client-side only, since JWT adalah stateless)
- * Di backend tidak ada logout endpoint, cukup hapus token di client
+ * Logout (notifies backend of logout)
  * @returns {Promise<void>}
  */
 export const logoutUser = async () => {
-  // Di sini bisa hit endpoint logout jika di-add ke backend nanti
-  // Untuk sekarang, logout hanya client-side (removeItem dari localStorage)
-  // dilakukan di useAuth.logout()
-  console.log('User logged out');
+  try {
+    await apiPost('/api/v1/auth/logout');
+  } catch (error) {
+    console.error('Error calling backend logout endpoint:', error);
+  }
 };
 
 export default {
