@@ -1,26 +1,61 @@
-import React from 'react';
+import React, { useState } from "react";
+import AdminScannerModal from "./AdminScannerModal";
 
-const AdminHandover = ({ 
-  handovers = [], 
+const AdminHandover = ({
+  handovers = [],
   activeLoans = [],
-  handleCompleteHandover = () => {}, 
+  handleCompleteHandover = () => {},
   handleProcessReturn = () => {},
   loadingHandovers = false,
-  loadingLoans = false
+  loadingLoans = false,
+  refreshHandovers = () => {},
 }) => {
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+
   return (
     <div className="space-y-8">
       {/* 1. Pending Handovers Section */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50">
-          <h3 className="text-lg font-bold text-slate-800">Asset Handover List</h3>
-          <p className="text-sm text-slate-500 mt-1">Assets below have been approved and are ready to be handed over to the borrower.</p>
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800">
+              Asset Handover List
+            </h3>
+            <p className="text-sm text-slate-500 mt-1">
+              Assets below have been approved and are ready to be handed over.
+            </p>
+          </div>
+          {/* QR SCANNER BUTTON */}
+          <button
+            onClick={() => setIsScannerOpen(true)}
+            className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-2 cursor-pointer"
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+              />
+            </svg>
+            Open QR Scanner
+          </button>
         </div>
+
         <div className="overflow-x-auto">
           {loadingHandovers ? (
-            <div className="p-8 text-center text-slate-400 text-sm">Loading...</div>
+            <div className="p-8 text-center text-slate-400 text-sm">
+              Loading...
+            </div>
           ) : handovers.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 text-sm">No pending handovers.</div>
+            <div className="p-8 text-center text-slate-400 text-sm">
+              No pending handovers.
+            </div>
           ) : (
             <table className="w-full text-left">
               <thead>
@@ -29,26 +64,42 @@ const AdminHandover = ({
                   <th className="p-4 font-semibold">Borrower</th>
                   <th className="p-4 font-semibold">Asset</th>
                   <th className="p-4 font-semibold">Status</th>
-                  <th className="p-4 font-semibold text-right">Action</th>
+                  <th className="p-4 font-semibold text-right">
+                    Action (Manual Fallback)
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {handovers.map(h => (
-                  <tr key={h.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-4 text-sm font-semibold text-slate-700">{h.id}</td>
-                    <td className="p-4 text-sm">
-                      <div className="font-semibold text-slate-800">{h.user}</div>
-                      <div className="text-xs text-slate-500">{h.department}</div>
+                {handovers.map((h) => (
+                  <tr
+                    key={h.id}
+                    className="hover:bg-slate-50/50 transition-colors"
+                  >
+                    <td className="p-4 text-sm font-semibold text-slate-700">
+                      {h.id}
                     </td>
-                    <td className="p-4 text-sm text-slate-600 font-medium">{h.asset}</td>
+                    <td className="p-4 text-sm">
+                      <div className="font-semibold text-slate-800">
+                        {h.user}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {h.department}
+                      </div>
+                    </td>
+                    <td className="p-4 text-sm text-slate-600 font-medium">
+                      {h.asset}
+                    </td>
                     <td className="p-4 text-sm">
                       <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-yellow-50 text-yellow-700 border-yellow-200">
                         {h.status}
                       </span>
                     </td>
                     <td className="p-4 text-sm text-right">
-                      <button onClick={() => handleCompleteHandover(h._id)} className="px-4 py-1.5 bg-[#1E3A8A] text-white shadow-sm hover:bg-blue-900 rounded-lg transition-all font-semibold text-xs cursor-pointer">
-                        Handover Asset
+                      <button
+                        onClick={() => handleCompleteHandover(h._id)}
+                        className="px-4 py-1.5 bg-slate-200 text-slate-700 shadow-sm hover:bg-slate-300 rounded-lg transition-all font-semibold text-xs cursor-pointer"
+                      >
+                        Manual Handover
                       </button>
                     </td>
                   </tr>
@@ -59,17 +110,24 @@ const AdminHandover = ({
         </div>
       </div>
 
-      {/* 2. Active Loans Section */}
+      {/* 2. Active Loans Section (Dulu terpotong, sekarang dikembalikan) */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="p-6 border-b border-slate-100 bg-slate-50/50">
           <h3 className="text-lg font-bold text-slate-800">Active Loans</h3>
-          <p className="text-sm text-slate-500 mt-1">Assets currently checked out by users. Click process return once they physically return it.</p>
+          <p className="text-sm text-slate-500 mt-1">
+            Assets currently checked out by users. Click process return once
+            they physically return it.
+          </p>
         </div>
         <div className="overflow-x-auto">
           {loadingLoans ? (
-            <div className="p-8 text-center text-slate-400 text-sm">Loading...</div>
+            <div className="p-8 text-center text-slate-400 text-sm">
+              Loading...
+            </div>
           ) : activeLoans.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 text-sm">No active loans.</div>
+            <div className="p-8 text-center text-slate-400 text-sm">
+              No active loans.
+            </div>
           ) : (
             <table className="w-full text-left">
               <thead>
@@ -83,14 +141,25 @@ const AdminHandover = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {activeLoans.map(loan => (
-                  <tr key={loan.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-4 text-sm font-semibold text-slate-700">{loan.id}</td>
-                    <td className="p-4 text-sm">
-                      <div className="font-semibold text-slate-800">{loan.user}</div>
-                      <div className="text-xs text-slate-500">{loan.department}</div>
+                {activeLoans.map((loan) => (
+                  <tr
+                    key={loan.id}
+                    className="hover:bg-slate-50/50 transition-colors"
+                  >
+                    <td className="p-4 text-sm font-semibold text-slate-700">
+                      {loan.id}
                     </td>
-                    <td className="p-4 text-sm text-slate-600 font-medium">{loan.asset}</td>
+                    <td className="p-4 text-sm">
+                      <div className="font-semibold text-slate-800">
+                        {loan.user}
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {loan.department}
+                      </div>
+                    </td>
+                    <td className="p-4 text-sm text-slate-600 font-medium">
+                      {loan.asset}
+                    </td>
                     <td className="p-4 text-sm text-slate-500 text-xs">
                       {loan.startDate} — {loan.endDate}
                     </td>
@@ -100,7 +169,10 @@ const AdminHandover = ({
                       </span>
                     </td>
                     <td className="p-4 text-sm text-right">
-                      <button onClick={() => handleProcessReturn(loan._id)} className="px-4 py-1.5 bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 rounded-lg transition-all font-semibold text-xs cursor-pointer">
+                      <button
+                        onClick={() => handleProcessReturn(loan._id)}
+                        className="px-4 py-1.5 bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 rounded-lg transition-all font-semibold text-xs cursor-pointer"
+                      >
                         Process Return
                       </button>
                     </td>
@@ -111,6 +183,13 @@ const AdminHandover = ({
           )}
         </div>
       </div>
+
+      {/* MODAL SCANNER */}
+      <AdminScannerModal
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onHandoverSuccess={refreshHandovers}
+      />
     </div>
   );
 };

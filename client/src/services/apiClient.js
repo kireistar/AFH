@@ -2,8 +2,7 @@
  * API Client — Fetch wrapper dengan auto Authorization header
  * Automatically adds JWT token ke semua requests
  */
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 /**
  * Fetch wrapper yang auto-add Authorization header + handle errors
@@ -14,17 +13,17 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
  */
 export const apiCall = async (endpoint, options = {}) => {
   // Get token dari localStorage
-  const token = localStorage.getItem('accessToken');
+  const token = localStorage.getItem("accessToken");
 
   // Default headers
   const headers = {
-    'Accept': 'application/json',
+    Accept: "application/json",
     ...options.headers,
   };
 
   // Add Authorization header jika ada token
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    headers["Authorization"] = `Bearer ${token}`;
   }
 
   // Merge dengan options
@@ -39,10 +38,10 @@ export const apiCall = async (endpoint, options = {}) => {
     // Handle 401 — token might be expired or invalid
     if (response.status === 401) {
       // Clear auth state — component yang pake hook akan auto-redirect ke login
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('user');
-      window.dispatchEvent(new Event('auth-expired'));
-      throw new Error('Session expired. Please login again.');
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("user");
+      window.dispatchEvent(new Event("auth-expired"));
+      throw new Error("Session expired. Please login again.");
     }
 
     // Handle other error status codes
@@ -69,7 +68,7 @@ export const apiCall = async (endpoint, options = {}) => {
  */
 export const apiGet = (endpoint, options = {}) => {
   return apiCall(endpoint, {
-    method: 'GET',
+    method: "GET",
     ...options,
   });
 };
@@ -80,9 +79,9 @@ export const apiGet = (endpoint, options = {}) => {
 export const apiPost = (endpoint, body, options = {}) => {
   const { headers, ...restOptions } = options;
   return apiCall(endpoint, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...headers,
     },
     body: JSON.stringify(body),
@@ -96,9 +95,9 @@ export const apiPost = (endpoint, body, options = {}) => {
 export const apiPut = (endpoint, body, options = {}) => {
   const { headers, ...restOptions } = options;
   return apiCall(endpoint, {
-    method: 'PUT',
+    method: "PUT",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...headers,
     },
     body: JSON.stringify(body),
@@ -112,9 +111,9 @@ export const apiPut = (endpoint, body, options = {}) => {
 export const apiPatch = (endpoint, body, options = {}) => {
   const { headers, ...restOptions } = options;
   return apiCall(endpoint, {
-    method: 'PATCH',
+    method: "PATCH",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...headers,
     },
     body: JSON.stringify(body),
@@ -127,7 +126,7 @@ export const apiPatch = (endpoint, body, options = {}) => {
  */
 export const apiDelete = (endpoint, options = {}) => {
   return apiCall(endpoint, {
-    method: 'DELETE',
+    method: "DELETE",
     ...options,
   });
 };

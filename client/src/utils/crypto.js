@@ -3,11 +3,6 @@ import util from "tweetnacl-util";
 
 const STORAGE_KEY = "ed25519_keypair";
 
-/**
- * Retrieves or generates an Ed25519 keypair for the current browser session.
- * Time Complexity: O(1) for retrieval or generation.
- * Space Complexity: O(1) storing 64-byte secret key and 32-byte public key.
- */
 export const getOrGenerateKeyPair = () => {
   const stored = localStorage.getItem(STORAGE_KEY);
   if (stored) {
@@ -31,4 +26,33 @@ export const getOrGenerateKeyPair = () => {
 export const getPublicKeyBase64 = () => {
   const keyPair = getOrGenerateKeyPair();
   return util.encodeBase64(keyPair.publicKey);
+};
+
+// ── TAMBAHAN UNTUK NON-REPUDIATION ──────────────────────────────────────────
+
+// Sort key alfabetis agar deterministik
+const sortObject = (obj) => {
+  return Object.keys(obj)
+    .sort()
+    .reduce((result, key) => {
+      result[key] = obj[key];
+      return result;
+    }, {});
+};
+
+export const signPayload = (payload) => {
+  // Ambil kunci (otomatis generate jika belum ada)
+  const keyPair = getOrGenerateKeyPair();
+
+  const sortedPayload = sortObject(payload);
+  const messageStr = JSON.stringify(sortedPayload);
+
+  // Konversi string JSON ke format byte menggunakan tweetnacl-util
+  const messageBytes = util.decodeUTF8(messageStr);
+
+  // Buat detached signature (hanya 64-byte signature, tanpa message aslinya)
+  const signature = nacl.sign.detached(messageBytes, keyPair.secretKey);
+
+  // Return dalam bentuk base64
+  return util.encodeBase64(signature);
 };
