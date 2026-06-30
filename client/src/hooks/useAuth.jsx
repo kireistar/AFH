@@ -89,12 +89,24 @@ export const AuthProvider = ({ children }) => {
       }
     };
 
+    const handleAuthExpired = () => {
+      console.warn('API returned 401, logging out...');
+      logout();
+    };
+
     // Check saat mount
     checkTokenExpiry();
 
     // Check setiap 1 menit
     const interval = setInterval(checkTokenExpiry, 60000);
-    return () => clearInterval(interval);
+
+    // Listen event dari apiClient saat API return 401
+    window.addEventListener('auth-expired', handleAuthExpired);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('auth-expired', handleAuthExpired);
+    };
   }, [accessToken, logout]);
 
   const value = {

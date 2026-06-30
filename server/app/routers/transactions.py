@@ -128,12 +128,12 @@ def create_transaction(transaction_in: TransactionCreate, db: Session = Depends(
             db,
             user_id=transaction_in.borrower_id,
             request_id=transaction_in.request_id,
-            occured_at=new_transaction.occured_at or datetime.now(timezone.utc),
+            occurred_at=new_transaction.occurred_at or datetime.now(timezone.utc),
         )
 
     elif transaction_in.action == "fine_issued":
         amount = transaction_in.payload.get("fine_amount", 0)
-        record_fine_issued(db, transaction_in.borrwer_id, Decimal(str(amount)))
+        record_fine_issued(db, transaction_in.borrower_id, Decimal(str(amount)))
     db.commit()
     db.refresh(new_transaction)
     return new_transaction

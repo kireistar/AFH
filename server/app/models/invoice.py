@@ -33,6 +33,7 @@ class Invoice(Base):
     # bank_transfer / cash / e_wallet / payroll_deduction
     payment_method = Column(String(30), nullable=True)
     payment_proof_url = Column(Text, nullable=True)  # bukti upload (Supabase Storage)
+    notes = Column(Text, nullable=True)
 
     paid_at = Column(DateTime(timezone=True), nullable=True)
     verified_by = Column(UUID(as_uuid=True),

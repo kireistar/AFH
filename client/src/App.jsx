@@ -2,6 +2,7 @@ import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
 import ProtectedRoute from './components/ProtectedRoute';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const Login = lazy(() => import('./pages/auth/Login'));
 const UserDashboard = lazy(() => import('./pages/user/UserDashboard'));
@@ -17,34 +18,36 @@ const PageLoader = () => (
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            <Route path="/" element={<Navigate to="/login" replace />} />
-            <Route path="/login" element={<Login />} />
+    <ErrorBoundary>
+      <AuthProvider>
+        <Router>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/login" replace />} />
+              <Route path="/login" element={<Login />} />
 
-            <Route element={<ProtectedRoute allowedRoles={['user']} />}>
-              <Route path="/user/*" element={<UserDashboard />} />
-            </Route>
+              <Route element={<ProtectedRoute allowedRoles={['user']} />}>
+                <Route path="/user/*" element={<UserDashboard />} />
+              </Route>
 
-            <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
-              <Route path="/admin/*" element={<AdminDashboard />} />
-            </Route>
+              <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
+                <Route path="/admin/*" element={<AdminDashboard />} />
+              </Route>
 
-            <Route element={<ProtectedRoute allowedRoles={['manager']} />}>
-              <Route path="/manager/*" element={<ManagerDashboard />} />
-            </Route>
+              <Route element={<ProtectedRoute allowedRoles={['manager']} />}>
+                <Route path="/manager/*" element={<ManagerDashboard />} />
+              </Route>
 
-            <Route element={<ProtectedRoute allowedRoles={['finance']} />}>
-              <Route path="/finance/*" element={<FinanceDashboard />} />
-            </Route>
+              <Route element={<ProtectedRoute allowedRoles={['finance']} />}>
+                <Route path="/finance/*" element={<FinanceDashboard />} />
+              </Route>
 
-            <Route path="*" element={<Navigate to="/login" replace />} />
-          </Routes>
-        </Suspense>
-      </Router>
-    </AuthProvider>
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </Routes>
+          </Suspense>
+        </Router>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

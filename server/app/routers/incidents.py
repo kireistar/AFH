@@ -26,17 +26,20 @@ def get_all_incidents(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
 ):
-    """Mengambil semua incident reports dari database. Semua role yang login bisa akses."""
-    return db.query(Incident).offset(skip).limit(limit).all()
+    """Mengambil incident reports. User biasa hanya lihat miliknya."""
+    query = db.query(Incident)
+    if current_user.role == "user":
+        query = query.filter(Incident.reporter_id == current_user.id)
+    return query.offset(skip).limit(limit).all()
 
 
 @router.get("/{incident_id}", response_model=IncidentResponse)
 def get_incident(
     incident_id: int, 
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),
     ):
     """Ambil 1 incident report by id."""
     incident = db.query(Incident).filter(Incident.id == incident_id).first()
@@ -44,6 +47,11 @@ def get_incident(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Incident with id {incident_id} not found",
+        )
+    if current_user.role == "user" and incident.reporter_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
         )
     return incident
 

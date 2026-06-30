@@ -15,7 +15,7 @@ from app.schemas.user import UserResponse
 class InvoiceBase(BaseModel):
     transaction_id: int
     user_id: UUID
-    fine_amount: Decimal = Field(..., ge=0)
+    fine_amount: Decimal = Field(..., ge=0, max_digits=15, decimal_places=2)
     reason: str = Field(..., min_length=1)
     due_date: Optional[date] = None
 

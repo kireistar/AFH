@@ -59,6 +59,11 @@ def get_request(request_id: int, db: Session = Depends(get_db), current_user: Us
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Asset request with id {request_id} not found",
         )
+    if current_user.role == "user" and request.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
     return request
 
 @router.post("/", response_model=AssetRequestResponse, status_code=status.HTTP_201_CREATED)

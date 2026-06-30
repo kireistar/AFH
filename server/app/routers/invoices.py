@@ -40,12 +40,14 @@ def get_all_invoices(
     - user_id: filter by user UUID
     """
     query = db.query(Invoice)
-    
+
+    if current_user.role == "user":
+        query = query.filter(Invoice.user_id == current_user.id)
+    elif user_id:
+        query = query.filter(Invoice.user_id == UUID(user_id))
+
     if status_filter:
         query = query.filter(Invoice.status == status_filter)
-    
-    if user_id:
-        query = query.filter(Invoice.user_id == UUID(user_id))
     
     return query.offset(skip).limit(limit).all()
 
@@ -62,6 +64,11 @@ def get_invoice(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Invoice with id {invoice_id} not found",
+        )
+    if current_user.role == "user" and invoice.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
         )
     return invoice
 
@@ -118,11 +125,13 @@ def update_invoice(
             detail=f"Invoice with id {invoice_id} not found",
         )
 
+    old_status = invoice.status
+
     update_data = invoice_in.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(invoice, key, value)
 
-    if invoice_in.status == "paid" and invoice.status != "paid":
+    if invoice_in.status == "paid" and old_status != "paid":
         record_fine_paid(db, invoice.user_id, invoice.fine_amount)
     db.commit()
     db.refresh(invoice)

@@ -48,8 +48,6 @@ class UserUpdate(BaseModel):
     clearance_level: Optional[int] = Field(None, ge=1, le=5)
     employment_status: Optional[EmploymentStatus] = None
     resignation_date: Optional[date] = None
-    risk_score: Optional[Decimal] = Field(None, ge=0, le=100)
-    risk_score_tier: Optional[RiskTier] = None
     public_key: Optional[str] = None
 
     @field_validator('resignation_date', mode='before')
@@ -64,7 +62,7 @@ class UserUpdate(BaseModel):
 # ---- Response (output API; NO password_hash) ----
 class UserResponse(UserBase):
     id: UUID
-    risk_score: Decimal = Field(..., ge=0, le=100)
+    risk_score: Decimal = Field(..., ge=0, le=100, max_digits=5, decimal_places=2)
     risk_score_tier: RiskTier
     public_key: Optional[str] = None
     last_login_at: Optional[datetime] = None
