@@ -41,8 +41,7 @@ const sortObject = (obj) => {
 };
 
 export const signPayload = (payload) => {
-  // Ambil kunci (otomatis generate jika belum ada)
-  const keyPair = getOrGenerateKeyPair();
+  const keyPair = getOrGenerateKeyPair(); // Ambil kunci (otomatis generate jika belum ada)
 
   const sortedPayload = sortObject(payload);
   const messageStr = JSON.stringify(sortedPayload);

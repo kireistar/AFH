@@ -3,10 +3,12 @@ User router — CRUD endpoint untuk user management.
 RBAC: semua endpoint admin only (manajemen user adalah hak admin).
 """
 from typing import List
+from pydantic import BaseModel
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_role
@@ -14,11 +16,15 @@ from app.core.security import hash_password
 from app.models import User
 from app.schemas import UserCreate, UserResponse, UserUpdate
 
+
 router = APIRouter(
     prefix="/api/v1/users",
     tags=["Users"],
 )
 
+class PublicKeyResponse(BaseModel):
+    user_id: UUID
+    public_key: str | None
 
 @router.get("/me", response_model=UserResponse)
 def get_current_user(
@@ -114,8 +120,16 @@ def delete_user(
     """Hapus user (hard delete). Admin only."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail=f"User with id {user_id} not found")
-    db.delete(user)
-    db.commit()
+        raise HTTPException(status_code=404, detail="User not found")
+
+    try:
+        db.delete(user)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        # This prevents the 500 error that triggers "Failed to Fetch"
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete user: User has existing requests or transactions. Please deactivate the account instead."
+        )
     return None
