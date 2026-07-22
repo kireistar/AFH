@@ -1,57 +1,77 @@
-import nacl from "tweetnacl";
-import util from "tweetnacl-util";
+import * as ed from '@noble/ed25519';
+import { get, set } from 'idb-keyval';
 
-const STORAGE_KEY = "ed25519_keypair";
+const PRIV_KEY_ALIAS = 'afh_ed25519_priv';
 
-export const getOrGenerateKeyPair = () => {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    const parsed = JSON.parse(stored);
-    return {
-      publicKey: util.decodeBase64(parsed.publicKey),
-      secretKey: util.decodeBase64(parsed.secretKey),
-    };
+/**
+ * 1. Ambil atau generate keypair Ed25519 dari IndexedDB
+ */
+export const getOrGenerateKeyPair = async () => {
+  let privKey = await get(PRIV_KEY_ALIAS);
+
+  if (!privKey) {
+    privKey = window.crypto.getRandomValues(new Uint8Array(32));
+    await set(PRIV_KEY_ALIAS, privKey);
   }
 
-  const keyPair = nacl.sign.keyPair();
-  const encodedKeyPair = {
-    publicKey: util.encodeBase64(keyPair.publicKey),
-    secretKey: util.encodeBase64(keyPair.secretKey),
+  const pubKey = await ed.getPublicKeyAsync(privKey);
+  const pubKeyBase64 = btoa(String.fromCharCode(...pubKey));
+
+  return {
+    privKey,
+    pubKey,
+    pubKeyBase64,
   };
-
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(encodedKeyPair));
-  return keyPair;
 };
 
-export const getPublicKeyBase64 = () => {
-  const keyPair = getOrGenerateKeyPair();
-  return util.encodeBase64(keyPair.publicKey);
+/**
+ * 2. Ambil Public Key terdaftar dalam format Base64
+ */
+export const getStoredPublicKey = async () => {
+  try {
+    const { pubKeyBase64 } = await getOrGenerateKeyPair();
+    return pubKeyBase64;
+  } catch (error) {
+    console.error("Gagal mengambil stored public key:", error);
+    return null;
+  }
 };
 
-// ── TAMBAHAN UNTUK NON-REPUDIATION ──────────────────────────────────────────
+/**
+ * 3. ALIAS EXPORT: Untuk mendukung komponen yang mengimpor 'getPublicKeyBase64'
+ */
+export const getPublicKeyBase64 = getStoredPublicKey;
 
-// Sort key alfabetis agar deterministik
-const sortObject = (obj) => {
-  return Object.keys(obj)
-    .sort()
-    .reduce((result, key) => {
-      result[key] = obj[key];
-      return result;
-    }, {});
+/**
+ * 4. Format Canonical String untuk verifikasi deterministik (Fase 1 & 3)
+ * Format: action|borrower_id|asset_id|timestamp
+ */
+export const createCanonicalPayload = (action, borrowerId, assetId, timestamp) => {
+  return `${action}|${borrowerId}|${assetId}|${timestamp}`;
 };
 
-export const signPayload = (payload) => {
-  const keyPair = getOrGenerateKeyPair(); // Ambil kunci (otomatis generate jika belum ada)
+/**
+ * 5. Tanda tangani payload string menggunakan private key Ed25519
+ */
+export const signPayload = async (payloadString, privKey) => {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(payloadString);
+  const signature = await ed.signAsync(data, privKey);
+  return btoa(String.fromCharCode(...signature));
+};
 
-  const sortedPayload = sortObject(payload);
-  const messageStr = JSON.stringify(sortedPayload);
-
-  // Konversi string JSON ke format byte menggunakan tweetnacl-util
-  const messageBytes = util.decodeUTF8(messageStr);
-
-  // Buat detached signature (hanya 64-byte signature, tanpa message aslinya)
-  const signature = nacl.sign.detached(messageBytes, keyPair.secretKey);
-
-  // Return dalam bentuk base64
-  return util.encodeBase64(signature);
+/**
+ * Deterministic JSON stringify to match Python's json.dumps(..., sort_keys=True, separators=(',', ':'))
+ * Mencegah InvalidSignature akibat perbedaan urutan key JSON antara JS dan Python.
+ */
+export const deterministicStringify = (obj) => {
+  if (obj === null || typeof obj !== 'object') {
+    return JSON.stringify(obj);
+  }
+  if (Array.isArray(obj)) {
+    return `[${obj.map(deterministicStringify).join(',')}]`;
+  }
+  const keys = Object.keys(obj).sort();
+  const str = keys.map(k => `"${k}":${deterministicStringify(obj[k])}`).join(',');
+  return `{${str}}`;
 };

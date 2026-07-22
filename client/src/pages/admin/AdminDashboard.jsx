@@ -22,7 +22,7 @@ const AdminDashboard = () => {
 
   const { assets, loading: loadingAssets, refresh: refreshAssets } = useAssets();
   const { users, loading: loadingUsers, refresh: refreshUsers } = useUsers();
-  
+
   // Requests pending admin review
   const { requests: approvals, loading: loadingApprovals, refresh: refreshApprovals, approve, reject } = useRequests('all', 'pending_admin');
 
@@ -153,10 +153,10 @@ const AdminDashboard = () => {
     { name: 'Handover', badge: pendingHandoverCount > 0 ? `${pendingHandoverCount} Pending` : null, badgeColor: 'bg-blue-100 text-[#1E3A8A]' },
     { name: 'Users', badge: null },
     { name: 'Reports', badge: null },
-    { 
-      name: 'Security', 
-      badge: !ledgerStatus.valid ? 'Tampered' : 'Secure', 
-      badgeColor: !ledgerStatus.valid ? 'bg-rose-100 text-rose-800 animate-pulse font-bold' : 'bg-emerald-100 text-emerald-800' 
+    {
+      name: 'Security',
+      badge: !ledgerStatus.valid ? 'Tampered' : 'Secure',
+      badgeColor: !ledgerStatus.valid ? 'bg-rose-100 text-rose-800 animate-pulse font-bold' : 'bg-emerald-100 text-emerald-800'
     },
   ];
 
@@ -212,10 +212,10 @@ const AdminDashboard = () => {
         return <AdminReports transactions={transactions} incidents={incidents} />;
       case 'Security':
         return (
-          <AdminSecurity 
-            transactions={transactions} 
-            loadingTransactions={loadingTransactions} 
-            onRefreshTransactions={refreshTransactions} 
+          <AdminSecurity
+            transactions={transactions}
+            loadingTransactions={loadingTransactions}
+            onRefreshTransactions={refreshTransactions}
           />
         );
       default:
@@ -244,7 +244,7 @@ const AdminDashboard = () => {
               <p className="text-xs mt-0.5 font-medium">Unauthorized modification detected in the transaction history database! Check the Security logs immediately.</p>
             </div>
           </div>
-          <button 
+          <button
             onClick={() => setActiveTab('Security')}
             className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer whitespace-nowrap"
           >

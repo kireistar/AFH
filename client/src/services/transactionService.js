@@ -1,68 +1,38 @@
 import { apiGet, apiPost } from "./apiClient";
-import { formatStatus, formatCurrency, formatDate } from "../utils/formatters";
-import nacl from "tweetnacl";
-import util from "tweetnacl-util";
-import { getOrGenerateKeyPair, getPublicKeyBase64 } from "../utils/crypto";
+// Hapus import crypto di sini karena sudah di-handle oleh apiClient.js secara otomatis
 
-/**
- * Mapper: backend transaction object -> format yang dipakai komponen
- */
+export const submitTransaction = async (transactionData) => {
+  // 1. Ekstraksi ID dengan fallback yang aman (mencegah "undefined")
+  // Sesuaikan dengan struktur asli dari database/API get requests kamu
+  const reqId = transactionData.request_id || transactionData._id;
 
-const mapTransaction = (raw) => ({
-  id: raw.transaction_code,
-  party: raw.borrower?.employee_name || "Unknown User",
-  asset: raw.asset?.asset_name || "Unknown Asset",
-  date: formatDate(raw.occurred_at),
-  action: formatStatus(raw.action),
-  amount: raw.payload?.fine_amount
-    ? formatCurrency(raw.payload.fine_amount)
-    : "-",
-  status: formatStatus(raw.status),
-  _id: raw.id,
-  _action: raw.action,
-  _status: raw.status,
-  previous_hash: raw.previous_hash,
-  current_hash: raw.current_hash,
-});
+  // Ambil dari _assetId, asset_id, atau id dari dalam objek asset
+  const assetId = transactionData.asset_id || transactionData._assetId || transactionData.asset?._id || transactionData.asset;
 
-export const fetchAllTransactions = async () => {
-  const data = await apiGet("/api/v1/transactions/");
-  return data.map(mapTransaction);
+  // Ambil dari _borrowerId, borrower_id, atau id dari dalam objek user
+  const borrowerId = transactionData.borrower_id || transactionData._borrowerId || transactionData.user?._id || transactionData.user;
+
+  if (!assetId || !borrowerId) {
+    console.error("Payload Data:", transactionData);
+    throw new Error("Gagal melakukan handover: asset_id atau borrower_id kosong (undefined).");
+  }
+
+  // 2. Langsung tembak API. apiClient.js akan otomatis membuatkan signature-nya!
+  return await apiPost('/api/v1/transactions/', {
+    action: "handover",
+    asset_id: assetId.toString(),
+    borrower_id: borrowerId.toString(),
+    request_id: reqId.toString(),
+    admin_id: transactionData.admin_id,
+    payload: transactionData.payload || { notes: "Handover executed via Admin Dashboard" }
+  });
 };
 
 export const verifyLedger = async () => {
-  return await apiGet("/api/v1/transactions/verify/ledger");
+  // Tembak endpoint verifikasi ledger backend kamu
+  return await apiPost("/api/v1/transactions/verify/ledger", {});
 };
 
-/**
- * Submits a new transaction with an Ed25519 signature for non-repudiation.
- * Time Complexity: O(N) where N is the payload string length for encoding, O(1) for curve signing.
- * Space Complexity: O(N) for message byte array allocation + 64 bytes constant for the signature.
- */
-export const submitTransaction = async (transactionPayload) => {
-  const keyPair = getOrGenerateKeyPair();
-
-  // Inject timestamp for anti-replay verification on the backend
-  const securePayload = {
-    ...transactionPayload,
-    timestamp: Math.floor(Date.now() / 1000),
-  };
-
-  // Serialize to standard UTF-8 bytes before signing
-  const payloadString = JSON.stringify(securePayload);
-  const messageUint8 = util.decodeUTF8(payloadString);
-
-  // Generate the EdDSA signature
-  const signatureUint8 = nacl.sign.detached(messageUint8, keyPair.secretKey);
-
-  // Execute POST request with cryptographic headers
-  const data = await apiPost("/api/v1/transactions/", securePayload, {
-    headers: {
-      "x-ed25519-signature": util.encodeBase64(signatureUint8),
-      "x-ed25519-public-key": getPublicKeyBase64(),
-    },
-  });
-
-  // Optionally map the returned single transaction if your UI expects the formatted version
-  return data.transaction_code ? mapTransaction(data) : data;
+export const fetchAllTransactions = async () => {
+  return await apiGet("/api/v1/transactions/");
 };

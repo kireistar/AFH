@@ -6,15 +6,15 @@ const AuthContext = createContext(null);
 // ── Helper: Cek apakah token sudah expired ────────────────────────────────────
 const isTokenExpired = (token) => {
   if (!token) return true;
-  
+
   try {
     // JWT format: header.payload.signature
     const parts = token.split('.');
     if (parts.length !== 3) return true;
-    
+
     // Decode payload (base64)
     const payload = JSON.parse(atob(parts[1]));
-    
+
     // exp adalah seconds since epoch
     const expiryTime = payload.exp * 1000; // convert to milliseconds
     return Date.now() >= expiryTime;
@@ -29,16 +29,16 @@ const initializeAuthState = () => {
   try {
     const accessToken = localStorage.getItem('accessToken');
     const userJson = localStorage.getItem('user');
-    
+
     // Jika token sudah expired, clear localStorage
     if (accessToken && isTokenExpired(accessToken)) {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('user');
       return { accessToken: null, user: null, isAuth: false };
     }
-    
+
     const user = userJson ? JSON.parse(userJson) : null;
-    
+
     return {
       accessToken: accessToken || null,
       user: user || null,
@@ -61,7 +61,7 @@ export const AuthProvider = ({ children }) => {
     try {
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('user', JSON.stringify(userProfile));
-      
+
       setAccessToken(accessToken);
       setUser(userProfile);
       setIsAuth(true);
@@ -75,10 +75,11 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(() => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
-    
+
     setAccessToken(null);
     setUser(null);
     setIsAuth(false);
+    window.location.href = "/login";
   }, []);
 
   // ── Check token expiry on mount & periodically ────────────────────────────
@@ -111,7 +112,7 @@ export const AuthProvider = ({ children }) => {
     // Actions
     login,
     logout,
-    
+
     // Helpers
     isTokenExpired: (token = accessToken) => isTokenExpired(token),
   };

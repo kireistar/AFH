@@ -16,6 +16,7 @@ from app.routers import (
     incidents,
     invoices,
     handover_tokens,
+    ledger
 )
 
 app = FastAPI(
@@ -45,7 +46,7 @@ app.include_router(transactions.router)
 app.include_router(incidents.router)
 app.include_router(invoices.router)
 app.include_router(handover_tokens.router)
-
+app.include_router(ledger.router)
 
 @app.get("/", tags=["Health"])
 def health_check():

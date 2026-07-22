@@ -114,7 +114,7 @@ def create_transaction(
             req_obj = db.query(AssetRequest).filter(AssetRequest.id == transaction_in.request_id).first()
             if req_obj:
                 req_obj.status = "handed_over"
-        
+
         asset_obj = db.query(Asset).filter(Asset.id == transaction_in.asset_id).first()
         if asset_obj:
             asset_obj.status = "borrowed"
@@ -142,6 +142,7 @@ def create_transaction(
 
 
 @router.get("/verify/ledger", response_model=LedgerVerifyResult)
+@router.post("/verify/ledger", response_model=LedgerVerifyResult)
 def verify_ledger(db: Session = Depends(get_db)):
     transactions = db.query(Transaction).order_by(Transaction.id.asc()).all()
     if not transactions:

@@ -1,60 +1,101 @@
-/**
- * API Client — Fetch wrapper dengan auto Authorization header
- * Automatically adds JWT token ke semua requests
- */
+import { getOrGenerateKeyPair, createCanonicalPayload, signPayload } from "../utils/crypto";
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
-/**
- * Fetch wrapper yang auto-add Authorization header + handle errors
- * @param {string} endpoint - API endpoint (e.g., '/api/assets')
- * @param {object} options - Fetch options (method, body, headers, dll)
- * @returns {Promise<any>} Response JSON
- * @throws {Error} Jika response tidak ok atau network error
- */
-export const apiCall = async (endpoint, options = {}) => {
-  // Get token dari localStorage
-  const token = localStorage.getItem("accessToken");
+const injectEd25519Signature = async (endpoint, config) => {
+  const isProtectedEndpoint =
+    endpoint.includes("/transactions") ||
+    endpoint.includes("/handover-tokens/scan");
 
-  // Default headers
+  const isPost = config.method && config.method.toUpperCase() === "POST";
+
+  if (isProtectedEndpoint && isPost) {
+    try {
+      // 1. Ambil Keypair dari IndexedDB (Public & Private)
+      const { privKey, pubKeyBase64 } = await getOrGenerateKeyPair();
+
+      let payload = {};
+      if (config.body) {
+        payload = typeof config.body === "string" ? JSON.parse(config.body) : config.body;
+      }
+
+      const action = payload.action || "handover";
+      const borrowerId = payload.borrower_id;
+      const assetId = payload.asset_id;
+      const timestamp = payload.timestamp || Math.floor(Date.now() / 1000);
+
+      payload.timestamp = timestamp;
+      config.body = JSON.stringify(payload);
+
+      // 2. Buat Canonical String
+      const canonicalString = createCanonicalPayload(action, borrowerId, assetId, timestamp);
+      console.log("FRONTEND CANONICAL STRING:", canonicalString);
+
+      // 3. Signature
+      const signResult = await signPayload(canonicalString, privKey);
+      const signature = typeof signResult === "string" ? signResult : (signResult.signatureHex || signResult.signatureBase64);
+
+      // 4. INJEKSI KEDUA HEADER SECARA LENGKAP (Signature & Public Key)
+      config.headers["x-ed25519-signature"] = signature;
+      if (!config.headers["x-ed25519-public-key"] && pubKeyBase64) {
+        config.headers["x-ed25519-public-key"] = pubKeyBase64;
+      }
+    } catch (err) {
+      console.error("Gagal melakukan signing Ed25519 pada request:", err);
+    }
+  }
+};
+
+export const apiCall = async (endpoint, options = {}) => {
+  // SAFE FALLBACK TOKEN RETRIEVAL (Mencakup accessToken, token, & access_token)
+  const token =
+    localStorage.getItem("accessToken") ||
+    localStorage.getItem("token") ||
+    localStorage.getItem("access_token");
+
   const headers = {
     Accept: "application/json",
     ...options.headers,
   };
 
-  // Add Authorization header jika ada token
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  // Merge dengan options
   const config = {
     ...options,
     headers,
   };
 
+  await injectEd25519Signature(endpoint, config);
+
   try {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
 
-    // Handle 401 — token might be expired or invalid
     if (response.status === 401) {
-      // Clear auth state — component yang pake hook akan auto-redirect ke login
+      // Baca pesan error detail dari backend jika ada
+      const errorData = await response.json().catch(() => ({}));
+      const detailMessage = errorData.detail || "Session expired. Please login again.";
+
+      // Jangan hapus token jika hanya masalah signature mismatch
+      if (detailMessage.toLowerCase().includes("signature") || detailMessage.toLowerCase().includes("mismatch")) {
+        throw new Error(`Cryptographic Auth Failed: ${detailMessage}`);
+      }
+
       localStorage.removeItem("accessToken");
+      localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.dispatchEvent(new Event("auth-expired"));
-      throw new Error("Session expired. Please login again.");
+      throw new Error(detailMessage);
     }
 
-    // Handle other error status codes
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       const message = errorData.detail || `API Error: ${response.status}`;
       throw new Error(message);
     }
 
-    // Parse dan return response safely (handle 204 No Content or empty bodies)
-    if (response.status === 204) {
-      return null;
-    }
+    if (response.status === 204) return null;
     const text = await response.text();
     return text ? JSON.parse(text) : null;
   } catch (error) {
@@ -63,73 +104,35 @@ export const apiCall = async (endpoint, options = {}) => {
   }
 };
 
-/**
- * GET request
- */
-export const apiGet = (endpoint, options = {}) => {
-  return apiCall(endpoint, {
-    method: "GET",
-    ...options,
-  });
-};
-
-/**
- * POST request
- */
+export const apiGet = (endpoint, options = {}) => apiCall(endpoint, { method: "GET", ...options });
 export const apiPost = (endpoint, body, options = {}) => {
   const { headers, ...restOptions } = options;
   return apiCall(endpoint, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-    },
+    headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
     ...restOptions,
   });
 };
-
-/**
- * PUT request
- */
 export const apiPut = (endpoint, body, options = {}) => {
   const { headers, ...restOptions } = options;
   return apiCall(endpoint, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-    },
+    headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
     ...restOptions,
   });
 };
-
-/**
- * PATCH request
- */
 export const apiPatch = (endpoint, body, options = {}) => {
   const { headers, ...restOptions } = options;
   return apiCall(endpoint, {
     method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-    },
+    headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
     ...restOptions,
   });
 };
-
-/**
- * DELETE request
- */
-export const apiDelete = (endpoint, options = {}) => {
-  return apiCall(endpoint, {
-    method: "DELETE",
-    ...options,
-  });
-};
+export const apiDelete = (endpoint, options = {}) => apiCall(endpoint, { method: "DELETE", ...options });
 
 export default {
   apiCall,

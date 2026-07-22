@@ -38,3 +38,8 @@ export const updateUser = async (userId, userData) => {
 export const deleteUser = async (userId) => {
   await apiDelete(`/api/v1/users/${userId}`);
 };
+
+export const resetUserDeviceKey = async (userId) => {
+  // Tembak endpoint reset key yang kita buat di users.py
+  return await apiPatch(`/api/v1/users/${userId}/reset-device-key`);
+};
