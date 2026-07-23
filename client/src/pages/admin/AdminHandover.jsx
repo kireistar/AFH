@@ -25,26 +25,6 @@ const AdminHandover = ({
               Assets below have been approved and are ready to be handed over.
             </p>
           </div>
-          {/* QR SCANNER BUTTON */}
-          <button
-            onClick={() => setIsScannerOpen(true)}
-            className="px-5 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-bold hover:bg-emerald-700 transition-colors shadow-sm flex items-center gap-2 cursor-pointer"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-              />
-            </svg>
-            Open QR Scanner
-          </button>
         </div>
 
         <div className="overflow-x-auto">
@@ -183,13 +163,6 @@ const AdminHandover = ({
           )}
         </div>
       </div>
-
-      {/* MODAL SCANNER */}
-      <AdminScannerModal
-        isOpen={isScannerOpen}
-        onClose={() => setIsScannerOpen(false)}
-        onHandoverSuccess={refreshHandovers}
-      />
     </div>
   );
 };

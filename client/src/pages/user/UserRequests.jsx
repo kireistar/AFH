@@ -113,6 +113,9 @@ const UserRequests = ({
         requestData={selectedRequest}
         user={user}
         timestamp={qrTimestamp}
+        onRefreshSuccess={() => {
+          if (typeof onRefresh === 'function') onRefresh();
+        }}
       />
     </div>
   );

@@ -1,107 +1,87 @@
-import React, { useState, useEffect } from 'react';
-import { QRCodeCanvas } from 'qrcode.react';
-import { getOrGenerateKeyPair, signPayload, deterministicStringify } from '../../utils/crypto';
-import { apiPost } from '../../services/apiClient';
+import React, { useEffect, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
+import nacl from "tweetnacl";
 
-export default function AdminQRModal({ requestObj, onClose, onSuccess }) {
-  const [qrPayload, setQrPayload] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const ProduceQRModal = ({ isOpen, onClose, requestData, user, timestamp }) => {
+  const [qrValue, setQrValue] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
-    generateAndSignToken();
-  }, []);
+    if (!isOpen || !requestData) {
+      setQrValue("");
+      return;
+    }
 
-  const generateAndSignToken = async () => {
+    setIsGenerating(true);
+
     try {
-      setLoading(true);
-      setError(null);
-
-      // 1. Ambil Private & Public Key Admin
-      const { privKey, pubKeyBase64 } = await getOrGenerateKeyPair();
-
-      // 2. Buat parameter token & waktu
-      const adminTokenString = crypto.randomUUID().replace(/-/g, '');
-      const expiresAt = Math.floor(Date.now() / 1000) + 300; // 5 menit dari sekarang
-
-      // 3. Susun payload persis seperti HandoverQRPayload di backend
-      // CATATAN: Pastikan requestObj memiliki asset.asset_code dan user.employee_id
-      const payloadToSign = {
-        token: adminTokenString,
-        request_id: requestObj.id,
-        asset_code: requestObj.asset?.asset_code || requestObj.asset_code,
-        borrower_employee_id: requestObj.user?.employee_id || requestObj.borrower_employee_id,
-        expires_at: expiresAt
+      // 1. Siapkan Payload yang persis sama dengan struktur log-mu
+      const payloadObj = {
+        action: "handover",
+        asset_id: requestData._assetId || requestData.id,
+        borrower_id: user?.id || "unknown_user",
+        request_id: requestData._id || requestData.id,
+        timestamp: timestamp,
       };
 
-      // 4. Stringify secara deterministik agar sesuai dengan backend Python
-      const serializedPayload = deterministicStringify(payloadToSign);
+      // 2. Buat KeyPair Kriptografi
+      // (Untuk demo ini kita generate baru. Nanti gunakan private key asli user)
+      const keypair = nacl.sign.keyPair();
 
-      // 5. Sign payload menggunakan kunci privat Ed25519
-      const signatureBase64 = await signPayload(serializedPayload, privKey);
+      // 3. Proses Penandatanganan (Signing)
+      const payloadString = JSON.stringify(payloadObj);
+      const messageUint8 = new TextEncoder().encode(payloadString);
+      const signatureUint8 = nacl.sign.detached(messageUint8, keypair.secretKey);
 
-      // 6. Tembak endpoint /generate
-      await apiPost('/api/v1/handover-tokens/generate', {
-        request_id: requestObj.id,
-        admin_token_string: adminTokenString,
-        admin_signature: signatureBase64,
-        expires_at: expiresAt
-      }, {
-        headers: {
-          'x-ed25519-public-key': pubKeyBase64 // Inline TOFU dari backend
-        }
+      // 4. KRUSIAL: Konversi Uint8Array ke Base64 agar tidak menjadi objek kosong {}
+      const signatureB64 = btoa(String.fromCharCode.apply(null, signatureUint8));
+      const pubKeyB64 = btoa(String.fromCharCode.apply(null, keypair.publicKey));
+
+      // 5. Gabungkan menjadi satu JSON string utuh
+      const finalQrData = JSON.stringify({
+        payload: payloadObj,
+        signature: signatureB64,
+        public_key: pubKeyB64,
       });
 
-      // 7. Jika sukses, siapkan string yang akan ditampilkan ke dalam bentuk QR Code
-      // Kita hanya memasukkan token string ke dalam QR agar scannernya cepat dan ringan.
-      setQrPayload(adminTokenString);
-
-    } catch (err) {
-      console.error('Failed to generate QR Token:', err);
-      setError(err.message || 'An error occurred during cryptographic processing.');
+      setQrValue(finalQrData);
+    } catch (error) {
+      console.error("Gagal membuat QR Code:", error);
+      setQrValue("ERROR");
     } finally {
-      setLoading(false);
+      setIsGenerating(false);
     }
-  };
+  }, [isOpen, requestData, user, timestamp]);
+
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-center">
-        <h2 className="text-xl font-bold text-slate-800 mb-2">Secure Handover</h2>
-        <p className="text-sm text-slate-500 mb-6">
-          Ask the borrower to scan this QR code using their device.
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4 backdrop-blur-sm">
+      <div className="bg-white p-6 rounded-2xl shadow-xl w-full max-w-sm flex flex-col items-center">
+        <h2 className="text-xl font-bold mb-2 text-slate-800">Secure Handover QR</h2>
+        <p className="text-sm text-slate-500 mb-6 text-center px-4">
+          Tunjukkan QR Code ini kepada Admin untuk memverifikasi serah terima aset.
         </p>
 
-        <div className="flex justify-center items-center bg-slate-50 p-4 rounded-xl border border-slate-100 min-h-[250px]">
-          {loading ? (
-            <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
-          ) : error ? (
-            <div className="text-red-500 text-sm font-medium">{error}</div>
+        <div className="bg-white p-4 rounded-xl border-2 border-dashed border-slate-200 mb-6 flex justify-center items-center min-h-[250px] w-full">
+          {isGenerating ? (
+            <span className="text-slate-400 font-medium animate-pulse">Menghasilkan Kunci Kriptografi...</span>
+          ) : qrValue && qrValue !== "ERROR" ? (
+            <QRCodeSVG value={qrValue} size={220} level="H" includeMargin={true} />
           ) : (
-            <div className="bg-white p-2 rounded-lg shadow-sm border border-slate-200">
-              <QRCodeCanvas
-                value={qrPayload}
-                size={200}
-                level={"H"}
-                includeMargin={true}
-              />
-            </div>
+            <span className="text-red-500 font-bold">Gagal memuat QR Code</span>
           )}
         </div>
 
-        {qrPayload && (
-          <p className="text-xs font-mono text-slate-400 mt-4 break-all">
-            {qrPayload}
-          </p>
-        )}
-
         <button
           onClick={onClose}
-          className="mt-6 w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-colors cursor-pointer"
+          className="w-full py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors cursor-pointer"
         >
-          Close
+          Tutup
         </button>
       </div>
     </div>
   );
-}
+};
+
+export default ProduceQRModal;

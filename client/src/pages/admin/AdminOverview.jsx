@@ -18,7 +18,8 @@ const AdminOverview = ({
   recentActivities,
   systemAlerts,
   activeIncidentCount,
-  onAddAssetClick
+  onAddAssetClick,
+  onOpenScanner // <-- Tangkap prop ini
 }) => {
   return (
     <div className="space-y-8">
@@ -47,7 +48,10 @@ const AdminOverview = ({
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
         <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4">Quick Access</h3>
         <div className="flex flex-wrap gap-4">
-          <button className="flex-1 min-w-[150px] py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center cursor-pointer">
+          <button
+            onClick={onOpenScanner} // <-- Pasang pelatuknya di sini
+            className="flex-1 min-w-[150px] py-3 px-4 bg-slate-50 hover:bg-[#1E3A8A] hover:text-white rounded-xl text-sm font-bold text-[#1E3A8A] border border-blue-50 transition-all text-center cursor-pointer"
+          >
             Scan Handover QR
           </button>
           <button

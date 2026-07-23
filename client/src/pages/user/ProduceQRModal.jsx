@@ -1,66 +1,160 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { signPayload, getPublicKeyBase64 } from "../../utils/crypto";
 
-const ProduceQRModal = ({ isOpen, onClose, requestData, user, timestamp }) => {
-  const qrString = useMemo(() => {
-    if (!isOpen || !requestData || !user || !timestamp) return "";
+// [PERBAIKAN KUNCI]
+// 1. Hapus import nacl
+// 2. Gunakan fungsi kripto milikmu untuk mengambil kunci ASLI peminjam dari IndexedDB
+import { getOrGenerateKeyPair, createCanonicalPayload, signPayload } from "../../utils/crypto";
 
-    const payload = {
-      action: "handover",
-      asset_id: requestData._assetId,
-      borrower_id: user.id,
-      request_id: requestData._id,
-      timestamp: timestamp,
+const ProduceQRModal = ({ isOpen, onClose, requestData, user, timestamp, onRefreshSuccess }) => {
+  const [qrValue, setQrValue] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [handoverStatus, setHandoverStatus] = useState("waiting");
+
+  // 1. Logika Pembuatan QR Code
+  useEffect(() => {
+    if (!isOpen || !requestData) {
+      setQrValue("");
+      setHandoverStatus("waiting");
+      return;
+    }
+
+    // Karena membaca kunci dari IndexedDB butuh waktu, kita bungkus dalam async
+    const generateQR = async () => {
+      setIsGenerating(true);
+      try {
+        const payloadObj = {
+          action: "handover",
+          asset_id: String(requestData._assetId || requestData.id),
+          borrower_id: String(user?.id || "unknown_user"),
+          request_id: String(requestData._id || requestData.id),
+          timestamp: String(timestamp),
+        };
+
+        // Ambil private key ASLI milik Peminjam
+        const { privKey, pubKeyBase64 } = await getOrGenerateKeyPair();
+
+        const canonicalString = createCanonicalPayload(
+          payloadObj.action,
+          payloadObj.borrower_id,
+          payloadObj.asset_id,
+          payloadObj.timestamp
+        );
+
+        // Tanda tangani canonical payload menggunakan private key asli
+        const signatureB64 = await signPayload(canonicalString, privKey);
+
+        const finalQrData = JSON.stringify({
+          payload: payloadObj,
+          signature: signatureB64,
+          public_key: pubKeyBase64,
+        });
+
+        setQrValue(finalQrData);
+      } catch (error) {
+        console.error("Gagal membuat QR Code:", error);
+        setQrValue("ERROR");
+      } finally {
+        setIsGenerating(false);
+      }
     };
 
-    const signature = signPayload(payload);
-
-    const finalData = {
-      payload,
-      signature,
-      public_key: localStorage.getItem("isKeyRegistered")
-        ? null
-        : getPublicKeyBase64(),
-    };
-
-    return JSON.stringify(finalData);
+    generateQR();
   }, [isOpen, requestData, user, timestamp]);
+
+  // 2. Logika Polling
+  useEffect(() => {
+    let intervalId;
+
+    if (isOpen && requestData && handoverStatus === "waiting") {
+      intervalId = setInterval(async () => {
+        try {
+          const reqId = requestData._id || requestData.id;
+
+          const url = `http://127.0.0.1:8000/api/v1/requests/${reqId}`;
+          const response = await fetch(url);
+
+          if (!response.ok) return;
+
+          const data = await response.json();
+          const currentStatus = data.status || data?.data?.status || data?._status;
+
+          if (!currentStatus) return;
+
+          const statusLower = String(currentStatus).toLowerCase();
+
+          if (
+            statusLower === "handed over" ||
+            statusLower === "handed_over" ||
+            statusLower === "active" ||
+            statusLower === "active loan"
+          ) {
+            setHandoverStatus("success");
+            clearInterval(intervalId);
+
+            setTimeout(() => {
+              if (onRefreshSuccess) onRefreshSuccess();
+              onClose();
+            }, 2500);
+          }
+        } catch (error) {
+          console.error("🚨 [POLLING] Error jaringan:", error.message);
+        }
+      }, 3000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isOpen, requestData, handoverStatus, onClose, onRefreshSuccess]);
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full text-center relative">
-        <h3 className="text-xl font-bold text-slate-800 mb-2">
-          Scan to Collect Asset
-        </h3>
-        <p className="text-sm text-slate-500 mb-6">
-          Show this QR Code to the Admin on-site to receive{" "}
-          <b>{requestData?.asset}</b>.
-        </p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4 backdrop-blur-sm transition-opacity">
+      <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col items-center transform transition-all">
+        {handoverStatus === "waiting" ? (
+          <>
+            <h2 className="text-xl font-bold mb-2 text-slate-800">Scan untuk Serah Terima</h2>
+            <p className="text-sm text-slate-500 mb-6 text-center">
+              Tunjukkan QR Code ini kepada Admin.
+            </p>
 
-        <div className="bg-white p-4 inline-block rounded-xl border-2 border-slate-100 shadow-sm">
-          {qrString ? (
-            <QRCodeSVG
-              value={qrString}
-              size={256}
-              level="L"
-              includeMargin={true}
-            />
-          ) : (
-            <div className="w-64 h-64 flex items-center justify-center bg-slate-50">
-              <span className="text-slate-400">Generating QR...</span>
+            <div className="bg-white p-4 rounded-xl border-2 border-dashed border-blue-200 mb-6 flex flex-col justify-center items-center min-h-[250px] w-full relative">
+              {isGenerating ? (
+                <span className="text-slate-400 font-medium animate-pulse">Menghasilkan Kriptografi...</span>
+              ) : qrValue && qrValue !== "ERROR" ? (
+                <>
+                  <QRCodeSVG value={qrValue} size={220} level="L" includeMargin={true} />
+                  <div className="mt-4 flex items-center text-xs font-semibold text-blue-600 animate-pulse">
+                    Menunggu Admin memindai...
+                  </div>
+                </>
+              ) : (
+                <span className="text-red-500 font-bold">Gagal memuat QR Code</span>
+              )}
             </div>
-          )}
-        </div>
 
-        <button
-          onClick={onClose}
-          className="mt-6 w-full py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors cursor-pointer"
-        >
-          Close
-        </button>
+            <button
+              onClick={onClose}
+              className="w-full py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+            >
+              Batal
+            </button>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-8">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4 animate-bounce">
+              <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
+              </svg>
+            </div>
+            <h2 className="text-2xl font-extrabold text-slate-800 mb-2">Berhasil!</h2>
+            <p className="text-sm text-slate-500 text-center">
+              Penyerahan aset telah diverifikasi.<br/>Aset sekarang berada di tanggung jawabmu.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

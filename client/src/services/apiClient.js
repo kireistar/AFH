@@ -11,13 +11,31 @@ const injectEd25519Signature = async (endpoint, config) => {
 
   if (isProtectedEndpoint && isPost) {
     try {
-      // 1. Ambil Keypair dari IndexedDB (Public & Private)
-      const { privKey, pubKeyBase64 } = await getOrGenerateKeyPair();
-
       let payload = {};
       if (config.body) {
         payload = typeof config.body === "string" ? JSON.parse(config.body) : config.body;
       }
+
+      // --- PERBAIKAN: JALUR QR CODE (NON-REPUDIATION) ---
+      // Jika payload dari service sudah membawa signature dan public_key peminjam,
+      // gunakan itu untuk Header, dan JANGAN timpa dengan tanda tangan Admin.
+      if (payload.signature && payload.public_key) {
+        config.headers["x-ed25519-signature"] = payload.signature;
+        config.headers["x-ed25519-public-key"] = payload.public_key;
+
+        // Sinkronkan timestamp di Root dengan timestamp dari dalam QR Code
+        // agar validasi backend tidak hancur
+        if (payload.payload && payload.payload.timestamp) {
+          payload.timestamp = payload.payload.timestamp;
+          config.body = JSON.stringify(payload);
+        }
+
+        return; // KELUAR DARI FUNGSI SEKARANG. Jangan jalankan kode di bawah.
+      }
+
+      // --- JALUR MANUAL (ADMIN SIGNATURE) ---
+      // 1. Ambil Keypair dari IndexedDB (Public & Private) milik Admin
+      const { privKey, pubKeyBase64 } = await getOrGenerateKeyPair();
 
       const action = payload.action || "handover";
       const borrowerId = payload.borrower_id;
@@ -29,19 +47,18 @@ const injectEd25519Signature = async (endpoint, config) => {
 
       // 2. Buat Canonical String
       const canonicalString = createCanonicalPayload(action, borrowerId, assetId, timestamp);
-      console.log("FRONTEND CANONICAL STRING:", canonicalString);
 
       // 3. Signature
       const signResult = await signPayload(canonicalString, privKey);
       const signature = typeof signResult === "string" ? signResult : (signResult.signatureHex || signResult.signatureBase64);
 
-      // 4. INJEKSI KEDUA HEADER SECARA LENGKAP (Signature & Public Key)
+      // 4. Injeksi Header Manual
       config.headers["x-ed25519-signature"] = signature;
       if (!config.headers["x-ed25519-public-key"] && pubKeyBase64) {
         config.headers["x-ed25519-public-key"] = pubKeyBase64;
       }
     } catch (err) {
-      console.error("Gagal melakukan signing Ed25519 pada request:", err);
+      console.error("Failed to perform Ed25519 signing on request:", err);
     }
   }
 };
