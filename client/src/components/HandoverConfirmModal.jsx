@@ -1,10 +1,5 @@
 import React from "react";
 
-/**
- * HandoverConfirmModal
- * Shows asset + borrower details after QR scan verification.
- * Admin confirms to complete the physical handover.
- */
 export default function HandoverConfirmModal({
   isOpen,
   onClose,
@@ -16,8 +11,8 @@ export default function HandoverConfirmModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-opacity">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 transition-opacity">
+      <div className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-md w-full overflow-hidden transform transition-all">
         {isSuccess ? (
           /* ── SUCCESS STATE ── */
           <div className="p-8 text-center">
@@ -41,7 +36,7 @@ export default function HandoverConfirmModal({
           /* ── CONFIRM STATE ── */
           <>
             {/* Header */}
-            <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+            <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center shrink-0">
                   <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -53,11 +48,17 @@ export default function HandoverConfirmModal({
                   <p className="text-xs text-slate-500">Verify details before transferring the asset</p>
                 </div>
               </div>
+              <button
+                onClick={onClose}
+                disabled={isLoading}
+                className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-lg transition-colors"
+              >
+                ✕
+              </button>
             </div>
 
             {/* Details */}
             <div className="p-6 space-y-4">
-              {/* Borrower */}
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-500">Borrower</span>
                 <span className="text-sm font-bold text-slate-800">
@@ -65,7 +66,6 @@ export default function HandoverConfirmModal({
                 </span>
               </div>
 
-              {/* Department */}
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-500">Department</span>
                 <span className="text-sm font-semibold text-slate-700">
@@ -73,7 +73,6 @@ export default function HandoverConfirmModal({
                 </span>
               </div>
 
-              {/* Asset */}
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-500">Asset</span>
                 <span className="text-sm font-bold text-slate-800">
@@ -81,7 +80,6 @@ export default function HandoverConfirmModal({
                 </span>
               </div>
 
-              {/* Request ID */}
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-500">Request ID</span>
                 <span className="text-sm font-mono font-semibold text-slate-700">
@@ -89,7 +87,6 @@ export default function HandoverConfirmModal({
                 </span>
               </div>
 
-              {/* Risk Level */}
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-500">Risk Level</span>
                 <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
@@ -103,7 +100,6 @@ export default function HandoverConfirmModal({
                 </span>
               </div>
 
-              {/* Divider */}
               <div className="border-t border-slate-100 pt-4">
                 <p className="text-xs text-slate-400 text-center">
                   Cryptographic verification passed. Both borrower and admin signatures are valid.
@@ -116,22 +112,19 @@ export default function HandoverConfirmModal({
               <button
                 onClick={onClose}
                 disabled={isLoading}
-                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+                className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-700 font-semibold rounded-xl text-sm hover:bg-slate-50 active:bg-slate-100 transition-colors duration-200 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={onConfirm}
                 disabled={isLoading}
-                className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                className="flex-1 px-4 py-2.5 bg-[#1E3A8A] hover:bg-blue-900 active:bg-blue-950 text-white font-semibold rounded-xl text-sm transition-colors duration-200 shadow-md shadow-blue-900/10 disabled:opacity-50 flex justify-center items-center gap-2"
               >
                 {isLoading ? (
                   <>
-                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Processing...
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Processing...</span>
                   </>
                 ) : (
                   "Confirm Handover"

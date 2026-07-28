@@ -52,7 +52,7 @@ const ProduceQRModal = ({ isOpen, onClose, requestData, user, timestamp, onRefre
       setQrValue(finalQrData);
       setCountdown(QR_TTL_SECONDS);
     } catch (error) {
-      console.error("Gagal membuat QR Code:", error);
+      console.error("Failed to generate QR Code:", error);
       setQrValue("ERROR");
     } finally {
       setIsGenerating(false);
@@ -78,7 +78,7 @@ const ProduceQRModal = ({ isOpen, onClose, requestData, user, timestamp, onRefre
     };
   }, [isOpen, handoverStatus, generateQR, qrValue]);
 
-  // 1. Logika Pembuatan QR Code
+  // Generate QR on open
   useEffect(() => {
     if (!isOpen || !requestData) {
       setQrValue("");
@@ -89,7 +89,7 @@ const ProduceQRModal = ({ isOpen, onClose, requestData, user, timestamp, onRefre
     generateQR();
   }, [isOpen, requestData, user, timestamp, generateQR]);
 
-  // 2. Logika Polling
+  // Polling: detect handover completion
   useEffect(() => {
     let intervalId;
 
@@ -120,7 +120,7 @@ const ProduceQRModal = ({ isOpen, onClose, requestData, user, timestamp, onRefre
             }, 2500);
           }
         } catch (error) {
-          console.error("Error polling:", error.message);
+          console.error("Polling error:", error.message);
         }
       }, 3000);
     }
@@ -138,51 +138,51 @@ const ProduceQRModal = ({ isOpen, onClose, requestData, user, timestamp, onRefre
     "text-blue-600";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4 backdrop-blur-sm transition-opacity">
-      <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col items-center transform transition-all">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 transition-opacity">
+      <div className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-sm w-full p-8 flex flex-col items-center transform transition-all">
         {handoverStatus === "waiting" ? (
           <>
-            <h2 className="text-xl font-bold mb-2 text-slate-800">Scan untuk Serah Terima</h2>
+            <h2 className="text-xl font-bold mb-2 text-slate-800">Scan to Hand Over</h2>
             <p className="text-sm text-slate-500 mb-4 text-center">
-              Tunjukkan QR Code ini kepada Admin.
+              Show this QR Code to the Admin for verification.
             </p>
 
             <div className={`text-xs font-bold mb-4 ${countdownColor}`}>
-              QR berlaku dalam {countdown} detik
+              QR expires in {countdown} seconds
             </div>
 
             <div className="bg-white p-4 rounded-xl border-2 border-dashed border-blue-200 mb-6 flex flex-col justify-center items-center min-h-[250px] w-full relative">
               {isGenerating ? (
-                <span className="text-slate-400 font-medium animate-pulse">Menghasilkan Kriptografi...</span>
+                <span className="text-slate-400 font-medium animate-pulse">Generating cryptographic signature...</span>
               ) : qrValue && qrValue !== "ERROR" ? (
                 <>
                   <QRCodeSVG value={qrValue} size={220} level="L" includeMargin={true} />
                   <div className="mt-4 flex items-center text-xs font-semibold text-blue-600 animate-pulse">
-                    Menunggu Admin memindai...
+                    Waiting for admin to scan...
                   </div>
                 </>
               ) : (
-                <span className="text-red-500 font-bold">Gagal memuat QR Code</span>
+                <span className="text-red-500 font-bold">Failed to load QR Code</span>
               )}
             </div>
 
             <button
               onClick={onClose}
-              className="w-full py-3 bg-slate-100 text-slate-700 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+              className="w-full py-3 border border-slate-200 text-slate-700 font-semibold rounded-xl text-sm hover:bg-slate-50 active:bg-slate-100 transition-colors"
             >
-              Batal
+              Cancel
             </button>
           </>
         ) : (
           <div className="flex flex-col items-center justify-center py-8">
-            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-4 animate-bounce">
-              <svg className="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-5 animate-bounce">
+              <svg className="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
               </svg>
             </div>
-            <h2 className="text-2xl font-extrabold text-slate-800 mb-2">Berhasil!</h2>
+            <h2 className="text-2xl font-extrabold text-slate-800 mb-2">Handover Successful!</h2>
             <p className="text-sm text-slate-500 text-center">
-              Penyerahan aset telah diverifikasi.<br/>Aset sekarang berada di tanggung jawabmu.
+              Asset transfer has been verified and recorded.<br/>The asset is now under your responsibility.
             </p>
           </div>
         )}
