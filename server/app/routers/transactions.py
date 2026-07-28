@@ -1,8 +1,9 @@
 """
 Transaction router — Immutable ledger (append-only) dengan Ed25519 Non-Repudiation.
-Updated: Integrasi guard sekuriti dan perbaikan tipe data.
+Updated: Dual-party signature support (QR code flow).
 """
 
+import json
 from datetime import datetime, timezone
 from decimal import Decimal
 from typing import List, Optional, cast
@@ -106,7 +107,17 @@ def create_transaction(
     transaction_data["previous_hash"] = previous_hash
     transaction_data["current_hash"] = current_hash
     transaction_data["occurred_at"] = occurred_at
-    transaction_data["signature"] = request.headers.get("x-ed25519-signature")
+
+    # Store signatures: dual-party (QR) or single-party (manual)
+    admin_sig = request.headers.get("x-ed25519-admin-signature")
+    borrower_sig = request.headers.get("x-ed25519-signature")
+    if admin_sig and borrower_sig:
+        transaction_data["signature"] = json.dumps({
+            "borrower_sig": borrower_sig,
+            "admin_sig": admin_sig,
+        })
+    else:
+        transaction_data["signature"] = borrower_sig
 
     # Update request and asset status for handovers
     if transaction_in.action == "handover":

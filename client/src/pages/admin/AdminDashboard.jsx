@@ -97,27 +97,19 @@
       };
       // 3. PELATUK SCANNER (QR Code)
       const handleScannerSuccess = async (scannedText) => {
-          // === ALAT DEBUG ===
-          console.log("1. RAW SCANNED DATA:", scannedText);
-
           let parsedQR;
           try {
             parsedQR = typeof scannedText === 'string' ? JSON.parse(scannedText) : scannedText;
-            console.log("2. PARSED QR OBJECT:", parsedQR);
           } catch (err) {
-            alert("❌ Invalid QR Code format. Please scan a valid Handover QR.");
+            alert("Invalid QR Code format. Please scan a valid Handover QR.");
             return;
           }
 
           // Mari kita buat pencarian data payload yang lebih fleksibel
           const scannedData = parsedQR.payload || parsedQR.data || parsedQR;
-          console.log("3. EXTRACTED PAYLOAD:", scannedData);
-
           const scannedId = scannedData?.request_id || scannedData?.id || scannedData?._id;
-          console.log("4. EXTRACTED ID:", scannedId);
-
           if (!scannedId) {
-            alert("❌ QR Code does not contain a valid Request ID.");
+            alert("QR Code does not contain a valid Request ID.");
             return;
           }
 

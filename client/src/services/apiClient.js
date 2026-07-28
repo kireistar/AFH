@@ -16,46 +16,51 @@ const injectEd25519Signature = async (endpoint, config) => {
         payload = typeof config.body === "string" ? JSON.parse(config.body) : config.body;
       }
 
-      // --- PERBAIKAN: JALUR QR CODE (NON-REPUDIATION) ---
-      // Jika payload dari service sudah membawa signature dan public_key peminjam,
-      // gunakan itu untuk Header, dan JANGAN timpa dengan tanda tangan Admin.
-      if (payload.signature && payload.public_key) {
-        config.headers["x-ed25519-signature"] = payload.signature;
-        config.headers["x-ed25519-public-key"] = payload.public_key;
+      const isQRFlow = payload.signature && payload.public_key;
 
-        // Sinkronkan timestamp di Root dengan timestamp dari dalam QR Code
-        // agar validasi backend tidak hancur
-        if (payload.payload && payload.payload.timestamp) {
+      // Sinkronkan timestamp & expires_at dari QR payload agar validasi backend tidak gagal
+      if (isQRFlow && payload.payload) {
+        if (payload.payload.timestamp) {
           payload.timestamp = payload.payload.timestamp;
-          config.body = JSON.stringify(payload);
         }
-
-        return; // KELUAR DARI FUNGSI SEKARANG. Jangan jalankan kode di bawah.
+        if (payload.payload.expires_at) {
+          payload.expires_at = payload.payload.expires_at;
+        }
       }
 
-      // --- JALUR MANUAL (ADMIN SIGNATURE) ---
-      // 1. Ambil Keypair dari IndexedDB (Public & Private) milik Admin
+      // Selalu generate canonical string + admin signature
       const { privKey, pubKeyBase64 } = await getOrGenerateKeyPair();
 
       const action = payload.action || "handover";
       const borrowerId = payload.borrower_id;
       const assetId = payload.asset_id;
-      const timestamp = payload.timestamp || Math.floor(Date.now() / 1000);
+      const ts = payload.timestamp || Math.floor(Date.now() / 1000);
+      const expiresAt = isQRFlow && payload.payload?.expires_at ? payload.payload.expires_at : null;
 
-      payload.timestamp = timestamp;
+      payload.timestamp = ts;
       config.body = JSON.stringify(payload);
 
-      // 2. Buat Canonical String
-      const canonicalString = createCanonicalPayload(action, borrowerId, assetId, timestamp);
+      const canonicalString = createCanonicalPayload(action, borrowerId, assetId, ts, expiresAt);
 
-      // 3. Signature
       const signResult = await signPayload(canonicalString, privKey);
-      const signature = typeof signResult === "string" ? signResult : (signResult.signatureHex || signResult.signatureBase64);
+      const adminSignature = typeof signResult === "string" ? signResult : (signResult.signatureHex || signResult.signatureBase64);
 
-      // 4. Injeksi Header Manual
-      config.headers["x-ed25519-signature"] = signature;
+      // Admin signature ALWAYS injected
+      config.headers["x-ed25519-admin-signature"] = adminSignature;
       if (!config.headers["x-ed25519-public-key"] && pubKeyBase64) {
         config.headers["x-ed25519-public-key"] = pubKeyBase64;
+      }
+
+      if (isQRFlow) {
+        // QR path: borrower's signature as primary, admin's as secondary
+        config.headers["x-ed25519-signature"] = payload.signature;
+        config.headers["x-ed25519-public-key"] = payload.public_key;
+      } else {
+        // Manual path: admin is the sole signer
+        config.headers["x-ed25519-signature"] = adminSignature;
+        if (!config.headers["x-ed25519-public-key"]) {
+          config.headers["x-ed25519-public-key"] = pubKeyBase64;
+        }
       }
     } catch (err) {
       console.error("Failed to perform Ed25519 signing on request:", err);

@@ -25,6 +25,24 @@ export const getOrGenerateKeyPair = async () => {
 };
 
 /**
+ * 1b. Regenerate keypair Ed25519 (untuk re-registrasi perangkat).
+ * Overwrite keypair lama di IndexedDB dengan yang baru.
+ */
+export const regenerateKeyPair = async () => {
+  const privKey = window.crypto.getRandomValues(new Uint8Array(32));
+  await set(PRIV_KEY_ALIAS, privKey);
+
+  const pubKey = await ed.getPublicKeyAsync(privKey);
+  const pubKeyBase64 = btoa(String.fromCharCode(...pubKey));
+
+  return {
+    privKey,
+    pubKey,
+    pubKeyBase64,
+  };
+};
+
+/**
  * 2. Ambil Public Key terdaftar dalam format Base64
  */
 export const getStoredPublicKey = async () => {
@@ -43,11 +61,16 @@ export const getStoredPublicKey = async () => {
 export const getPublicKeyBase64 = getStoredPublicKey;
 
 /**
- * 4. Format Canonical String untuk verifikasi deterministik (Fase 1 & 3)
- * Format: action|borrower_id|asset_id|timestamp
+ * 4. Format Canonical String untuk verifikasi deterministik
+ * Format: action|borrower_id|asset_id|timestamp[|expires_at]
+ * expires_at opsional — jika disertakan, QR berlaku 30 detik.
  */
-export const createCanonicalPayload = (action, borrowerId, assetId, timestamp) => {
-  return `${action}|${borrowerId}|${assetId}|${timestamp}`;
+export const createCanonicalPayload = (action, borrowerId, assetId, timestamp, expiresAt) => {
+  let canonical = `${action}|${borrowerId}|${assetId}|${timestamp}`;
+  if (expiresAt) {
+    canonical += `|${expiresAt}`;
+  }
+  return canonical;
 };
 
 /**

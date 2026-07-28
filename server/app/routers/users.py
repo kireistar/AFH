@@ -33,20 +33,37 @@ def register_public_key(
     current_user: User = Depends(get_current_user),
 ):
     """
-    Fase 2: Device Registration Shield
+    Device Registration Shield
     Mengikat Public Key Ed25519 dari perangkat fisik ke tabel users (D1).
+    Mengizinkan re-registrasi (overwrite) jika user berganti perangkat.
     """
-    # Mencegah overwrite jika kunci publik sudah terdaftar
-    if current_user.public_key:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Public key sudah terdaftar untuk akun ini. Hubungi Admin untuk reset perangkat."
-        )
-
     current_user.public_key = payload.public_key
     db.commit()
     db.refresh(current_user)
     return current_user
+
+
+@router.patch("/{user_id}/reset-device-key", response_model=UserResponse)
+def reset_device_key(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("admin")),
+):
+    """
+    Admin-only: Reset public key Ed25519 seorang user.
+    Menghapus public_key sehingga user dipaksa registrasi ulang perangkat.
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with id {user_id} not found",
+        )
+
+    user.public_key = None
+    db.commit()
+    db.refresh(user)
+    return user
 
 
 # --- EXISTING CRUD ENDPOINTS ---

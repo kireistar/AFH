@@ -1,15 +1,81 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
-// [PERBAIKAN KUNCI]
-// 1. Hapus import nacl
-// 2. Gunakan fungsi kripto milikmu untuk mengambil kunci ASLI peminjam dari IndexedDB
 import { getOrGenerateKeyPair, createCanonicalPayload, signPayload } from "../../utils/crypto";
+
+const QR_TTL_SECONDS = 30;
 
 const ProduceQRModal = ({ isOpen, onClose, requestData, user, timestamp, onRefreshSuccess }) => {
   const [qrValue, setQrValue] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [handoverStatus, setHandoverStatus] = useState("waiting");
+  const [countdown, setCountdown] = useState(QR_TTL_SECONDS);
+  const countdownRef = useRef(null);
+  const expiryRef = useRef(null);
+
+  const generateQR = useCallback(async () => {
+    if (!isOpen || !requestData) return;
+    setIsGenerating(true);
+    try {
+      const now = Math.floor(Date.now() / 1000);
+      const expiresAt = now + QR_TTL_SECONDS;
+      expiryRef.current = expiresAt;
+
+      const payloadObj = {
+        action: "handover",
+        asset_id: String(requestData._assetId || requestData.id),
+        borrower_id: String(user?.id || "unknown_user"),
+        request_id: String(requestData._id || requestData.id),
+        timestamp: String(timestamp),
+        expires_at: String(expiresAt),
+      };
+
+      const { privKey, pubKeyBase64 } = await getOrGenerateKeyPair();
+
+      const canonicalString = createCanonicalPayload(
+        payloadObj.action,
+        payloadObj.borrower_id,
+        payloadObj.asset_id,
+        payloadObj.timestamp,
+        payloadObj.expires_at
+      );
+
+      const signatureB64 = await signPayload(canonicalString, privKey);
+
+      const finalQrData = JSON.stringify({
+        payload: payloadObj,
+        signature: signatureB64,
+        public_key: pubKeyBase64,
+      });
+
+      setQrValue(finalQrData);
+      setCountdown(QR_TTL_SECONDS);
+    } catch (error) {
+      console.error("Gagal membuat QR Code:", error);
+      setQrValue("ERROR");
+    } finally {
+      setIsGenerating(false);
+    }
+  }, [isOpen, requestData, user, timestamp]);
+
+  // Countdown timer — auto-regenerate QR when expired
+  useEffect(() => {
+    if (!isOpen || handoverStatus !== "waiting" || !expiryRef.current) return;
+
+    countdownRef.current = setInterval(() => {
+      const remaining = expiryRef.current - Math.floor(Date.now() / 1000);
+      if (remaining <= 0) {
+        clearInterval(countdownRef.current);
+        generateQR();
+      } else {
+        setCountdown(remaining);
+      }
+    }, 1000);
+
+    return () => {
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+  }, [isOpen, handoverStatus, generateQR, qrValue]);
 
   // 1. Logika Pembuatan QR Code
   useEffect(() => {
@@ -19,48 +85,8 @@ const ProduceQRModal = ({ isOpen, onClose, requestData, user, timestamp, onRefre
       return;
     }
 
-    // Karena membaca kunci dari IndexedDB butuh waktu, kita bungkus dalam async
-    const generateQR = async () => {
-      setIsGenerating(true);
-      try {
-        const payloadObj = {
-          action: "handover",
-          asset_id: String(requestData._assetId || requestData.id),
-          borrower_id: String(user?.id || "unknown_user"),
-          request_id: String(requestData._id || requestData.id),
-          timestamp: String(timestamp),
-        };
-
-        // Ambil private key ASLI milik Peminjam
-        const { privKey, pubKeyBase64 } = await getOrGenerateKeyPair();
-
-        const canonicalString = createCanonicalPayload(
-          payloadObj.action,
-          payloadObj.borrower_id,
-          payloadObj.asset_id,
-          payloadObj.timestamp
-        );
-
-        // Tanda tangani canonical payload menggunakan private key asli
-        const signatureB64 = await signPayload(canonicalString, privKey);
-
-        const finalQrData = JSON.stringify({
-          payload: payloadObj,
-          signature: signatureB64,
-          public_key: pubKeyBase64,
-        });
-
-        setQrValue(finalQrData);
-      } catch (error) {
-        console.error("Gagal membuat QR Code:", error);
-        setQrValue("ERROR");
-      } finally {
-        setIsGenerating(false);
-      }
-    };
-
     generateQR();
-  }, [isOpen, requestData, user, timestamp]);
+  }, [isOpen, requestData, user, timestamp, generateQR]);
 
   // 2. Logika Polling
   useEffect(() => {
@@ -98,7 +124,7 @@ const ProduceQRModal = ({ isOpen, onClose, requestData, user, timestamp, onRefre
             }, 2500);
           }
         } catch (error) {
-          console.error("🚨 [POLLING] Error jaringan:", error.message);
+          console.error("Error polling:", error.message);
         }
       }, 3000);
     }
@@ -110,15 +136,24 @@ const ProduceQRModal = ({ isOpen, onClose, requestData, user, timestamp, onRefre
 
   if (!isOpen) return null;
 
+  const countdownColor =
+    countdown <= 10 ? "text-red-500" :
+    countdown <= 20 ? "text-amber-500" :
+    "text-blue-600";
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4 backdrop-blur-sm transition-opacity">
       <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-sm flex flex-col items-center transform transition-all">
         {handoverStatus === "waiting" ? (
           <>
             <h2 className="text-xl font-bold mb-2 text-slate-800">Scan untuk Serah Terima</h2>
-            <p className="text-sm text-slate-500 mb-6 text-center">
+            <p className="text-sm text-slate-500 mb-4 text-center">
               Tunjukkan QR Code ini kepada Admin.
             </p>
+
+            <div className={`text-xs font-bold mb-4 ${countdownColor}`}>
+              QR berlaku dalam {countdown} detik
+            </div>
 
             <div className="bg-white p-4 rounded-xl border-2 border-dashed border-blue-200 mb-6 flex flex-col justify-center items-center min-h-[250px] w-full relative">
               {isGenerating ? (

@@ -70,10 +70,13 @@ export default function AdminScannerModal({ isOpen, onClose, onVerifySuccess }) 
       try {
         parsedData = JSON.parse(decodedText);
 
-        // [PERBAIKAN KRUSIAL]
-        // Polisi lokal sekarang menggunakan Canonical Payload, BUKAN JSON.stringify
         const p = parsedData.payload;
-        payloadString = createCanonicalPayload(p.action, p.borrower_id, p.asset_id, p.timestamp);
+        payloadString = createCanonicalPayload(p.action, p.borrower_id, p.asset_id, p.timestamp, p.expires_at);
+
+        // Client-side QR expiry check
+        if (p.expires_at && Math.floor(Date.now() / 1000) > parseInt(p.expires_at)) {
+          throw new Error("QR Code has expired. Ask borrower to generate a new one.");
+        }
 
         signatureB64 = parsedData.signature;
         pubKeyB64 = parsedData.public_key;
