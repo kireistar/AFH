@@ -13,7 +13,6 @@ from app.schemas.enums import (
     PaymentMethod,
     RequestStatus,
     RiskTier,
-    TokenStatus,
     TransactionAction,
     TransactionStatus,
     UserRole,
@@ -66,14 +65,6 @@ from app.schemas.incident import (
     IncidentUpdate,
 )
 
-# Handover Token
-from app.schemas.handover_token import (
-    HandoverQRPayload,
-    HandoverTokenCreate,
-    HandoverTokenResponse,
-    HandoverTokenScan,
-)
-
 # User Behavior Stats
 from app.schemas.user_behavior_stats import (
     UserBehaviorStatsResponse,
@@ -85,7 +76,7 @@ __all__ = [
     "AssetCategory", "AssetCondition", "AssetStatus",
     "EmploymentStatus", "IncidentSeverity", "IncidentStatus",
     "InvoiceStatus", "PaymentMethod", "RequestStatus",
-    "RiskTier", "TokenStatus", "TransactionAction",
+    "RiskTier", "TransactionAction",
     "TransactionStatus", "UserRole",
     # User
     "Token", "TokenPayload", "UserBase", "UserCreate",
@@ -100,9 +91,6 @@ __all__ = [
     "InvoiceBase", "InvoiceCreate", "InvoiceResponse", "InvoiceUpdate",
     # Incident
     "IncidentBase", "IncidentCreate", "IncidentResponse", "IncidentUpdate",
-    # Handover Token
-    "HandoverQRPayload", "HandoverTokenCreate",
-    "HandoverTokenResponse", "HandoverTokenScan",
     # User Behavior Stats
     "UserBehaviorStatsResponse", "UserBehaviorStatsUpdate",
 ]

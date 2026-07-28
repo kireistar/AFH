@@ -15,7 +15,6 @@ from app.routers import (
     transactions,
     incidents,
     invoices,
-    handover_tokens,
     ledger
 )
 
@@ -45,7 +44,6 @@ app.include_router(asset_requests.router)
 app.include_router(transactions.router)
 app.include_router(incidents.router)
 app.include_router(invoices.router)
-app.include_router(handover_tokens.router)
 app.include_router(ledger.router)
 
 @app.get("/", tags=["Health"])

@@ -51,11 +51,6 @@ class AssetRequest(Base):
     approver = relationship("User", foreign_keys=[approved_by])
     asset = relationship("Asset", back_populates="requests")
     transactions = relationship("Transaction", back_populates="request")
-    handover_tokens = relationship(
-        "HandoverToken",
-        back_populates="request",
-        cascade="all, delete-orphan",
-    )
 
     def __repr__(self) -> str:
         return f"<AssetRequest {self.request_code} ({self.status})>"

@@ -103,11 +103,3 @@ class IncidentStatus(str, Enum):
     INVESTIGATING = "investigating"
     RESOLVED = "resolved"
     CLOSED = "closed"
-
-
-
-class TokenStatus(str, Enum):
-    ACTIVE = "active"
-    USED = "used"
-    EXPIRED = "expired"
-    REVOKED = "revoked"

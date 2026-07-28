@@ -45,22 +45,15 @@ const injectEd25519Signature = async (endpoint, config) => {
       const signResult = await signPayload(canonicalString, privKey);
       const adminSignature = typeof signResult === "string" ? signResult : (signResult.signatureHex || signResult.signatureBase64);
 
-      // Admin signature ALWAYS injected
-      config.headers["x-ed25519-admin-signature"] = adminSignature;
-      if (!config.headers["x-ed25519-public-key"] && pubKeyBase64) {
-        config.headers["x-ed25519-public-key"] = pubKeyBase64;
-      }
-
       if (isQRFlow) {
         // QR path: borrower's signature as primary, admin's as secondary
         config.headers["x-ed25519-signature"] = payload.signature;
+        config.headers["x-ed25519-admin-signature"] = adminSignature;
         config.headers["x-ed25519-public-key"] = payload.public_key;
       } else {
-        // Manual path: admin is the sole signer
+        // Manual path: admin is the sole signer (single-party verification)
         config.headers["x-ed25519-signature"] = adminSignature;
-        if (!config.headers["x-ed25519-public-key"]) {
-          config.headers["x-ed25519-public-key"] = pubKeyBase64;
-        }
+        config.headers["x-ed25519-public-key"] = pubKeyBase64;
       }
     } catch (err) {
       console.error("Failed to perform Ed25519 signing on request:", err);

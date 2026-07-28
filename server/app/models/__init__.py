@@ -12,7 +12,6 @@ from app.models.asset_request import AssetRequest
 from app.models.transaction import Transaction
 from app.models.invoice import Invoice
 from app.models.incident import Incident
-from app.models.handover_token import HandoverToken
 from app.models.user_behavior_stats import UserBehaviorStats
 
 __all__ = [
@@ -23,6 +22,5 @@ __all__ = [
     "Transaction",
     "Invoice",
     "Incident",
-    "HandoverToken",
     "UserBehaviorStats",
 ]

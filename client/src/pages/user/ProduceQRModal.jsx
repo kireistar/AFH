@@ -27,7 +27,7 @@ const ProduceQRModal = ({ isOpen, onClose, requestData, user, timestamp, onRefre
         asset_id: String(requestData._assetId || requestData.id),
         borrower_id: String(user?.id || "unknown_user"),
         request_id: String(requestData._id || requestData.id),
-        timestamp: String(timestamp),
+        timestamp: String(now),
         expires_at: String(expiresAt),
       };
 
