@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { FiEdit, FiTrash2 } from 'react-icons/fi';
 import AddUserModal from '../../components/AddUserModal';
 import EditUserModal from '../../components/EditUserModal';
+import ConfirmModal from '../../components/ConfirmModal';
+import Toast, { createToast } from '../../components/Toast';
 import { deleteUser } from '../../services/userService';
 
 const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
@@ -9,19 +11,39 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
   const [editingUser, setEditingUser] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
 
-  const handleDeleteUser = async (user) => {
-    const confirmed = window.confirm(`Are you sure you want to delete ${user.name}? This action cannot be undone.`);
-    if (!confirmed) return;
+  // Delete confirm modal
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
+  // Toast
+  const [toasts, setToasts] = useState([]);
+  const addToast = useCallback((message, type) => {
+    setToasts(prev => [...prev, createToast(message, type)]);
+  }, []);
+  const dismissToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const handleDeleteUser = (user) => {
+    setDeleteTarget(user);
+    setIsDeleteOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deleteUser(user._id);
+      await deleteUser(deleteTarget._id);
+      setIsDeleteOpen(false);
+      setDeleteTarget(null);
       if (onRefresh) onRefresh();
+      addToast(`${deleteTarget.name} has been deleted.`, "success");
     } catch (err) {
-      alert(err.message || `Failed to delete ${user.name}. It is likely they have active requests or transactions connected to their account.`);
+      setIsDeleteOpen(false);
+      addToast(err.message || `Failed to delete ${deleteTarget.name}. They may have active requests or transactions.`, "error");
+      setDeleteTarget(null);
     }
   };
 
-  // Filter users based on showInactive toggle
   const filteredUsers = showInactive
     ? users
     : users.filter(u => u.status === 'Active' || u.status === 'On Leave');
@@ -41,7 +63,7 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
               />
               <span>Show Inactive/Resigned</span>
             </label>
-            <button 
+            <button
               onClick={() => setIsAddModalOpen(true)}
               className="px-4 py-2 bg-[#1E3A8A] text-white rounded-xl text-sm font-semibold hover:bg-blue-900 transition-colors cursor-pointer"
             >
@@ -54,8 +76,8 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
             <div className="p-8 text-center text-slate-400 text-sm">Loading...</div>
           ) : filteredUsers.length === 0 ? (
             <div className="p-8 text-center text-slate-400 text-sm">
-              {showInactive 
-                ? 'No users found.' 
+              {showInactive
+                ? 'No users found.'
                 : 'No active users found. Toggle "Show Inactive/Resigned" to view archived profiles.'}
             </div>
           ) : (
@@ -79,8 +101,8 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
                     <td className="p-4 text-sm">
                       <div className="flex items-center text-slate-600">
                         <span className={`w-2 h-2 rounded-full mr-2 ${
-                          user.status === 'Active' ? 'bg-emerald-500' : 
-                          user.status === 'On Leave' ? 'bg-amber-400' : 
+                          user.status === 'Active' ? 'bg-emerald-500' :
+                          user.status === 'On Leave' ? 'bg-amber-400' :
                           user.status === 'Suspended' ? 'bg-red-500' : 'bg-slate-300'
                         }`}></span>
                         {user.status}
@@ -88,7 +110,7 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
                     </td>
                     <td className="p-4 text-sm text-right pr-6">
                       <div className="inline-flex gap-2">
-                        <button 
+                        <button
                           onClick={() => setEditingUser(user)}
                           className="p-1.5 text-slate-500 hover:text-[#1E3A8A] hover:bg-blue-50 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1 text-xs font-semibold border border-transparent hover:border-blue-100"
                           title="Edit Profile"
@@ -96,7 +118,7 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
                           <FiEdit size={14} />
                           <span>Edit</span>
                         </button>
-                        <button 
+                        <button
                           onClick={() => handleDeleteUser(user)}
                           className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1 text-xs font-semibold border border-transparent hover:border-red-100"
                           title="Delete User"
@@ -114,19 +136,31 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
         </div>
       </div>
 
-      <AddUserModal 
+      <AddUserModal
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onSuccess={onRefresh}
         users={users}
       />
 
-      <EditUserModal 
+      <EditUserModal
         isOpen={!!editingUser}
         onClose={() => setEditingUser(null)}
         onSuccess={onRefresh}
         user={editingUser}
       />
+
+      <ConfirmModal
+        isOpen={isDeleteOpen}
+        onClose={() => { setIsDeleteOpen(false); setDeleteTarget(null); }}
+        onConfirm={confirmDelete}
+        title="Delete User"
+        message={`Are you sure you want to delete ${deleteTarget?.name || 'this user'}? This action cannot be undone and will remove all their data from the system.`}
+        confirmLabel="Delete"
+        variant="danger"
+      />
+
+      <Toast toasts={toasts} onDismiss={dismissToast} />
     </>
   );
 };

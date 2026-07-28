@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import ManagerOverview from './ManagerOverview';
 import ManagerApprovals from './ManagerApprovals';
 import ManagerRiskAssessment from './ManagerRiskAssessment';
 import ManagerReports from './ManagerReports';
+import ConfirmModal from '../../components/ConfirmModal';
+import InputModal from '../../components/InputModal';
+import Toast, { createToast } from '../../components/Toast';
 import { useAuth } from '../../hooks/useAuth';
 import useRequests from '../../hooks/useRequests';
 import useAssets from '../../hooks/useAssets';
@@ -13,33 +16,58 @@ const ManagerDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const { user } = useAuth();
 
-  // Hanya fetch request yang perlu review manager
   const { requests: approvals, loading, approve, reject } = useRequests('all', 'pending_manager');
-
   const { requests: allRequests, loading: allRequestsLoading } = useRequests('all');
-
   const pendingApprovalCount = approvals.length;
-
   const { assets } = useAssets();
   const { incidents } = useIncidents();
 
   const activeAssetCount = assets.filter(a => a.status === 'Borrowed').length;
   const incidentCount = incidents.length;
 
-  const handleApprove = async (req) => {
-    if (window.confirm("Approve this high-risk request?")) {
-      await approve(req._id); // _id = integer id asli
-    }
+  // Approve confirm modal
+  const [isApproveOpen, setIsApproveOpen] = useState(false);
+  const [approveTarget, setApproveTarget] = useState(null);
+
+  // Reject input modal
+  const [isRejectOpen, setIsRejectOpen] = useState(false);
+  const [rejectTarget, setRejectTarget] = useState(null);
+
+  // Toast
+  const [toasts, setToasts] = useState([]);
+  const addToast = useCallback((message, type) => {
+    setToasts(prev => [...prev, createToast(message, type)]);
+  }, []);
+  const dismissToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const handleApprove = (req) => {
+    setApproveTarget(req);
+    setIsApproveOpen(true);
   };
 
-  const handleReject = async (req) => {
-    const reason = window.prompt("Enter rejection reason:");
-    if (reason) {
-      await reject(req._id, reason);
-    }
+  const confirmApprove = async () => {
+    if (!approveTarget) return;
+    await approve(approveTarget._id);
+    setIsApproveOpen(false);
+    setApproveTarget(null);
+    addToast("High-risk request approved.", "success");
   };
 
-  // Profile configuration for Manager
+  const handleReject = (req) => {
+    setRejectTarget(req);
+    setIsRejectOpen(true);
+  };
+
+  const submitReject = async (reason) => {
+    if (!rejectTarget || !reason) return;
+    await reject(rejectTarget._id, reason);
+    setIsRejectOpen(false);
+    setRejectTarget(null);
+    addToast("Request rejected.", "success");
+  };
+
   const managerProfile = {
     name: user?.employee_name || 'Manager',
     subTitle: user?.department || 'Management',
@@ -47,7 +75,6 @@ const ManagerDashboard = () => {
     avatarLetter: (user?.employee_name || 'M')[0].toUpperCase(),
   };
 
-  // Flat sidebar menu items for Manager
   const menuItems = [
     { name: 'Dashboard', badge: null },
     { name: 'Approvals', badge: pendingApprovalCount > 0 ? `${pendingApprovalCount} Urgent` : null, badgeColor: 'bg-orange-100 text-orange-700' },
@@ -57,8 +84,8 @@ const ManagerDashboard = () => {
 
   const metrics = {
     pendingApprovals: pendingApprovalCount,
-    activeAssets: activeAssetCount,      // Bisa dienhance dengan AI jobdesk
-    monthlyIncidents: incidentCount,  // Bisa dienhance dengan AI jobdesk
+    activeAssets: activeAssetCount,
+    monthlyIncidents: incidentCount,
   };
 
   const renderContent = () => {
@@ -72,17 +99,41 @@ const ManagerDashboard = () => {
   };
 
   return (
-    <DashboardLayout
-      roleTitle="Manager"
-      menuItems={menuItems}
-      activeTab={activeTab}
-      setActiveTab={setActiveTab}
-      userProfile={managerProfile}
-      pageHeaderTitle={activeTab === 'Dashboard' ? 'MANAGEMENT OVERVIEW' : `${activeTab.toUpperCase()} PANEL`}
-      pageHeaderSubtitle={activeTab === 'Dashboard' ? 'Review high-risk requests and operational analytics.' : `Process ${activeTab.toLowerCase()} metrics.`}
-    >
-      {renderContent()}
-    </DashboardLayout>
+    <>
+      <DashboardLayout
+        roleTitle="Manager"
+        menuItems={menuItems}
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        userProfile={managerProfile}
+        pageHeaderTitle={activeTab === 'Dashboard' ? 'MANAGEMENT OVERVIEW' : `${activeTab.toUpperCase()} PANEL`}
+        pageHeaderSubtitle={activeTab === 'Dashboard' ? 'Review high-risk requests and operational analytics.' : `Process ${activeTab.toLowerCase()} metrics.`}
+      >
+        {renderContent()}
+      </DashboardLayout>
+
+      <ConfirmModal
+        isOpen={isApproveOpen}
+        onClose={() => { setIsApproveOpen(false); setApproveTarget(null); }}
+        onConfirm={confirmApprove}
+        title="Approve High-Risk Request"
+        message={`Are you sure you want to approve this high-risk request from ${approveTarget?.user || 'this user'}? This action will authorize the asset handover process.`}
+        confirmLabel="Approve"
+        variant="primary"
+      />
+
+      <InputModal
+        isOpen={isRejectOpen}
+        onClose={() => { setIsRejectOpen(false); setRejectTarget(null); }}
+        onSubmit={submitReject}
+        title="Reject Request"
+        label="Please provide a reason for rejecting this request"
+        placeholder="e.g., Risk too high, alternative device available..."
+        multiline
+      />
+
+      <Toast toasts={toasts} onDismiss={dismissToast} />
+    </>
   );
 };
 

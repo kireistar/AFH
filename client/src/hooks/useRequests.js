@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   fetchAllRequests,
   fetchMyRequests,
@@ -8,58 +8,87 @@ import {
 } from '../services/requestService';
 
 const useRequests = (mode = 'all', statusFilter = null) => {
-  // mode: 'all' untuk admin/manager, 'mine' untuk user
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [pollingFailed, setPollingFailed] = useState(false);
+  const abortRef = useRef(null);
+  const mountedRef = useRef(true);
+  const failureCountRef = useRef(0);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (isInitial = false) => {
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    if (isInitial) {
+      setLoading(true);
+    }
     setError(null);
+
     try {
       const data = mode === 'mine'
         ? await fetchMyRequests()
         : await fetchAllRequests(statusFilter);
-      setRequests(data);
+
+      if (!controller.signal.aborted && mountedRef.current) {
+        setRequests(data);
+        failureCountRef.current = 0;
+        setPollingFailed(false);
+      }
     } catch (err) {
-      setError(err.message || 'Gagal memuat data request.');
+      if (!controller.signal.aborted && mountedRef.current) {
+        failureCountRef.current += 1;
+        if (failureCountRef.current >= 3) {
+          setPollingFailed(true);
+        }
+        if (isInitial) {
+          setError(err.message || 'Failed to load requests.');
+        }
+      }
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted && mountedRef.current) {
+        setLoading(false);
+      }
     }
   }, [mode, statusFilter]);
 
   useEffect(() => {
-    load();
+    mountedRef.current = true;
+    load(true);
+    return () => { mountedRef.current = false; };
   }, [load]);
 
   const approve = async (requestId) => {
     try {
       await approveRequest(requestId);
-      await load(); // refresh list setelah aksi
+      await load(true);
     } catch (err) {
-      setError(err.message || 'Gagal approve request.');
+      setError(err.message || 'Failed to approve request.');
     }
   };
 
   const reject = async (requestId, reason) => {
     try {
       await rejectRequest(requestId, reason);
-      await load();
+      await load(true);
     } catch (err) {
-      setError(err.message || 'Gagal reject request.');
+      setError(err.message || 'Failed to reject request.');
     }
   };
 
   const returnAsset = async (requestId, conditionNotes = "") => {
     try {
       await returnRequest(requestId, conditionNotes);
-      await load();
+      await load(true);
     } catch (err) {
-      setError(err.message || 'Gagal memproses pengembalian asset.');
+      setError(err.message || 'Failed to process return.');
     }
   };
 
-  return { requests, loading, error, refresh: load, approve, reject, returnAsset };
+  const refresh = () => load(false);
+
+  return { requests, loading, error, pollingFailed, refresh, approve, reject, returnAsset };
 };
 
 export default useRequests;

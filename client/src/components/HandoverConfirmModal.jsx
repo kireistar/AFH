@@ -1,4 +1,5 @@
 import React from "react";
+import { TIER_STYLES } from "../utils/styles";
 
 export default function HandoverConfirmModal({
   isOpen,
@@ -89,13 +90,7 @@ export default function HandoverConfirmModal({
 
               <div className="flex justify-between items-center">
                 <span className="text-sm text-slate-500">Risk Level</span>
-                <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
-                  requestData?.urgency === "High"
-                    ? "bg-red-50 text-red-700 border-red-200"
-                    : requestData?.urgency === "Medium"
-                    ? "bg-amber-50 text-amber-700 border-amber-200"
-                    : "bg-blue-50 text-blue-700 border-blue-200"
-                }`}>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${TIER_STYLES[requestData?.urgency] || TIER_STYLES.Low}`}>
                   {requestData?.urgency || "Low"}
                 </span>
               </div>

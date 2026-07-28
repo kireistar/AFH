@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import AdminOverview from './AdminOverview';
 import AdminAssets from './AdminAssets';
@@ -9,6 +9,9 @@ import AdminSecurity from './AdminSecurity';
 import AdminApprovals from './AdminApprovals';
 import AdminScannerModal from './AdminScannerModal';
 import HandoverConfirmModal from '../../components/HandoverConfirmModal';
+import ConfirmModal from '../../components/ConfirmModal';
+import InputModal from '../../components/InputModal';
+import Toast, { createToast } from '../../components/Toast';
 
 import { useAuth } from '../../hooks/useAuth';
 import useAssets from '../../hooks/useAssets';
@@ -24,27 +27,50 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('Dashboard');
   const [autoOpenAddAsset, setAutoOpenAddAsset] = useState(false);
 
-  // Scanner modal state
+  // Scanner modal
   const [isScannerOpen, setIsScannerOpen] = useState(false);
 
-  // Handover confirm modal state
+  // Handover confirm modal
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [confirmRequestData, setConfirmRequestData] = useState(null);
   const [pendingHandoverPayload, setPendingHandoverPayload] = useState(null);
   const [isHandoverLoading, setIsHandoverLoading] = useState(false);
   const [isHandoverSuccess, setIsHandoverSuccess] = useState(false);
 
+  // Approve confirm modal
+  const [isApproveOpen, setIsApproveOpen] = useState(false);
+  const [approveTarget, setApproveTarget] = useState(null);
+
+  // Reject input modal
+  const [isRejectOpen, setIsRejectOpen] = useState(false);
+  const [rejectTarget, setRejectTarget] = useState(null);
+
+  // Return input modal
+  const [isReturnOpen, setIsReturnOpen] = useState(false);
+  const [returnTarget, setReturnTarget] = useState(null);
+
+  // Toast
+  const [toasts, setToasts] = useState([]);
+  const addToast = useCallback((message, type) => {
+    setToasts(prev => [...prev, createToast(message, type)]);
+  }, []);
+  const dismissToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
   const { user } = useAuth();
-  const { assets, loading: loadingAssets, refresh: refreshAssets } = useAssets();
+  const { assets, loading: loadingAssets, pollingFailed: assetsPollingFailed, refresh: refreshAssets } = useAssets();
   const { users, loading: loadingUsers, refresh: refreshUsers } = useUsers();
 
-  const { requests: approvals, loading: loadingApprovals, refresh: refreshApprovals, approve, reject } = useRequests('all', 'pending_admin');
+  const { requests: approvals, loading: loadingApprovals, pollingFailed: approvalsPollingFailed, refresh: refreshApprovals, approve, reject } = useRequests('all', 'pending_admin');
   const { requests: handovers, loading: loadingHandovers, refresh: refreshHandovers } = useRequests('all', 'approved');
   const { requests: activeLoans, loading: loadingLoans, refresh: refreshLoans, returnAsset } = useRequests('all', 'handed_over');
   const { incidents } = useIncidents();
-  const { transactions, loading: loadingTransactions, refresh: refreshTransactions } = useTransactions();
+  const { transactions, loading: loadingTransactions, pollingFailed: txPollingFailed, refresh: refreshTransactions } = useTransactions();
 
-  // ── Auto-refresh: keep data live for both admin and user ──
+  const anyPollingFailed = assetsPollingFailed || approvalsPollingFailed || txPollingFailed;
+
+  // ── Auto-refresh: silent background polling ──
   const refreshAll = useRef(() => {
     refreshHandovers();
     refreshTransactions();
@@ -70,20 +96,35 @@ const AdminDashboard = () => {
   const pendingHandoverCount = handovers.length;
   const pendingApprovalCount = approvals.length;
 
-  const handleApprove = async (req) => {
-    if (window.confirm("Approve this asset request?")) {
-      await approve(req._id || req.id);
-      refreshHandovers();
-      refreshApprovals();
-    }
+  // ── Approve handler ──
+  const handleApprove = (req) => {
+    setApproveTarget(req);
+    setIsApproveOpen(true);
   };
 
-  const handleReject = async (req) => {
-    const reason = window.prompt("Enter rejection reason:");
-    if (reason) {
-      await reject(req._id || req.id, reason);
-      refreshApprovals();
-    }
+  const confirmApprove = async () => {
+    if (!approveTarget) return;
+    await approve(approveTarget._id || approveTarget.id);
+    refreshHandovers();
+    refreshApprovals();
+    setIsApproveOpen(false);
+    setApproveTarget(null);
+    addToast("Request approved successfully.", "success");
+  };
+
+  // ── Reject handler ──
+  const handleReject = (req) => {
+    setRejectTarget(req);
+    setIsRejectOpen(true);
+  };
+
+  const submitReject = async (reason) => {
+    if (!rejectTarget || !reason) return;
+    await reject(rejectTarget._id || rejectTarget.id, reason);
+    refreshApprovals();
+    setIsRejectOpen(false);
+    setRejectTarget(null);
+    addToast("Request rejected.", "success");
   };
 
   // ── Shared: execute handover on backend ──
@@ -91,7 +132,6 @@ const AdminDashboard = () => {
     setIsHandoverLoading(true);
     try {
       if (payload) {
-        // QR path: borrower's crypto payload
         await submitTransaction({
           payload: payload.payload,
           signature: payload.signature,
@@ -99,7 +139,6 @@ const AdminDashboard = () => {
           admin_id: user?.id || user?._id || 'admin',
         });
       } else {
-        // Manual path
         await submitTransaction({
           action: 'handover',
           asset_id: requestData._assetId || requestData.asset_id,
@@ -118,11 +157,11 @@ const AdminDashboard = () => {
       const errorMessage = err?.message || "Server error";
       setIsHandoverLoading(false);
       setIsConfirmOpen(false);
-      alert("Failed to complete handover: " + errorMessage);
+      addToast("Failed to complete handover: " + errorMessage, "error");
     }
   };
 
-  // ── Confirm modal handlers ──
+  // ── Handover confirm modal handlers ──
   const openConfirmModal = (requestData, handoverPayload) => {
     setConfirmRequestData(requestData);
     setPendingHandoverPayload(handoverPayload);
@@ -156,42 +195,47 @@ const AdminDashboard = () => {
     let parsedQR;
     try {
       parsedQR = typeof scannedText === 'string' ? JSON.parse(scannedText) : scannedText;
-    } catch (err) {
-      alert("Invalid QR Code format. Please scan a valid Handover QR.");
+    } catch {
+      addToast("Invalid QR Code format. Please scan a valid Handover QR.", "error");
       return;
     }
 
     const scannedData = parsedQR.payload || parsedQR.data || parsedQR;
     const scannedId = scannedData?.request_id || scannedData?.id || scannedData?._id;
     if (!scannedId) {
-      alert("QR Code does not contain a valid Request ID.");
+      addToast("QR Code does not contain a valid Request ID.", "error");
       return;
     }
 
     const req = handovers.find(h => String(h._id) === String(scannedId) || String(h.id) === String(scannedId));
     if (!req) {
-      alert(`Request ID [${scannedId}] not found in current Handover table.`);
+      addToast(`Request ID [${scannedId}] not found in current Handover table.`, "error");
       return;
     }
 
     openConfirmModal(req, parsedQR);
   };
 
-  const handleProcessReturn = async (requestId) => {
+  // ── Return handler ──
+  const handleProcessReturn = (requestId) => {
     const req = activeLoans.find(h => h._id === requestId || h.id === requestId);
     if (!req) return;
+    setReturnTarget(req);
+    setIsReturnOpen(true);
+  };
 
-    const conditionNotes = window.prompt("Enter device return condition notes (optional):", "Good condition");
-    if (conditionNotes !== null) {
-      try {
-        await returnAsset(req._id || req.id, conditionNotes);
-        alert("Asset return processed successfully!");
-        refreshLoans();
-        refreshTransactions();
-      } catch (err) {
-        const errorMessage = err?.message || "Server error";
-        alert("Failed to process return: " + errorMessage);
-      }
+  const submitReturn = async (conditionNotes) => {
+    if (!returnTarget) return;
+    try {
+      await returnAsset(returnTarget._id || returnTarget.id, conditionNotes || "Good condition");
+      refreshLoans();
+      refreshTransactions();
+      setIsReturnOpen(false);
+      setReturnTarget(null);
+      addToast("Asset return processed successfully!", "success");
+    } catch (err) {
+      const errorMessage = err?.message || "Server error";
+      addToast("Failed to process return: " + errorMessage, "error");
     }
   };
 
@@ -348,6 +392,19 @@ const AdminDashboard = () => {
             </button>
           </div>
         )}
+
+        {anyPollingFailed && (
+          <div className="mb-6 p-4 bg-amber-50 border-l-4 border-amber-500 rounded-xl shadow-sm text-amber-800 flex items-center gap-3">
+            <svg className="w-5 h-5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <span className="font-bold text-sm">CONNECTION ISSUE:</span>
+              <p className="text-xs mt-0.5 font-medium">Unable to refresh data. Some information may be outdated. Check your network connection.</p>
+            </div>
+          </div>
+        )}
+
         {renderContent()}
       </DashboardLayout>
 
@@ -367,6 +424,43 @@ const AdminDashboard = () => {
         isLoading={isHandoverLoading}
         isSuccess={isHandoverSuccess}
       />
+
+      {/* Approve Confirmation Modal */}
+      <ConfirmModal
+        isOpen={isApproveOpen}
+        onClose={() => { setIsApproveOpen(false); setApproveTarget(null); }}
+        onConfirm={confirmApprove}
+        title="Approve Request"
+        message={`Are you sure you want to approve this asset request from ${approveTarget?.user || 'this user'}? The request will move to the Handover queue.`}
+        confirmLabel="Approve"
+        variant="primary"
+      />
+
+      {/* Reject Input Modal */}
+      <InputModal
+        isOpen={isRejectOpen}
+        onClose={() => { setIsRejectOpen(false); setRejectTarget(null); }}
+        onSubmit={submitReject}
+        title="Reject Request"
+        label="Please provide a reason for rejecting this request"
+        placeholder="e.g., Asset not available, insufficient justification..."
+        multiline
+      />
+
+      {/* Return Condition Modal */}
+      <InputModal
+        isOpen={isReturnOpen}
+        onClose={() => { setIsReturnOpen(false); setReturnTarget(null); }}
+        onSubmit={submitReturn}
+        title="Process Asset Return"
+        label="Enter the condition of the returned device"
+        placeholder="Good condition"
+        multiline
+        defaultValue="Good condition"
+      />
+
+      {/* Toast Notifications */}
+      <Toast toasts={toasts} onDismiss={dismissToast} />
     </>
   );
 };
