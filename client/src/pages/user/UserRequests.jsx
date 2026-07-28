@@ -7,6 +7,7 @@ const generateCurrentTimestamp = () => Math.floor(Date.now() / 1000);
 
 const UserRequests = ({
   onOpenRequestModal,
+  onRefresh,
   requests = [],
   loading = false,
 }) => {

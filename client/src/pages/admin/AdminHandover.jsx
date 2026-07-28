@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import AdminScannerModal from "./AdminScannerModal";
+import React from "react";
 
 const AdminHandover = ({
   handovers = [],
@@ -10,7 +9,6 @@ const AdminHandover = ({
   loadingLoans = false,
   refreshHandovers = () => {},
 }) => {
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
 
   return (
     <div className="space-y-8">

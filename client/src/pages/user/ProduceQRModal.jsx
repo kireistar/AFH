@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
 import { getOrGenerateKeyPair, createCanonicalPayload, signPayload } from "../../utils/crypto";
+import { apiGet } from "../../services/apiClient";
 
 const QR_TTL_SECONDS = 30;
 
@@ -97,13 +98,8 @@ const ProduceQRModal = ({ isOpen, onClose, requestData, user, timestamp, onRefre
         try {
           const reqId = requestData._id || requestData.id;
 
-          const url = `http://127.0.0.1:8000/api/v1/requests/${reqId}`;
-          const response = await fetch(url);
-
-          if (!response.ok) return;
-
-          const data = await response.json();
-          const currentStatus = data.status || data?.data?.status || data?._status;
+          const data = await apiGet(`/api/v1/asset-requests/${reqId}`);
+          const currentStatus = data?.status || data?.data?.status || data?._status;
 
           if (!currentStatus) return;
 

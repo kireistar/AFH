@@ -76,7 +76,7 @@ const UserDashboard = () => {
       case 'Assets':
         return <UserAssets requests={requests} loading={loading} />;
       case 'Requests':
-        return <UserRequests requests={requests} loading={loading} onOpenRequestModal={() => setIsRequestModalOpen(true)} />;
+        return <UserRequests requests={requests} loading={loading} onOpenRequestModal={() => setIsRequestModalOpen(true)} onRefresh={refresh} />;
       case 'Incidents':
         return <UserIncidents incidents={incidents} loading={incidentsLoading} onOpenIncidentModal={() => setIsIncidentModalOpen(true)} />;
       default:
