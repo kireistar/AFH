@@ -1,10 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import { FiEdit, FiTrash2 } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiRefreshCw } from 'react-icons/fi';
 import AddUserModal from '../../components/AddUserModal';
 import EditUserModal from '../../components/EditUserModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import Toast, { createToast } from '../../components/Toast';
-import { deleteUser } from '../../services/userService';
+import { deleteUser, resetUserDeviceKey } from '../../services/userService';
 
 const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -14,6 +14,10 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
   // Delete confirm modal
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+
+  // Reset key confirm modal
+  const [isResetOpen, setIsResetOpen] = useState(false);
+  const [resetTarget, setResetTarget] = useState(null);
 
   // Toast
   const [toasts, setToasts] = useState([]);
@@ -41,6 +45,26 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
       setIsDeleteOpen(false);
       addToast(err.message || `Failed to delete ${deleteTarget.name}. They may have active requests or transactions.`, "error");
       setDeleteTarget(null);
+    }
+  };
+
+  const handleResetKey = (user) => {
+    setResetTarget(user);
+    setIsResetOpen(true);
+  };
+
+  const confirmReset = async () => {
+    if (!resetTarget) return;
+    try {
+      await resetUserDeviceKey(resetTarget._id);
+      setIsResetOpen(false);
+      setResetTarget(null);
+      if (onRefresh) onRefresh();
+      addToast(`${resetTarget.name}'s device key has been reset.`, "success");
+    } catch (err) {
+      setIsResetOpen(false);
+      addToast(err.message || `Failed to reset key for ${resetTarget.name}.`, "error");
+      setResetTarget(null);
     }
   };
 
@@ -87,6 +111,7 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
                   <th className="p-4 font-semibold">User</th>
                   <th className="p-4 font-semibold">Department</th>
                   <th className="p-4 font-semibold">Status</th>
+                  <th className="p-4 font-semibold">Device</th>
                   <th className="p-4 font-semibold text-right pr-6">Actions</th>
                 </tr>
               </thead>
@@ -108,6 +133,16 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
                         {user.status}
                       </div>
                     </td>
+                    <td className="p-4 text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`w-2 h-2 rounded-full ${
+                          user.public_key ? 'bg-emerald-500' : 'bg-slate-300'
+                        }`}></span>
+                        <span className={user.public_key ? 'text-emerald-700' : 'text-slate-400'}>
+                          {user.public_key ? 'Registered' : 'Not Registered'}
+                        </span>
+                      </div>
+                    </td>
                     <td className="p-4 text-sm text-right pr-6">
                       <div className="inline-flex gap-2">
                         <button
@@ -118,14 +153,22 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
                           <FiEdit size={14} />
                           <span>Edit</span>
                         </button>
-                        <button
-                          onClick={() => handleDeleteUser(user)}
-                          className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1 text-xs font-semibold border border-transparent hover:border-red-100"
-                          title="Delete User"
-                        >
-                          <FiTrash2 size={14} className="text-red-500" />
-                          <span className="text-red-600">Delete</span>
-                        </button>
+                          <button
+                            onClick={() => handleResetKey(user)}
+                            className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1 text-xs font-semibold border border-transparent hover:border-amber-100"
+                            title="Reset Device Key"
+                          >
+                            <FiRefreshCw size={14} className="text-amber-500" />
+                            <span className="text-amber-600">Reset Key</span>
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(user)}
+                            className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1 text-xs font-semibold border border-transparent hover:border-red-100"
+                            title="Delete User"
+                          >
+                            <FiTrash2 size={14} className="text-red-500" />
+                            <span className="text-red-600">Delete</span>
+                          </button>
                       </div>
                     </td>
                   </tr>
@@ -158,6 +201,16 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
         message={`Are you sure you want to delete ${deleteTarget?.name || 'this user'}? This action cannot be undone and will remove all their data from the system.`}
         confirmLabel="Delete"
         variant="danger"
+      />
+
+      <ConfirmModal
+        isOpen={isResetOpen}
+        onClose={() => { setIsResetOpen(false); setResetTarget(null); }}
+        onConfirm={confirmReset}
+        title="Reset Device Key"
+        message={`Reset device key for ${resetTarget?.name || 'this user'}? They will need to re-register their device on next login.`}
+        confirmLabel="Reset Key"
+        variant="primary"
       />
 
       <Toast toasts={toasts} onDismiss={dismissToast} />

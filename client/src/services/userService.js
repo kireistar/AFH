@@ -12,7 +12,8 @@ const mapUser = (raw) => ({
   status: raw.employment_status,
   riskScore: raw.risk_score,
   riskTier: raw.risk_score_tier,
-  _id: raw.id,  // UUID asli, dibutuhkan saat kirim ke API
+  public_key: raw.public_key,
+  _id: raw.id,
 });
 
 export const fetchUsers = async () => {
