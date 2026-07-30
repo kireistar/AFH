@@ -3,6 +3,14 @@ import { get, set } from 'idb-keyval';
 
 const PRIV_KEY_ALIAS = 'afh_ed25519_priv';
 
+const uint8ArrayToBase64 = (bytes) => {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+};
+
 /**
  * 1. Ambil atau generate keypair Ed25519 dari IndexedDB
  */
@@ -15,7 +23,7 @@ export const getOrGenerateKeyPair = async () => {
   }
 
   const pubKey = await ed.getPublicKeyAsync(privKey);
-  const pubKeyBase64 = btoa(String.fromCharCode(...pubKey));
+  const pubKeyBase64 = uint8ArrayToBase64(pubKey);
 
   return {
     privKey,
@@ -33,7 +41,7 @@ export const regenerateKeyPair = async () => {
   await set(PRIV_KEY_ALIAS, privKey);
 
   const pubKey = await ed.getPublicKeyAsync(privKey);
-  const pubKeyBase64 = btoa(String.fromCharCode(...pubKey));
+  const pubKeyBase64 = uint8ArrayToBase64(pubKey);
 
   return {
     privKey,
@@ -80,7 +88,7 @@ export const signPayload = async (payloadString, privKey) => {
   const encoder = new TextEncoder();
   const data = encoder.encode(payloadString);
   const signature = await ed.signAsync(data, privKey);
-  return btoa(String.fromCharCode(...signature));
+  return uint8ArrayToBase64(signature);
 };
 
 /**

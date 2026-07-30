@@ -82,6 +82,26 @@ export const AuthProvider = ({ children }) => {
     window.location.href = "/login";
   }, []);
 
+  // ── refreshUser: refetch user profile from backend ────────────────────────
+  const refreshUser = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) return null;
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/v1/users/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error(`Failed to fetch user: ${response.status}`);
+      const updatedUser = await response.json();
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      setIsAuth(true);
+      return updatedUser;
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+      return null;
+    }
+  }, []);
+
   // ── Check token expiry on mount & periodically ────────────────────────────
   useEffect(() => {
     const checkTokenExpiry = () => {
@@ -112,6 +132,7 @@ export const AuthProvider = ({ children }) => {
     // Actions
     login,
     logout,
+    refreshUser,
 
     // Helpers
     isTokenExpired: (token = accessToken) => isTokenExpired(token),

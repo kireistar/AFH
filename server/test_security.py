@@ -47,10 +47,21 @@ public_key_b64 = base64.b64encode(public_key_bytes).decode("utf-8")
 
 
 def sign_data(payload):
-    # JSON dump harus konsisten (tanpa spasi) agar signature valid
-    payload_bytes = json.dumps(payload, separators=(",", ":")).encode("utf-8")
-    signature = private_key.sign(payload_bytes)
-    return payload_bytes, base64.b64encode(signature).decode("utf-8")
+    # Build canonical string: action|borrower_id|asset_id|timestamp[|expires_at]
+    canonical = f"{payload['action']}|{payload['borrower_id']}|{payload['asset_id']}|{payload['timestamp']}"
+    if payload.get('expires_at'):
+        canonical += f"|{payload['expires_at']}"
+    canonical_bytes = canonical.encode("utf-8")
+    signature = private_key.sign(canonical_bytes)
+    return canonical_bytes, base64.b64encode(signature).decode("utf-8")
+
+
+def send_signed(payload, extra_headers=None):
+    """Helper to POST a signed transaction."""
+    canonical_bytes, sig = sign_data(payload)
+    body = json.dumps(payload, separators=(",", ":"))
+    headers = {**HEADERS, "x-ed25519-signature": sig, **(extra_headers or {})}
+    return requests.post(BASE_URL, data=body, headers=headers)
 
 
 print("Memulai Security Audit Ed25519 (Persisted Keys)...\n")
@@ -64,17 +75,8 @@ valid_payload = {
     "payload": {"notes": "Test device"},
     "timestamp": int(time.time()),
 }
-raw_body, signature = sign_data(valid_payload)
 
-res1 = requests.post(
-    BASE_URL,
-    data=raw_body,
-    headers={
-        **HEADERS,
-        "x-ed25519-signature": signature,
-        "x-ed25519-public-key": public_key_b64,
-    },
-)
+res1 = send_signed(valid_payload, {"x-ed25519-public-key": public_key_b64})
 print(
     f"Test 1 (Valid Transaction): {'PASS' if res1.status_code == 201 else 'FAIL'} - HTTP {res1.status_code}"
 )
@@ -82,23 +84,20 @@ print(
 # --- TEST 2: Tamper Attack ---
 tampered_payload = valid_payload.copy()
 tampered_payload["asset_id"] = 99
-tampered_body = json.dumps(tampered_payload, separators=(",", ":")).encode("utf-8")
-
+# Use the original valid signature but modify the body — will fail canonical check
+body2 = json.dumps(tampered_payload, separators=(",", ":"))
+_, sig_orig = sign_data(valid_payload)  # signature over ORIGINAL canonical string
 res2 = requests.post(
-    BASE_URL, data=tampered_body, headers={**HEADERS, "x-ed25519-signature": signature}
+    BASE_URL, data=body2, headers={**HEADERS, "x-ed25519-signature": sig_orig}
 )
 print(
-    f"Test 2 (Tampered Data)    : {'PASS' if res2.status_code == 403 else 'FAIL'} - HTTP {res2.status_code}"
+    f"Test 2 (Tampered Data)    : {'PASS' if res2.status_code == 401 else 'FAIL'} - HTTP {res2.status_code}"
 )
 
 # --- TEST 3: Replay Attack ---
 expired_payload = valid_payload.copy()
-expired_payload["timestamp"] = int(time.time()) - 600
-raw_expired, sig_expired = sign_data(expired_payload)
-
-res3 = requests.post(
-    BASE_URL, data=raw_expired, headers={**HEADERS, "x-ed25519-signature": sig_expired}
-)
+expired_payload["timestamp"] = int(time.time()) - 120  # 2 min old, beyond 60s window
+res3 = send_signed(expired_payload)
 print(
     f"Test 3 (Replay Attack)    : {'PASS' if res3.status_code == 400 else 'FAIL'} - HTTP {res3.status_code}"
 )

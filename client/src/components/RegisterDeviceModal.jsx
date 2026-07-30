@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getOrGenerateKeyPair, regenerateKeyPair } from '../utils/crypto';
+import { getOrGenerateKeyPair, signPayload } from '../utils/crypto';
 import { apiPost } from '../services/apiClient';
 
 export default function RegisterDeviceModal({ user, onKeyRegistered, onClose }) {
@@ -15,11 +15,16 @@ export default function RegisterDeviceModal({ user, onKeyRegistered, onClose }) 
 
     try {
       // 1. Generate atau ambil Ed25519 keypair dari IndexedDB
-      const { pubKeyBase64 } = await getOrGenerateKeyPair();
+      const { privKey, pubKeyBase64 } = await getOrGenerateKeyPair();
 
-      // 2. Kirim public key ke backend API
+      // 2. Proof-of-possession: sign challenge string
+      const challenge = `register:${user.id}`;
+      const signature = await signPayload(challenge, privKey);
+
+      // 3. Kirim public key + signature ke backend API
       await apiPost('/api/v1/users/register-key', {
         public_key: pubKeyBase64,
+        signature,
       });
 
       // 3. Force Sync LocalStorage
@@ -55,38 +60,14 @@ export default function RegisterDeviceModal({ user, onKeyRegistered, onClose }) 
       console.error('Device registration failed:', err);
       const errMsg = err?.message || '';
 
-      // Jika kunci sudah terdaftar di server, regenerate keypair baru dan coba lagi
+      // Jika kunci sudah terdaftar di server, treat as success
       if (errMsg.toLowerCase().includes('already registered') || errMsg.includes('sudah terdaftar')) {
-        try {
-          const { pubKeyBase64 } = await regenerateKeyPair();
-          await apiPost('/api/v1/users/register-key', {
-            public_key: pubKeyBase64,
-          });
-
-          // Sync localStorage
-          const storedUserStr = localStorage.getItem('user');
-          if (storedUserStr) {
-            try {
-              const storedUser = JSON.parse(storedUserStr);
-              storedUser.public_key = pubKeyBase64;
-              localStorage.setItem('user', JSON.stringify(storedUser));
-            } catch (e) {
-              console.error("Failed to sync local storage:", e);
-            }
-          }
-
-          setIsSuccess(true);
-          setTimeout(async () => {
-            if (typeof onKeyRegistered === 'function') await onKeyRegistered();
-            if (typeof onClose === 'function') onClose();
-          }, 2000);
-          return;
-        } catch (retryErr) {
-          console.error('Re-registration failed:', retryErr);
-          setError('Failed to re-register device. Please try again.');
-          setLoading(false);
-          return;
-        }
+        setIsSuccess(true);
+        setTimeout(async () => {
+          if (typeof onKeyRegistered === 'function') await onKeyRegistered();
+          if (typeof onClose === 'function') onClose();
+        }, 2000);
+        return;
       }
 
       setError(errMsg || 'Failed to register device. Please try again.');

@@ -2,12 +2,15 @@
 User router - CRUD endpoint untuk user management & Device Registration Shield.
 """
 
+import base64
 from typing import List
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from cryptography.hazmat.primitives.asymmetric import ed25519
+from cryptography.exceptions import InvalidSignature
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_role
@@ -24,6 +27,7 @@ router = APIRouter(
 
 class RegisterPublicKeyRequest(BaseModel):
     public_key: str = Field(..., description="Ed25519 Public Key dalam format Base64")
+    signature: str = Field(..., description="Ed25519 signature dari challenge string 'register:{user_id}' untuk proof-of-possession")
 
 
 @router.post("/register-key", response_model=UserResponse)
@@ -36,7 +40,24 @@ def register_public_key(
     Device Registration Shield
     Mengikat Public Key Ed25519 dari perangkat fisik ke tabel users (D1).
     Mengizinkan re-registrasi (overwrite) jika user berganti perangkat.
+
+    Melakukan proof-of-possession dengan memverifikasi signature dari
+    challenge 'register:{user_id}' untuk memastikan client memiliki private key.
     """
+    # 1. Proof-of-possession: verify client holds the private key
+    challenge = f"register:{current_user.id}"
+    challenge_bytes = challenge.encode("utf-8")
+    try:
+        pub_key_bytes = base64.b64decode(payload.public_key.strip())
+        sig_bytes = base64.b64decode(payload.signature.strip())
+        public_key = ed25519.Ed25519PublicKey.from_public_bytes(pub_key_bytes)
+        public_key.verify(sig_bytes, challenge_bytes)
+    except (InvalidSignature, ValueError, Exception) as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Proof-of-possession failed: {str(e)}"
+        )
+
     current_user.public_key = payload.public_key
     db.commit()
     db.refresh(current_user)

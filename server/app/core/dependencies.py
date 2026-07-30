@@ -107,8 +107,8 @@ async def verify_non_repudiation(
         if not all([action, borrower_id, asset_id, timestamp]):
             raise ValueError("Missing canonical payload fields.")
 
-        # Replay Attack Prevention (5 Minutes Window)
-        if abs(time.time() - int(timestamp)) > 300:
+        # Replay Attack Prevention (1 Minute Window)
+        if abs(time.time() - int(timestamp)) > 60:
             raise ValueError("Payload timestamp expired or out of tolerance.")
 
         # QR Expiry Enforcement (30-second TTL)

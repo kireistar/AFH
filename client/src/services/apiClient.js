@@ -18,24 +18,17 @@ const injectEd25519Signature = async (endpoint, config) => {
 
       const isQRFlow = payload.signature && payload.public_key;
 
-      // Sinkronkan timestamp & expires_at dari QR payload agar validasi backend tidak gagal
-      if (isQRFlow && payload.payload) {
-        if (payload.payload.timestamp) {
-          payload.timestamp = payload.payload.timestamp;
-        }
-        if (payload.payload.expires_at) {
-          payload.expires_at = payload.payload.expires_at;
-        }
-      }
+      // Ambil expires_at dari QR payload jika ada (untuk canonical string)
+      const qrExpiresAt = isQRFlow && payload.payload?.expires_at ? payload.payload.expires_at : null;
 
-      // Selalu generate canonical string + admin signature
+      // Generate admin canonical string dengan timestamp SEKARANG, bukan dari QR
       const { privKey, pubKeyBase64 } = await getOrGenerateKeyPair();
 
       const action = payload.action || "handover";
       const borrowerId = payload.borrower_id;
       const assetId = payload.asset_id;
-      const ts = payload.timestamp || Math.floor(Date.now() / 1000);
-      const expiresAt = isQRFlow && payload.payload?.expires_at ? payload.payload.expires_at : null;
+      const ts = Math.floor(Date.now() / 1000);
+      const expiresAt = qrExpiresAt;
 
       payload.timestamp = ts;
       config.body = JSON.stringify(payload);
@@ -57,6 +50,7 @@ const injectEd25519Signature = async (endpoint, config) => {
       }
     } catch (err) {
       console.error("Failed to perform Ed25519 signing on request:", err);
+      throw new Error("Cryptographic signing failed: " + (err.message || "Unable to sign transaction."));
     }
   }
 };

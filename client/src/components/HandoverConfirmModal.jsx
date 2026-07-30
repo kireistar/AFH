@@ -97,7 +97,7 @@ export default function HandoverConfirmModal({
 
               <div className="border-t border-slate-100 pt-4">
                 <p className="text-xs text-slate-400 text-center">
-                  Cryptographic verification passed. Both borrower and admin signatures are valid.
+                  Digital signature verified. Transaction will be appended to the immutable ledger.
                 </p>
               </div>
             </div>

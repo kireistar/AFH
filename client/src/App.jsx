@@ -34,7 +34,7 @@ function DeviceShieldGuard({ children }) {
 
   const user = auth?.user;
   const loading = auth?.loading;
-  const refreshUser = auth?.refreshUser || auth?.checkAuth || auth?.fetchUserProfile;
+  const refreshUser = auth?.refreshUser;
 
   // Reset localDismiss jika user logout atau berganti session
   useEffect(() => {
@@ -82,7 +82,6 @@ function DeviceShieldGuard({ children }) {
         <RegisterDeviceModal
           user={user}
           onKeyRegistered={handleKeyRegistered}
-          onClose={() => setLocalDismiss(true)}
         />
       )}
       {children}

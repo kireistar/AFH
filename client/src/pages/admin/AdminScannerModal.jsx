@@ -182,7 +182,11 @@ export default function AdminScannerModal({ isOpen, onClose, onVerifySuccess }) 
 
       <ExpiredQRModal
         isOpen={isExpiredQROpen}
-        onClose={() => setIsExpiredQROpen(false)}
+        onClose={() => {
+          setIsExpiredQROpen(false);
+          // Re-trigger scanner by having parent reopen via isOpen prop
+          // The parent will see modal closed and user can re-open scanner
+        }}
       />
     </>
   );
