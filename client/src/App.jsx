@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useState, useEffect } from 'react';
+import React, { Suspense, lazy, useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -31,6 +31,7 @@ function DeviceShieldGuard({ children }) {
 
   // State lokal untuk memaksa modal tertutup seketika setelah registrasi sukses
   const [localDismiss, setLocalDismiss] = useState(false);
+  const hasFetchedFreshProfile = useRef(false);
 
   const user = auth?.user;
   const loading = auth?.loading;
@@ -42,6 +43,15 @@ function DeviceShieldGuard({ children }) {
       setLocalDismiss(false);
     }
   }, [user]);
+
+  // Sync profile from backend once per session
+  // Catches stale public_key after admin resets it from another session
+  useEffect(() => {
+    if (user && !hasFetchedFreshProfile.current && typeof refreshUser === 'function') {
+      hasFetchedFreshProfile.current = true;
+      refreshUser().catch(() => {});
+    }
+  }, [user, refreshUser]);
 
   // Check physical token existence in localStorage (mencakup 'accessToken' atau 'token')
   const hasToken = Boolean(localStorage.getItem('accessToken') || localStorage.getItem('token'));

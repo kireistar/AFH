@@ -9,6 +9,7 @@ import AdminSecurity from './AdminSecurity';
 import AdminApprovals from './AdminApprovals';
 import AdminScannerModal from './AdminScannerModal';
 import HandoverConfirmModal from '../../components/HandoverConfirmModal';
+import ManualHandoverModal from '../../components/ManualHandoverModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import InputModal from '../../components/InputModal';
 import Toast, { createToast } from '../../components/Toast';
@@ -30,12 +31,18 @@ const AdminDashboard = () => {
   // Scanner modal
   const [isScannerOpen, setIsScannerOpen] = useState(false);
 
-  // Handover confirm modal
+  // Handover confirm modal (QR flow)
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [confirmRequestData, setConfirmRequestData] = useState(null);
   const [pendingHandoverPayload, setPendingHandoverPayload] = useState(null);
   const [isHandoverLoading, setIsHandoverLoading] = useState(false);
   const [isHandoverSuccess, setIsHandoverSuccess] = useState(false);
+
+  // Manual handover modal (non-QR flow)
+  const [isManualConfirmOpen, setIsManualConfirmOpen] = useState(false);
+  const [manualConfirmRequestData, setManualConfirmRequestData] = useState(null);
+  const [isManualLoading, setIsManualLoading] = useState(false);
+  const [isManualSuccess, setIsManualSuccess] = useState(false);
 
   // Approve confirm modal
   const [isApproveOpen, setIsApproveOpen] = useState(false);
@@ -202,7 +209,40 @@ const AdminDashboard = () => {
   const handleCompleteHandover = (requestId) => {
     const req = handovers.find(h => String(h._id) === String(requestId) || String(h.id) === String(requestId));
     if (!req) return;
-    openConfirmModal(req, null);
+    setManualConfirmRequestData(req);
+    setIsManualLoading(false);
+    setIsManualSuccess(false);
+    setIsManualConfirmOpen(true);
+  };
+
+  const handleConfirmManualHandover = async (notes) => {
+    setIsManualLoading(true);
+    try {
+      await submitTransaction({
+        action: 'handover',
+        asset_id: manualConfirmRequestData._assetId || manualConfirmRequestData.asset_id,
+        borrower_id: manualConfirmRequestData._borrowerId || manualConfirmRequestData.borrower_id,
+        request_id: manualConfirmRequestData._id || manualConfirmRequestData.id,
+        admin_id: user?.id || user?._id || 'admin',
+        payload: { notes: notes || "Handover executed via Admin Dashboard" },
+      });
+
+      setIsManualSuccess(true);
+      refreshHandovers();
+      refreshTransactions();
+      refreshLoans();
+    } catch (err) {
+      setIsManualLoading(false);
+      setIsManualConfirmOpen(false);
+      addToast("Failed to complete handover: " + (err?.message || "Server error"), "error");
+    }
+  };
+
+  const handleCloseManualConfirm = () => {
+    setIsManualConfirmOpen(false);
+    setManualConfirmRequestData(null);
+    setIsManualLoading(false);
+    setIsManualSuccess(false);
   };
 
   // ── QR scanner success trigger ──
@@ -433,7 +473,7 @@ const AdminDashboard = () => {
         onVerifySuccess={handleScannerSuccess}
       />
 
-      {/* Handover Confirmation Modal */}
+      {/* Handover Confirmation Modal (QR flow) */}
       <HandoverConfirmModal
         isOpen={isConfirmOpen}
         onClose={handleCloseConfirmModal}
@@ -441,6 +481,16 @@ const AdminDashboard = () => {
         requestData={confirmRequestData}
         isLoading={isHandoverLoading}
         isSuccess={isHandoverSuccess}
+      />
+
+      {/* Manual Handover Modal (non-QR flow) */}
+      <ManualHandoverModal
+        isOpen={isManualConfirmOpen}
+        onClose={handleCloseManualConfirm}
+        onConfirm={handleConfirmManualHandover}
+        requestData={manualConfirmRequestData}
+        isLoading={isManualLoading}
+        isSuccess={isManualSuccess}
       />
 
       {/* Approve Confirmation Modal */}

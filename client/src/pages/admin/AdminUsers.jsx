@@ -5,8 +5,10 @@ import EditUserModal from '../../components/EditUserModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import Toast, { createToast } from '../../components/Toast';
 import { deleteUser, resetUserDeviceKey } from '../../services/userService';
+import { useAuth } from '../../hooks/useAuth';
 
 const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
+  const auth = useAuth();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
@@ -64,11 +66,14 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
     if (!resetTarget) return;
     setIsResetting(true);
     try {
-      await resetUserDeviceKey(resetTarget._id);
+      const updatedUser = await resetUserDeviceKey(resetTarget._id);
       setIsResetOpen(false);
       setResetTarget(null);
       if (onRefresh) onRefresh();
       addToast(`${resetTarget.name}'s device key has been reset.`, "success");
+      if (auth?.user?.id && updatedUser?.id && auth.user.id === updatedUser.id && typeof auth?.refreshUser === 'function') {
+        await auth.refreshUser();
+      }
     } catch (err) {
       setIsResetOpen(false);
       addToast(err.message || `Failed to reset key for ${resetTarget.name}.`, "error");
