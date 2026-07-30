@@ -43,6 +43,7 @@ const FinanceDashboard = () => {
   // Payment confirm modal
   const [isPayConfirmOpen, setIsPayConfirmOpen] = useState(false);
   const [payTarget, setPayTarget] = useState(null);
+  const [isPaying, setIsPaying] = useState(false);
 
   // Toast
   const [toasts, setToasts] = useState([]);
@@ -60,6 +61,7 @@ const FinanceDashboard = () => {
 
   const confirmMarkAsPaid = async () => {
     if (!payTarget) return;
+    setIsPaying(true);
     try {
       await markAsPaid(payTarget._id);
       setIsPayConfirmOpen(false);
@@ -67,6 +69,8 @@ const FinanceDashboard = () => {
       addToast("Payment recorded successfully.", "success");
     } catch (err) {
       addToast("Failed to record payment: " + (err?.message || "Server error"), "error");
+    } finally {
+      setIsPaying(false);
     }
   };
 
@@ -124,6 +128,7 @@ const FinanceDashboard = () => {
         message={`Has the payment for fine #${payTarget?.id || ''} (Rp ${payTarget?._rawAmount?.toLocaleString('id-ID') || '0'}) been received? This will mark the fine as paid.`}
         confirmLabel="Confirm Payment"
         variant="primary"
+        isLoading={isPaying}
       />
 
       <Toast toasts={toasts} onDismiss={dismissToast} />

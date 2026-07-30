@@ -49,6 +49,11 @@ const AdminDashboard = () => {
   const [isReturnOpen, setIsReturnOpen] = useState(false);
   const [returnTarget, setReturnTarget] = useState(null);
 
+  // Loading states for modals
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [isReturning, setIsReturning] = useState(false);
+
   // Toast
   const [toasts, setToasts] = useState([]);
   const addToast = useCallback((message, type) => {
@@ -104,12 +109,17 @@ const AdminDashboard = () => {
 
   const confirmApprove = async () => {
     if (!approveTarget) return;
-    await approve(approveTarget._id || approveTarget.id);
-    refreshHandovers();
-    refreshApprovals();
-    setIsApproveOpen(false);
-    setApproveTarget(null);
-    addToast("Request approved successfully.", "success");
+    setIsApproving(true);
+    try {
+      await approve(approveTarget._id || approveTarget.id);
+      refreshHandovers();
+      refreshApprovals();
+      setIsApproveOpen(false);
+      setApproveTarget(null);
+      addToast("Request approved successfully.", "success");
+    } finally {
+      setIsApproving(false);
+    }
   };
 
   // ── Reject handler ──
@@ -120,11 +130,16 @@ const AdminDashboard = () => {
 
   const submitReject = async (reason) => {
     if (!rejectTarget || !reason) return;
-    await reject(rejectTarget._id || rejectTarget.id, reason);
-    refreshApprovals();
-    setIsRejectOpen(false);
-    setRejectTarget(null);
-    addToast("Request rejected.", "success");
+    setIsRejecting(true);
+    try {
+      await reject(rejectTarget._id || rejectTarget.id, reason);
+      refreshApprovals();
+      setIsRejectOpen(false);
+      setRejectTarget(null);
+      addToast("Request rejected.", "success");
+    } finally {
+      setIsRejecting(false);
+    }
   };
 
   // ── Shared: execute handover on backend ──
@@ -226,6 +241,7 @@ const AdminDashboard = () => {
 
   const submitReturn = async (conditionNotes) => {
     if (!returnTarget) return;
+    setIsReturning(true);
     try {
       await returnAsset(returnTarget._id || returnTarget.id, conditionNotes || "Good condition");
       refreshLoans();
@@ -236,6 +252,8 @@ const AdminDashboard = () => {
     } catch (err) {
       const errorMessage = err?.message || "Server error";
       addToast("Failed to process return: " + errorMessage, "error");
+    } finally {
+      setIsReturning(false);
     }
   };
 
@@ -434,6 +452,7 @@ const AdminDashboard = () => {
         message={`Are you sure you want to approve this asset request from ${approveTarget?.user || 'this user'}? The request will move to the Handover queue.`}
         confirmLabel="Approve"
         variant="primary"
+        isLoading={isApproving}
       />
 
       {/* Reject Input Modal */}
@@ -445,6 +464,7 @@ const AdminDashboard = () => {
         label="Please provide a reason for rejecting this request"
         placeholder="e.g., Asset not available, insufficient justification..."
         multiline
+        isLoading={isRejecting}
       />
 
       {/* Return Condition Modal */}
@@ -457,6 +477,7 @@ const AdminDashboard = () => {
         placeholder="Good condition"
         multiline
         defaultValue="Good condition"
+        isLoading={isReturning}
       />
 
       {/* Toast Notifications */}

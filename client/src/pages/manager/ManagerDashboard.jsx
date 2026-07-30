@@ -33,6 +33,10 @@ const ManagerDashboard = () => {
   const [isRejectOpen, setIsRejectOpen] = useState(false);
   const [rejectTarget, setRejectTarget] = useState(null);
 
+  // Loading states for modals
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+
   // Toast
   const [toasts, setToasts] = useState([]);
   const addToast = useCallback((message, type) => {
@@ -49,10 +53,15 @@ const ManagerDashboard = () => {
 
   const confirmApprove = async () => {
     if (!approveTarget) return;
-    await approve(approveTarget._id);
-    setIsApproveOpen(false);
-    setApproveTarget(null);
-    addToast("High-risk request approved.", "success");
+    setIsApproving(true);
+    try {
+      await approve(approveTarget._id);
+      setIsApproveOpen(false);
+      setApproveTarget(null);
+      addToast("High-risk request approved.", "success");
+    } finally {
+      setIsApproving(false);
+    }
   };
 
   const handleReject = (req) => {
@@ -62,10 +71,15 @@ const ManagerDashboard = () => {
 
   const submitReject = async (reason) => {
     if (!rejectTarget || !reason) return;
-    await reject(rejectTarget._id, reason);
-    setIsRejectOpen(false);
-    setRejectTarget(null);
-    addToast("Request rejected.", "success");
+    setIsRejecting(true);
+    try {
+      await reject(rejectTarget._id, reason);
+      setIsRejectOpen(false);
+      setRejectTarget(null);
+      addToast("Request rejected.", "success");
+    } finally {
+      setIsRejecting(false);
+    }
   };
 
   const managerProfile = {
@@ -120,6 +134,7 @@ const ManagerDashboard = () => {
         message={`Are you sure you want to approve this high-risk request from ${approveTarget?.user || 'this user'}? This action will authorize the asset handover process.`}
         confirmLabel="Approve"
         variant="primary"
+        isLoading={isApproving}
       />
 
       <InputModal
@@ -130,6 +145,7 @@ const ManagerDashboard = () => {
         label="Please provide a reason for rejecting this request"
         placeholder="e.g., Risk too high, alternative device available..."
         multiline
+        isLoading={isRejecting}
       />
 
       <Toast toasts={toasts} onDismiss={dismissToast} />

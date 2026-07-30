@@ -19,6 +19,10 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
   const [isResetOpen, setIsResetOpen] = useState(false);
   const [resetTarget, setResetTarget] = useState(null);
 
+  // Loading states for modals
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+
   // Toast
   const [toasts, setToasts] = useState([]);
   const addToast = useCallback((message, type) => {
@@ -35,6 +39,7 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
+    setIsDeleting(true);
     try {
       await deleteUser(deleteTarget._id);
       setIsDeleteOpen(false);
@@ -45,6 +50,8 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
       setIsDeleteOpen(false);
       addToast(err.message || `Failed to delete ${deleteTarget.name}. They may have active requests or transactions.`, "error");
       setDeleteTarget(null);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -55,6 +62,7 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
 
   const confirmReset = async () => {
     if (!resetTarget) return;
+    setIsResetting(true);
     try {
       await resetUserDeviceKey(resetTarget._id);
       setIsResetOpen(false);
@@ -65,6 +73,8 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
       setIsResetOpen(false);
       addToast(err.message || `Failed to reset key for ${resetTarget.name}.`, "error");
       setResetTarget(null);
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -201,6 +211,7 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
         message={`Are you sure you want to delete ${deleteTarget?.name || 'this user'}? This action cannot be undone and will remove all their data from the system.`}
         confirmLabel="Delete"
         variant="danger"
+        isLoading={isDeleting}
       />
 
       <ConfirmModal
@@ -211,6 +222,7 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
         message={`Reset device key for ${resetTarget?.name || 'this user'}? They will need to re-register their device on next login.`}
         confirmLabel="Reset Key"
         variant="primary"
+        isLoading={isResetting}
       />
 
       <Toast toasts={toasts} onDismiss={dismissToast} />
