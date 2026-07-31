@@ -47,3 +47,7 @@ export const verifyLedger = async () => {
 export const fetchAllTransactions = async () => {
   return await apiGet("/api/v1/transactions/");
 };
+
+export const fetchTransactionsByBorrower = async (borrowerId) => {
+  return await apiGet(`/api/v1/transactions/?borrower_id=${encodeURIComponent(borrowerId)}`);
+};

@@ -44,7 +44,7 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
             }`}>
               {checking ? (
                 <svg className="w-6 h-6 md:w-8 md:h-8 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.75 8.25dec" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 11 21.75 8.25" />
                 </svg>
               ) : integrityData?.valid ? (
                 <svg className="w-6 h-6 md:w-8 md:h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -116,7 +116,7 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
           {loadingTransactions || checking ? (
             <div className="p-12 text-center text-slate-400 text-sm">
               <svg className="w-6 h-6 animate-spin mx-auto mb-2 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.75 8.25dec" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 11 21.75 8.25" />
               </svg>
               Verifying blocks...
             </div>

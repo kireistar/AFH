@@ -2,8 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { loginUser } from '../../services/authService';
+import usePageMeta from '../../hooks/usePageMeta';
 
 function Login() {
+  usePageMeta({
+    title: 'AFH — Sign In',
+    description: 'Sign in to AFH to manage corporate asset handovers, requests, and the non-repudiation ledger.',
+  });
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

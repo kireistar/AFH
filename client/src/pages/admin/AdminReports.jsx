@@ -1,5 +1,6 @@
 import React from 'react';
 import { exportToCSV } from '../../utils/exportCSV';
+import { openReceiptInNewTab } from '../../utils/receipt';
 
 /**
  * Helper function untuk mengekstrak nilai string aman dari variabel yang bisa berupa
@@ -90,6 +91,7 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
                   <th className="p-4 font-semibold">Action</th>
                   <th className="p-4 font-semibold">Date</th>
                   <th className="p-4 font-semibold">Status</th>
+                  <th className="p-4 font-semibold text-right">Receipt</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -114,6 +116,14 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
                       <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200 uppercase">
                         {renderSafeValue(t.status, 'COMPLETED')}
                       </span>
+                    </td>
+                    <td className="p-4 text-sm text-right whitespace-nowrap">
+                      <button
+                        onClick={() => openReceiptInNewTab(t)}
+                        className="px-2.5 py-1 bg-[#1E3A8A] text-white rounded-lg hover:bg-blue-900 transition-all font-semibold text-xs cursor-pointer"
+                      >
+                        View
+                      </button>
                     </td>
                   </tr>
                 ))}

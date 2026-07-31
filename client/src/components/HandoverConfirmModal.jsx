@@ -1,5 +1,6 @@
 import React from "react";
 import { TIER_STYLES } from "../utils/styles";
+import ReceiptModal from "./ReceiptModal";
 
 export default function HandoverConfirmModal({
   isOpen,
@@ -8,33 +9,17 @@ export default function HandoverConfirmModal({
   requestData,
   isLoading = false,
   isSuccess = false,
+  receipt = null,
 }) {
   if (!isOpen) return null;
+
+  if (isSuccess) {
+    return <ReceiptModal receipt={receipt} onClose={onClose} />;
+  }
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 transition-opacity">
       <div className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-md w-full overflow-hidden transform transition-all">
-        {isSuccess ? (
-          /* ── SUCCESS STATE ── */
-          <div className="p-8 text-center">
-            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-5">
-              <svg className="w-10 h-10 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-slate-800 mb-2">Handover Complete</h2>
-            <p className="text-sm text-slate-500">
-              Asset has been successfully transferred. The ledger has been updated.
-            </p>
-            <button
-              onClick={onClose}
-              className="mt-6 w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-colors cursor-pointer"
-            >
-              Done
-            </button>
-          </div>
-        ) : (
-          /* ── CONFIRM STATE ── */
           <>
             {/* Header */}
             <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
@@ -127,7 +112,6 @@ export default function HandoverConfirmModal({
               </button>
             </div>
           </>
-        )}
       </div>
     </div>
   );

@@ -3,23 +3,41 @@ import DashboardLayout from '../../components/DashboardLayout';
 import UserAssets from './UserAssets';
 import UserRequests from './UserRequests';
 import UserIncidents from './UserIncidents';
+import UserReceipts from './UserReceipts';
 // Import komponen Modal
 import NewRequestModal from './NewRequestModal';
 import ReportIncidentModal from './ReportIncidentModal';
 import { useAuth } from '../../hooks/useAuth';
 import useRequests from '../../hooks/useRequests';
 import useIncidents from '../../hooks/useIncidents';
+import useMyTransactions from '../../hooks/useMyTransactions';
+import useDashboardRoute from '../../hooks/useDashboardRoute';
+import usePageMeta from '../../hooks/usePageMeta';
+
+const USER_TABS = ['Dashboard', 'Assets', 'Requests', 'Receipts', 'Incidents'];
+
+const USER_META = {
+  Dashboard: { title: 'AFH — Employee Portal', description: 'Manage your corporate devices and submit asset forms securely.' },
+  Assets: { title: 'AFH — My Assets', description: 'View the assets currently assigned to you.' },
+  Requests: { title: 'AFH — My Requests', description: 'Track and monitor the evaluation status of your asset applications.' },
+  Receipts: { title: 'AFH — My Receipts', description: 'Digital receipts for every asset handover, recorded immutably on the SHA-256 ledger.' },
+  Incidents: { title: 'AFH — My Incidents', description: 'Report and track device damages and malfunctions.' },
+};
 
 const UserDashboard = () => {
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const { activeTab, setActiveTab } = useDashboardRoute('/user', USER_TABS);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [isIncidentModalOpen, setIsIncidentModalOpen] = useState(false);
   const { user } = useAuth();
+
+  usePageMeta(USER_META[activeTab] || USER_META.Dashboard);
 
   // Fetch user requests
   const { requests, loading, refresh } = useRequests('mine');
 
   const { incidents, loading: incidentsLoading, refresh: refreshIncidents } = useIncidents();
+
+  const { transactions: myTransactions, loading: myTransactionsLoading } = useMyTransactions(user?.id);
 
   // Profile metadata for Employee
   const userProfile = {
@@ -30,10 +48,12 @@ const UserDashboard = () => {
   };
 
   // Flat sidebar menu items for Employee Portal
+  // Flat sidebar menu items for Employee Portal
   const menuItems = [
     { name: 'Dashboard', badge: null },
     { name: 'Assets', badge: null },
     { name: 'Requests', badge: null },
+    { name: 'Receipts', badge: null },
     { name: 'Incidents', badge: null },
   ];
 
@@ -77,6 +97,8 @@ const UserDashboard = () => {
         return <UserAssets requests={requests} loading={loading} />;
       case 'Requests':
         return <UserRequests requests={requests} loading={loading} onOpenRequestModal={() => setIsRequestModalOpen(true)} onRefresh={refresh} />;
+      case 'Receipts':
+        return <UserReceipts receipts={myTransactions} loading={myTransactionsLoading} />;
       case 'Incidents':
         return <UserIncidents incidents={incidents} loading={incidentsLoading} onOpenIncidentModal={() => setIsIncidentModalOpen(true)} />;
       default:

@@ -20,13 +20,29 @@ import useUsers from '../../hooks/useUsers';
 import useRequests from '../../hooks/useRequests';
 import useIncidents from '../../hooks/useIncidents';
 import useTransactions from '../../hooks/useTransactions';
+import useDashboardRoute from '../../hooks/useDashboardRoute';
+import usePageMeta from '../../hooks/usePageMeta';
 import { verifyLedger, submitTransaction } from '../../services/transactionService';
 
 const AUTO_REFRESH_INTERVAL = 8000;
 
+const ADMIN_TABS = ['Dashboard', 'Assets', 'Approvals', 'Handover', 'Users', 'Reports', 'Security'];
+
+const ADMIN_META = {
+  Dashboard: { title: 'AFH Admin — System Overview', description: 'Monitor company asset operations in real-time.' },
+  Assets: { title: 'AFH Admin — Asset Management', description: 'Manage the corporate asset inventory.' },
+  Approvals: { title: 'AFH Admin — Pending Approvals', description: 'Approve or reject asset requests.' },
+  Handover: { title: 'AFH Admin — Handover & Returns', description: 'Complete asset handovers and process returns.' },
+  Users: { title: 'AFH Admin — User Management', description: 'Manage employee accounts and device keys.' },
+  Reports: { title: 'AFH Admin — Transaction Reports', description: 'All asset handover, return, and incident transactions.' },
+  Security: { title: 'AFH Admin — Ledger Security', description: 'Verify the immutable SHA-256 ledger integrity.' },
+};
+
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const { activeTab, setActiveTab } = useDashboardRoute('/admin', ADMIN_TABS);
   const [autoOpenAddAsset, setAutoOpenAddAsset] = useState(false);
+
+  usePageMeta(ADMIN_META[activeTab] || ADMIN_META.Dashboard);
 
   // Scanner modal
   const [isScannerOpen, setIsScannerOpen] = useState(false);
@@ -43,6 +59,9 @@ const AdminDashboard = () => {
   const [manualConfirmRequestData, setManualConfirmRequestData] = useState(null);
   const [isManualLoading, setIsManualLoading] = useState(false);
   const [isManualSuccess, setIsManualSuccess] = useState(false);
+
+  // Digital signature receipt (struk) shown after handover success
+  const [receiptData, setReceiptData] = useState(null);
 
   // Approve confirm modal
   const [isApproveOpen, setIsApproveOpen] = useState(false);
@@ -153,15 +172,16 @@ const AdminDashboard = () => {
   const executeHandover = async (requestData, payload, notes) => {
     setIsHandoverLoading(true);
     try {
+      let txn;
       if (payload) {
-        await submitTransaction({
+        txn = await submitTransaction({
           payload: payload.payload,
           signature: payload.signature,
           public_key: payload.public_key,
           admin_id: user?.id || user?._id || 'admin',
         });
       } else {
-        await submitTransaction({
+        txn = await submitTransaction({
           action: 'handover',
           asset_id: requestData._assetId || requestData.asset_id,
           borrower_id: requestData._borrowerId || requestData.borrower_id,
@@ -171,6 +191,7 @@ const AdminDashboard = () => {
         });
       }
 
+      setReceiptData(txn);
       setIsHandoverSuccess(true);
       refreshHandovers();
       refreshTransactions();
@@ -189,6 +210,7 @@ const AdminDashboard = () => {
     setPendingHandoverPayload(handoverPayload);
     setIsHandoverLoading(false);
     setIsHandoverSuccess(false);
+    setReceiptData(null);
     setIsConfirmOpen(true);
   };
 
@@ -202,6 +224,7 @@ const AdminDashboard = () => {
     setPendingHandoverPayload(null);
     setIsHandoverLoading(false);
     setIsHandoverSuccess(false);
+    setReceiptData(null);
     setIsScannerOpen(false);
   };
 
@@ -212,13 +235,14 @@ const AdminDashboard = () => {
     setManualConfirmRequestData(req);
     setIsManualLoading(false);
     setIsManualSuccess(false);
+    setReceiptData(null);
     setIsManualConfirmOpen(true);
   };
 
   const handleConfirmManualHandover = async (notes) => {
     setIsManualLoading(true);
     try {
-      await submitTransaction({
+      const txn = await submitTransaction({
         action: 'handover',
         asset_id: manualConfirmRequestData._assetId || manualConfirmRequestData.asset_id,
         borrower_id: manualConfirmRequestData._borrowerId || manualConfirmRequestData.borrower_id,
@@ -227,6 +251,7 @@ const AdminDashboard = () => {
         payload: { notes: notes || "Handover executed via Admin Dashboard" },
       });
 
+      setReceiptData(txn);
       setIsManualSuccess(true);
       refreshHandovers();
       refreshTransactions();
@@ -243,6 +268,7 @@ const AdminDashboard = () => {
     setManualConfirmRequestData(null);
     setIsManualLoading(false);
     setIsManualSuccess(false);
+    setReceiptData(null);
   };
 
   // ── QR scanner success trigger ──
@@ -481,6 +507,7 @@ const AdminDashboard = () => {
         requestData={confirmRequestData}
         isLoading={isHandoverLoading}
         isSuccess={isHandoverSuccess}
+        receipt={receiptData}
       />
 
       {/* Manual Handover Modal (non-QR flow) */}
@@ -491,6 +518,7 @@ const AdminDashboard = () => {
         requestData={manualConfirmRequestData}
         isLoading={isManualLoading}
         isSuccess={isManualSuccess}
+        receipt={receiptData}
       />
 
       {/* Approve Confirmation Modal */}

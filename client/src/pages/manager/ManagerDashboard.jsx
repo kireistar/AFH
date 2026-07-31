@@ -11,10 +11,23 @@ import { useAuth } from '../../hooks/useAuth';
 import useRequests from '../../hooks/useRequests';
 import useAssets from '../../hooks/useAssets';
 import useIncidents from '../../hooks/useIncidents';
+import useDashboardRoute from '../../hooks/useDashboardRoute';
+import usePageMeta from '../../hooks/usePageMeta';
+
+const MANAGER_TABS = ['Dashboard', 'Approvals', 'Risk Assessment', 'Reports'];
+
+const MANAGER_META = {
+  Dashboard: { title: 'AFH Manager — Dashboard', description: 'Monitor approvals, assets, and incidents.' },
+  Approvals: { title: 'AFH Manager — Approvals', description: 'Approve or reject pending asset requests.' },
+  'Risk Assessment': { title: 'AFH Manager — Risk Assessment', description: 'Review AI-driven risk scores for asset requests.' },
+  Reports: { title: 'AFH Manager — Reports', description: 'Managerial reports for requests and incidents.' },
+};
 
 const ManagerDashboard = () => {
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const { activeTab, setActiveTab } = useDashboardRoute('/manager', MANAGER_TABS);
   const { user } = useAuth();
+
+  usePageMeta(MANAGER_META[activeTab] || MANAGER_META.Dashboard);
 
   const { requests: approvals, loading, approve, reject } = useRequests('all', 'pending_manager');
   const { requests: allRequests, loading: allRequestsLoading } = useRequests('all');

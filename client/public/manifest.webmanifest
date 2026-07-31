@@ -1,0 +1,17 @@
+{
+  "name": "AFH — Asset Facility Handover & Non-Repudiation Ledger",
+  "short_name": "AFH",
+  "description": "Corporate asset handovers protected by AI risk scoring, an immutable SHA-256 ledger, and Ed25519 digital signatures.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8FAFC",
+  "theme_color": "#1E3A8A",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

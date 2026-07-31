@@ -10,10 +10,24 @@ import Toast, { createToast } from '../../components/Toast';
 import { useAuth } from '../../hooks/useAuth';
 import useInvoices from '../../hooks/useInvoices';
 import useTransactions from '../../hooks/useTransactions';
+import useDashboardRoute from '../../hooks/useDashboardRoute';
+import usePageMeta from '../../hooks/usePageMeta';
+
+const FINANCE_TABS = ['Dashboard', 'Fines', 'Invoices', 'Payments', 'Reports'];
+
+const FINANCE_META = {
+  Dashboard: { title: 'AFH Finance — Dashboard', description: 'Monitor fines, invoices, and payments.' },
+  Fines: { title: 'AFH Finance — Fines', description: 'Manage and collect unpaid asset fines.' },
+  Invoices: { title: 'AFH Finance — Invoices', description: 'Review paid invoices.' },
+  Payments: { title: 'AFH Finance — Payments', description: 'Payment transaction history.' },
+  Reports: { title: 'AFH Finance — Reports', description: 'Financial reports for fines and transactions.' },
+};
 
 const FinanceDashboard = () => {
-  const [activeTab, setActiveTab] = useState('Dashboard');
+  const { activeTab, setActiveTab } = useDashboardRoute('/finance', FINANCE_TABS);
   const { user } = useAuth();
+
+  usePageMeta(FINANCE_META[activeTab] || FINANCE_META.Dashboard);
 
   const { invoices, loading, markAsPaid } = useInvoices();
 

@@ -42,6 +42,7 @@ class TransactionResponse(TransactionBase):
 
     borrower: Optional[UserResponse] = None
     asset: Optional[AssetResponse] = None
+    admin: Optional[UserResponse] = None
 
     model_config = ConfigDict(from_attributes=True)
 
