@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { FiEdit } from 'react-icons/fi';
 import AddAssetModal from '../../components/AddAssetModal';
 import EditAssetModal from '../../components/EditAssetModal';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 const AdminAssets = ({ assets = [], loading = false, onRefresh, autoOpenAdd = false, onAddModalClosed }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,6 +38,16 @@ const AdminAssets = ({ assets = [], loading = false, onRefresh, autoOpenAdd = fa
     const matchesBrand = filterBrand === 'All' || asset.brand === filterBrand;
     const matchesStatus = filterStatus === 'All' || asset.status === filterStatus;
     return matchesCategory && matchesBrand && matchesStatus;
+  });
+
+  const table = useTable(filteredAssets, {
+    accessors: {
+      id: (a) => a.id,
+      brand: (a) => a.brand,
+      name: (a) => a.name,
+      category: (a) => a.category,
+      status: (a) => a.status,
+    },
   });
 
   return (
@@ -110,16 +123,16 @@ const AdminAssets = ({ assets = [], loading = false, onRefresh, autoOpenAdd = fa
             <table className="w-full text-left">
               <thead>
                 <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-4 font-semibold">Asset ID</th>
-                  <th className="p-4 font-semibold">Brand</th>
-                  <th className="p-4 font-semibold">Device Name</th>
-                  <th className="p-4 font-semibold">Category</th>
-                  <th className="p-4 font-semibold">Status</th>
+                  <SortHeader label="Asset ID" sortKey="id" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                  <SortHeader label="Brand" sortKey="brand" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                  <SortHeader label="Device Name" sortKey="name" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                  <SortHeader label="Category" sortKey="category" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                  <SortHeader label="Status" sortKey="status" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
                   <th className="p-4 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {filteredAssets.map(asset => (
+                {table.pageItems.map(asset => (
                   <tr key={asset.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4 text-sm font-semibold text-slate-700">{asset.id}</td>
                     <td className="p-4 text-sm font-semibold text-slate-700">{asset.brand}</td>
@@ -148,6 +161,7 @@ const AdminAssets = ({ assets = [], loading = false, onRefresh, autoOpenAdd = fa
             </table>
           )}
         </div>
+        {table.count > 0 && <Pagination {...table} />}
       </div>
 
       <AddAssetModal 

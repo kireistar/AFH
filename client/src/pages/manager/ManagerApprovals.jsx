@@ -1,7 +1,21 @@
 import React from 'react';
 import { TIER_STYLES } from '../../utils/styles';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 const ManagerApprovals = ({ approvals = [], loading = false, handleApprove, handleReject }) => {
+  const table = useTable(approvals, {
+    accessors: {
+      id: (r) => r.id,
+      user: (r) => r.user,
+      asset: (r) => r.asset,
+      urgency: (r) => r.urgency,
+      aiReason: (r) => r.aiReason,
+      status: (r) => r.status,
+    },
+  });
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="p-6 border-b border-slate-100 bg-slate-50/50">
@@ -17,17 +31,17 @@ const ManagerApprovals = ({ approvals = [], loading = false, handleApprove, hand
           <table className="w-full text-left">
             <thead>
               <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                <th className="p-4 font-semibold">ID</th>
-                <th className="p-4 font-semibold">Requester</th>
-                <th className="p-4 font-semibold">Asset</th>
-                <th className="p-4 font-semibold">Risk Tier</th>
-                <th className="p-4 font-semibold">AI Reason</th>
-                <th className="p-4 font-semibold">Status</th>
+                <SortHeader label="ID" sortKey="id" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Requester" sortKey="user" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Asset" sortKey="asset" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Risk Tier" sortKey="urgency" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="AI Reason" sortKey="aiReason" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Status" sortKey="status" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
                 <th className="p-4 font-semibold text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {approvals.map(req => (
+              {table.pageItems.map(req => (
                 <tr key={req._id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="p-4 text-sm font-semibold text-slate-700">{req.id}</td>
                   <td className="p-4 text-sm font-medium text-slate-800">{req.user}</td>
@@ -58,10 +72,11 @@ const ManagerApprovals = ({ approvals = [], loading = false, handleApprove, hand
                 </tr>
               ))}
             </tbody>
-          </table>
-        )}
+            </table>
+          )}
+        </div>
+        {table.count > 0 && <Pagination {...table} />}
       </div>
-    </div>
   );
 };
 

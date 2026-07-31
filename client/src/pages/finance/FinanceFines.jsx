@@ -1,7 +1,20 @@
 import React from 'react';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 // UBAH: Menerima props handleMarkAsPaid
 const FinanceFines = ({ fines = [], loading = false, handleMarkAsPaid }) => {
+  const table = useTable(fines, {
+    accessors: {
+      id: (f) => f.id,
+      user: (f) => f.user,
+      reason: (f) => f.reason,
+      amount: (f) => f._rawAmount ?? f.amount,
+      status: (f) => f.status || f._status,
+    },
+  });
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -16,16 +29,16 @@ const FinanceFines = ({ fines = [], loading = false, handleMarkAsPaid }) => {
           <table className="w-full text-left">
             <thead>
               <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                <th className="p-4 font-semibold">Fine ID</th>
-                <th className="p-4 font-semibold">User</th>
-                <th className="p-4 font-semibold">Reason</th>
-                <th className="p-4 font-semibold">Amount</th>
-                <th className="p-4 font-semibold">Status</th>
+                <SortHeader label="Fine ID" sortKey="id" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="User" sortKey="user" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Reason" sortKey="reason" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Amount" sortKey="amount" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Status" sortKey="status" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
                 <th className="p-4 font-semibold text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {fines.map(fine => (
+              {table.pageItems.map(fine => (
                 <tr key={fine._id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="p-4 text-sm font-semibold text-slate-700">{fine.id}</td>
                   <td className="p-4 text-sm font-medium text-slate-800">{fine.user}</td>
@@ -50,10 +63,11 @@ const FinanceFines = ({ fines = [], loading = false, handleMarkAsPaid }) => {
                 </tr>
               ))}
             </tbody>
-          </table>
-        )}
+            </table>
+          )}
+        </div>
+        {table.count > 0 && <Pagination {...table} />}
       </div>
-    </div>
   );
 };
 

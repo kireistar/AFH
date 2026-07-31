@@ -1,11 +1,27 @@
 import React from 'react';
 import { formatDateTime, openReceiptInNewTab } from '../../utils/receipt';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 const UserReceipts = ({ receipts = [], loading = false }) => {
   const assetLabel = (t) => {
     const a = t.asset || {};
     return a.asset_name ? (a.asset_code ? `${a.asset_name} (${a.asset_code})` : a.asset_name) : (t.asset || '-');
   };
+
+  const table = useTable(receipts, {
+    accessors: {
+      code: (t) => t.transaction_code || `TX-${t.id || ''}`,
+      asset: (t) => {
+        const a = t.asset || {};
+        return typeof a === 'object' ? a.asset_name || '' : a;
+      },
+      action: (t) => t.action,
+      date: (t) => t.occurred_at || t.created_at,
+      status: (t) => t.status,
+    },
+  });
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
@@ -24,16 +40,16 @@ const UserReceipts = ({ receipts = [], loading = false }) => {
           <table className="w-full text-left">
             <thead>
               <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                <th className="p-4 font-semibold">Transaction Code</th>
-                <th className="p-4 font-semibold">Asset</th>
-                <th className="p-4 font-semibold">Action</th>
-                <th className="p-4 font-semibold">Date</th>
-                <th className="p-4 font-semibold">Status</th>
+                <SortHeader label="Transaction Code" sortKey="code" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Asset" sortKey="asset" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Action" sortKey="action" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Date" sortKey="date" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Status" sortKey="status" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
                 <th className="p-4 font-semibold text-right">Receipt</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {receipts.map((t) => (
+              {table.pageItems.map((t) => (
                 <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="p-4 text-sm font-semibold font-mono text-slate-700">
                     {t.transaction_code || `TX-${t.id || '-'}`}
@@ -63,10 +79,11 @@ const UserReceipts = ({ receipts = [], loading = false }) => {
                 </tr>
               ))}
             </tbody>
-          </table>
-        )}
+            </table>
+          )}
+        </div>
+        {table.count > 0 && <Pagination {...table} />}
       </div>
-    </div>
   );
 };
 

@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { verifyLedger } from '../../services/transactionService';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefreshTransactions }) => {
   const [integrityData, setIntegrityData] = useState(null);
@@ -28,6 +31,17 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
     if (!hash) return 'GENESIS (NULL)';
     return `${hash.slice(0, 8)}...${hash.slice(-8)}`;
   };
+
+  const table = useTable(transactions, {
+    accessors: {
+      date: (t) => t.occurred_at || t.date,
+      action: (t) => t.action || t._action,
+      previousHash: (t) => t.previous_hash,
+      currentHash: (t) => t.current_hash,
+      status: (t) =>
+        integrityData?.tampered_transaction_ids?.includes(t.id || t._id) ? 1 : 0,
+    },
+  });
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -126,16 +140,16 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
             <table className="w-full text-left min-w-[800px]">
               <thead>
                 <tr className="text-slate-400 text-[10px] md:text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Block Code</th>
-                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Action</th>
+                  <SortHeader label="Block Code" sortKey="date" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} className="whitespace-nowrap" />
+                  <SortHeader label="Action" sortKey="action" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} className="whitespace-nowrap" />
                   <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Payload Snapshot</th>
-                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Previous Hash</th>
-                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Current Hash</th>
-                  <th className="p-3 md:p-4 font-semibold text-center whitespace-nowrap">Status</th>
+                  <SortHeader label="Previous Hash" sortKey="previousHash" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} className="whitespace-nowrap" />
+                  <SortHeader label="Current Hash" sortKey="currentHash" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} className="whitespace-nowrap" />
+                  <SortHeader label="Status" sortKey="status" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} className="text-center whitespace-nowrap" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {transactions.map((t) => {
+                {table.pageItems.map((t) => {
                   const isTampered = integrityData?.tampered_transaction_ids?.includes(t.id || t._id);
 
                   let parsedPayload = {};
@@ -215,6 +229,7 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
             </table>
           )}
         </div>
+        {table.count > 0 && <Pagination {...table} />}
       </div>
     </div>
   );

@@ -1,6 +1,9 @@
 import React from 'react';
 import { exportToCSV } from '../../utils/exportCSV';
 import { openReceiptInNewTab } from '../../utils/receipt';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 /**
  * Helper function untuk mengekstrak nilai string aman dari variabel yang bisa berupa
@@ -31,6 +34,50 @@ const renderSafeValue = (val, fallback = 'N/A') => {
 };
 
 const AdminReports = ({ transactions = [], incidents = [] }) => {
+  const transactionSortValue = (t, key) => {
+    if (key === 'user') {
+      const v = t.party || t.borrower || t.user;
+      return typeof v === 'object' ? v.employee_name || v.full_name || v.username || v.name || '' : v;
+    }
+    if (key === 'asset') {
+      const v = t.asset;
+      return typeof v === 'object' ? v.asset_name || '' : v;
+    }
+    if (key === 'date') return t.date || t.occurred_at;
+    return t[key];
+  };
+
+  const transactionTable = useTable(transactions, {
+    accessors: {
+      id: (t) => t.id || t.transaction_code || '',
+      user: (t) => transactionSortValue(t, 'user'),
+      asset: (t) => transactionSortValue(t, 'asset'),
+      action: (t) => t.action,
+      date: (t) => transactionSortValue(t, 'date'),
+      status: (t) => t.status,
+    },
+  });
+
+  const incidentSortValue = (i, key) => {
+    if (key === 'asset') {
+      const v = i.asset;
+      return typeof v === 'object' ? v.asset_name || '' : v;
+    }
+    if (key === 'date') return i.date || i.created_at;
+    return i[key];
+  };
+
+  const incidentTable = useTable(incidents, {
+    accessors: {
+      id: (i) => i.id,
+      asset: (i) => incidentSortValue(i, 'asset'),
+      severity: (i) => i.severity,
+      status: (i) => i.status || i._status,
+      description: (i) => i.description,
+      date: (i) => incidentSortValue(i, 'date'),
+    },
+  });
+
   const handleExportTransactions = () => {
     exportToCSV(
       'admin_transaction_report',
@@ -85,17 +132,17 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
             <table className="w-full text-left">
               <thead>
                 <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-4 font-semibold">Transaction ID</th>
-                  <th className="p-4 font-semibold">User</th>
-                  <th className="p-4 font-semibold">Asset</th>
-                  <th className="p-4 font-semibold">Action</th>
-                  <th className="p-4 font-semibold">Date</th>
-                  <th className="p-4 font-semibold">Status</th>
+                  <SortHeader label="Transaction ID" sortKey="id" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
+                  <SortHeader label="User" sortKey="user" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
+                  <SortHeader label="Asset" sortKey="asset" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
+                  <SortHeader label="Action" sortKey="action" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
+                  <SortHeader label="Date" sortKey="date" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
+                  <SortHeader label="Status" sortKey="status" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
                   <th className="p-4 font-semibold text-right">Receipt</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {transactions.map(t => (
+                {transactionTable.pageItems.map(t => (
                   <tr key={t.id || Math.random()} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4 text-sm font-semibold text-slate-700">
                       {renderSafeValue(t.id)}
@@ -131,6 +178,7 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
             </table>
           )}
         </div>
+        {transactionTable.count > 0 && <Pagination {...transactionTable} />}
       </div>
 
       {/* Incident Report */}
@@ -155,16 +203,16 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
             <table className="w-full text-left">
               <thead>
                 <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-4 font-semibold">Incident ID</th>
-                  <th className="p-4 font-semibold">Asset</th>
-                  <th className="p-4 font-semibold">Severity</th>
-                  <th className="p-4 font-semibold">Status</th>
-                  <th className="p-4 font-semibold">Description</th>
-                  <th className="p-4 font-semibold">Reported Date</th>
+                  <SortHeader label="Incident ID" sortKey="id" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
+                  <SortHeader label="Asset" sortKey="asset" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
+                  <SortHeader label="Severity" sortKey="severity" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
+                  <SortHeader label="Status" sortKey="status" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
+                  <SortHeader label="Description" sortKey="description" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
+                  <SortHeader label="Reported Date" sortKey="date" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {incidents.map(i => {
+                {incidentTable.pageItems.map(i => {
                   const statusVal = renderSafeValue(i.status || i._status, 'open').toLowerCase();
                   return (
                     <tr key={i.id || Math.random()} className="hover:bg-slate-50/50 transition-colors">
@@ -199,6 +247,7 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
             </table>
           )}
         </div>
+        {incidentTable.count > 0 && <Pagination {...incidentTable} />}
       </div>
     </div>
   );

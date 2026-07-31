@@ -1,6 +1,19 @@
 import React from 'react';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 const FinanceInvoices = ({ invoices = [], loading = false }) => {
+  const table = useTable(invoices, {
+    accessors: {
+      id: (i) => i.id,
+      user: (i) => i.user,
+      reason: (i) => i.reason,
+      amount: (i) => i._rawAmount ?? i.amount,
+      status: (i) => i.status || i._status,
+    },
+  });
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -18,15 +31,15 @@ const FinanceInvoices = ({ invoices = [], loading = false }) => {
           <table className="w-full text-left">
             <thead>
               <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                <th className="p-4 font-semibold">Invoice ID</th>
-                <th className="p-4 font-semibold">User</th>
-                <th className="p-4 font-semibold">Reason</th>
-                <th className="p-4 font-semibold">Amount</th>
-                <th className="p-4 font-semibold">Status</th>
+                <SortHeader label="Invoice ID" sortKey="id" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="User" sortKey="user" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Reason" sortKey="reason" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Amount" sortKey="amount" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Status" sortKey="status" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {invoices.map(inv => (
+              {table.pageItems.map(inv => (
                 <tr key={inv.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="p-4 text-sm font-semibold text-slate-700">{inv.id}</td>
                   <td className="p-4 text-sm font-medium text-slate-800">{inv.user}</td>
@@ -40,10 +53,11 @@ const FinanceInvoices = ({ invoices = [], loading = false }) => {
                 </tr>
               ))}
             </tbody>
-          </table>
-        )}
+            </table>
+          )}
+        </div>
+        {table.count > 0 && <Pagination {...table} />}
       </div>
-    </div>
   );
 };
 

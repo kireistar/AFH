@@ -1,8 +1,36 @@
 import React from 'react';
 import { exportToCSV } from '../../utils/exportCSV';
 import { TIER_STYLES } from '../../utils/styles';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 const ManagerReports = ({ requests = [], incidents = [] }) => {
+  const requestTable = useTable(requests, {
+    accessors: {
+      id: (r) => r.id,
+      user: (r) => r.user,
+      asset: (r) => r.asset,
+      urgency: (r) => r.urgency,
+      riskScore: (r) => r.riskScore,
+      aiReason: (r) => r.aiReason,
+      status: (r) => r.status,
+      date: (r) => r.date,
+    },
+  });
+
+  const incidentTable = useTable(incidents, {
+    accessors: {
+      id: (i) => i.id,
+      reporter: (i) => i.reporter,
+      asset: (i) => i.asset,
+      severity: (i) => i.severity,
+      status: (i) => i.status || i._status,
+      description: (i) => i.description,
+      date: (i) => i.date,
+    },
+  });
+
   const handleExportRequests = () => {
     exportToCSV('manager_request_risk_report',
       ['Request ID', 'Requester', 'Asset', 'Risk Tier', 'Risk Score', 'AI Reason', 'Status', 'Date'],
@@ -41,18 +69,18 @@ const ManagerReports = ({ requests = [], incidents = [] }) => {
             <table className="w-full text-left">
               <thead>
                 <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-4 font-semibold">Request ID</th>
-                  <th className="p-4 font-semibold">Requester</th>
-                  <th className="p-4 font-semibold">Asset</th>
-                  <th className="p-4 font-semibold">Risk Tier</th>
-                  <th className="p-4 font-semibold">Risk Score</th>
-                  <th className="p-4 font-semibold">AI Reason</th>
-                  <th className="p-4 font-semibold">Status</th>
-                  <th className="p-4 font-semibold">Date</th>
+                  <SortHeader label="Request ID" sortKey="id" onSort={requestTable.onSort} activeKey={requestTable.sortKey} sortDir={requestTable.sortDir} />
+                  <SortHeader label="Requester" sortKey="user" onSort={requestTable.onSort} activeKey={requestTable.sortKey} sortDir={requestTable.sortDir} />
+                  <SortHeader label="Asset" sortKey="asset" onSort={requestTable.onSort} activeKey={requestTable.sortKey} sortDir={requestTable.sortDir} />
+                  <SortHeader label="Risk Tier" sortKey="urgency" onSort={requestTable.onSort} activeKey={requestTable.sortKey} sortDir={requestTable.sortDir} />
+                  <SortHeader label="Risk Score" sortKey="riskScore" onSort={requestTable.onSort} activeKey={requestTable.sortKey} sortDir={requestTable.sortDir} />
+                  <SortHeader label="AI Reason" sortKey="aiReason" onSort={requestTable.onSort} activeKey={requestTable.sortKey} sortDir={requestTable.sortDir} />
+                  <SortHeader label="Status" sortKey="status" onSort={requestTable.onSort} activeKey={requestTable.sortKey} sortDir={requestTable.sortDir} />
+                  <SortHeader label="Date" sortKey="date" onSort={requestTable.onSort} activeKey={requestTable.sortKey} sortDir={requestTable.sortDir} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {requests.map(r => (
+                {requestTable.pageItems.map(r => (
                   <tr key={r._id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4 text-sm font-semibold text-slate-700">{r.id}</td>
                     <td className="p-4 text-sm font-medium text-slate-800">{r.user}</td>
@@ -72,6 +100,7 @@ const ManagerReports = ({ requests = [], incidents = [] }) => {
             </table>
           )}
         </div>
+        {requestTable.count > 0 && <Pagination {...requestTable} />}
       </div>
 
       {/* Incident Analysis Report */}
@@ -96,17 +125,17 @@ const ManagerReports = ({ requests = [], incidents = [] }) => {
             <table className="w-full text-left">
               <thead>
                 <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-4 font-semibold">Incident ID</th>
-                  <th className="p-4 font-semibold">Reporter</th>
-                  <th className="p-4 font-semibold">Asset</th>
-                  <th className="p-4 font-semibold">Severity</th>
-                  <th className="p-4 font-semibold">Status</th>
-                  <th className="p-4 font-semibold">Description</th>
-                  <th className="p-4 font-semibold">Reported Date</th>
+                  <SortHeader label="Incident ID" sortKey="id" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
+                  <SortHeader label="Reporter" sortKey="reporter" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
+                  <SortHeader label="Asset" sortKey="asset" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
+                  <SortHeader label="Severity" sortKey="severity" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
+                  <SortHeader label="Status" sortKey="status" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
+                  <SortHeader label="Description" sortKey="description" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
+                  <SortHeader label="Reported Date" sortKey="date" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {incidents.map(i => (
+                {incidentTable.pageItems.map(i => (
                   <tr key={i.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4 text-sm font-semibold text-slate-700">{i.id}</td>
                     <td className="p-4 text-sm font-medium text-slate-800">{i.reporter}</td>
@@ -127,6 +156,7 @@ const ManagerReports = ({ requests = [], incidents = [] }) => {
             </table>
           )}
         </div>
+        {incidentTable.count > 0 && <Pagination {...incidentTable} />}
       </div>
     </div>
   );

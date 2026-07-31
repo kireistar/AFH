@@ -1,4 +1,7 @@
 import React from 'react';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 const STATUS_STYLES = {
   open: 'bg-yellow-50 text-yellow-700 border-yellow-200',
@@ -8,6 +11,16 @@ const STATUS_STYLES = {
 };
 
 const UserIncidents = ({ incidents = [], loading = false, onOpenIncidentModal }) => {
+  const table = useTable(incidents, {
+    accessors: {
+      id: (i) => i.id,
+      asset: (i) => i.asset,
+      description: (i) => i.description,
+      date: (i) => i.date,
+      status: (i) => i.status || i._status,
+    },
+  });
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -31,15 +44,15 @@ const UserIncidents = ({ incidents = [], loading = false, onOpenIncidentModal })
           <table className="w-full text-left">
             <thead>
               <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                <th className="p-4 font-semibold">Incident ID</th>
-                <th className="p-4 font-semibold">Asset Name</th>
-                <th className="p-4 font-semibold">Issue Description</th>
-                <th className="p-4 font-semibold">Reported Date</th>
-                <th className="p-4 font-semibold">Status</th>
+                <SortHeader label="Incident ID" sortKey="id" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Asset Name" sortKey="asset" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Issue Description" sortKey="description" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Reported Date" sortKey="date" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Status" sortKey="status" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {incidents.map(inc => (
+              {table.pageItems.map(inc => (
                 <tr key={inc.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="p-4 text-sm font-semibold text-slate-700">{inc.id}</td>
                   <td className="p-4 text-sm font-medium text-slate-800">{inc.asset}</td>
@@ -53,10 +66,11 @@ const UserIncidents = ({ incidents = [], loading = false, onOpenIncidentModal })
                 </tr>
               ))}
             </tbody>
-          </table>
-        )}
+            </table>
+          )}
+        </div>
+        {table.count > 0 && <Pagination {...table} />}
       </div>
-    </div>
   );
 };
 
