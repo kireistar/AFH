@@ -18,19 +18,22 @@ const injectEd25519Signature = async (endpoint, config) => {
 
       const isQRFlow = payload.signature && payload.public_key;
 
-      // Ambil expires_at dari QR payload jika ada (untuk canonical string)
+      // QR path: use the borrower's OWN timestamp + expires_at from the QR token,
+      // so borrower, admin, and server all sign/verify the SAME canonical string.
+      const qrTimestamp = isQRFlow && payload.payload?.timestamp ? payload.payload.timestamp : null;
       const qrExpiresAt = isQRFlow && payload.payload?.expires_at ? payload.payload.expires_at : null;
 
-      // Generate admin canonical string dengan timestamp SEKARANG, bukan dari QR
+      // Generate admin signature atas canonical string yang sama dengan borrower
       const { privKey, pubKeyBase64 } = await getOrGenerateKeyPair();
 
       const action = payload.action || "handover";
       const borrowerId = payload.borrower_id;
       const assetId = payload.asset_id;
-      const ts = Math.floor(Date.now() / 1000);
+      const ts = qrTimestamp || Math.floor(Date.now() / 1000);
       const expiresAt = qrExpiresAt;
 
       payload.timestamp = ts;
+      if (isQRFlow && expiresAt) payload.expires_at = expiresAt;
       config.body = JSON.stringify(payload);
 
       const canonicalString = createCanonicalPayload(action, borrowerId, assetId, ts, expiresAt);

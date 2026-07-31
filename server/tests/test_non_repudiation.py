@@ -557,3 +557,78 @@ def test_verify_non_repudiation_dual_party_expired_qr(keypair, mock_user):
     assert "expired" in response.json()["detail"].lower()
 
     test_app.dependency_overrides.clear()
+
+
+def test_verify_non_repudiation_dual_party_real_qr_shape(keypair, mock_user):
+    """
+    Test 12: Dual-Party with the real QR body shape (nested handover token).
+    Borrower signs the token's own canonical (string timestamp + expires_at) in
+    ProduceQRModal; admin signs the SAME string. The server must promote the
+    nested fields to top level so both signatures verify against one canonical.
+    """
+    borrower_priv, borrower_pub_b64 = keypair
+    admin_priv = ed25519.Ed25519PrivateKey.generate()
+    admin_pub_bytes = admin_priv.public_key().public_bytes_raw()
+    admin_pub_b64 = base64.b64encode(admin_pub_bytes).decode("utf-8")
+
+    mock_user.public_key = admin_pub_b64
+    current_time = int(time.time())
+    expires_at = current_time + 25
+
+    # Mirrors ProduceQRModal.jsx payloadObj: string timestamp & expires_at
+    token = {
+        "action": "handover",
+        "asset_id": "101",
+        "borrower_id": str(mock_user.id),
+        "request_id": "55",
+        "timestamp": str(current_time),
+        "expires_at": str(expires_at),
+    }
+
+    borrower_sig = create_signature(
+        borrower_priv,
+        action=token["action"],
+        borrower_id=token["borrower_id"],
+        asset_id=token["asset_id"],
+        timestamp=token["timestamp"],
+        expires_at=expires_at,
+    )
+
+    admin_sig = create_signature(
+        admin_priv,
+        action=token["action"],
+        borrower_id=token["borrower_id"],
+        asset_id=token["asset_id"],
+        timestamp=token["timestamp"],
+        expires_at=expires_at,
+    )
+
+    # Mirrors transactionService.submitTransaction QR path body shape
+    body = {
+        "action": token["action"],
+        "asset_id": token["asset_id"],
+        "borrower_id": token["borrower_id"],
+        "request_id": token["request_id"],
+        "admin_id": str(mock_user.id),
+        "payload": token,
+        "signature": borrower_sig,
+        "public_key": borrower_pub_b64,
+    }
+
+    test_app.dependency_overrides[get_current_user] = lambda: mock_user
+    client = TestClient(test_app)
+
+    response = client.post(
+        "/test-signature",
+        json=body,
+        headers={
+            "x-ed25519-signature": borrower_sig,
+            "x-ed25519-admin-signature": admin_sig,
+            "x-ed25519-public-key": borrower_pub_b64,
+        }
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+
+    test_app.dependency_overrides.clear()

@@ -98,6 +98,14 @@ async def verify_non_repudiation(
     try:
         payload = json.loads(raw_body)
 
+        # QR (dual-party) flow: canonical fields live in the nested handover token
+        # (payload.payload). Promote them so verification matches what the borrower
+        # signed in ProduceQRModal — and so the QR TTL check below actually runs.
+        nested = payload.get("payload") if isinstance(payload.get("payload"), dict) else {}
+        for key in ("action", "borrower_id", "asset_id", "timestamp", "expires_at"):
+            if payload.get(key) in (None, ""):
+                payload[key] = nested.get(key)
+
         action = payload.get("action")
         borrower_id = str(payload.get("borrower_id"))
         asset_id = payload.get("asset_id")
