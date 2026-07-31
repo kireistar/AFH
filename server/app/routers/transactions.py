@@ -10,7 +10,7 @@ from typing import List, Optional, cast
 from uuid import UUID
 
 from app.core.database import get_db
-from app.core.dependencies import verify_non_repudiation
+from app.core.dependencies import get_current_user, verify_non_repudiation
 from app.models import Asset, Transaction, User, AssetRequest
 from app.schemas import LedgerVerifyResult, TransactionCreate, TransactionResponse
 from app.services import ledger_service
@@ -36,6 +36,7 @@ def get_all_transactions(
     asset_id: Optional[int] = None,
     borrower_id: Optional[str] = None,
     db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
 ):
     query = db.query(Transaction)
     if asset_id:
@@ -48,7 +49,11 @@ def get_all_transactions(
 
 
 @router.get("/{transaction_id}", response_model=TransactionResponse)
-def get_transaction(transaction_id: int, db: Session = Depends(get_db)):
+def get_transaction(
+    transaction_id: int,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
     transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     if not transaction:
         raise HTTPException(
