@@ -169,6 +169,8 @@ def run_e2e_test():
         "borrower_id": target_user_id,
         "admin_id": admin_id,
         "request_id": request_id,
+        "timestamp": timestamp,
+        "expires_at": expires_at,
         "payload": {
             "action": "handover",
             "borrower_id": target_user_id,
