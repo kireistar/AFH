@@ -56,11 +56,7 @@ const injectEd25519Signature = async (endpoint, config) => {
 };
 
 export const apiCall = async (endpoint, options = {}) => {
-  // SAFE FALLBACK TOKEN RETRIEVAL (Mencakup accessToken, token, & access_token)
-  const token =
-    localStorage.getItem("accessToken") ||
-    localStorage.getItem("token") ||
-    localStorage.getItem("access_token");
+  const token = localStorage.getItem("accessToken");
 
   const headers = {
     Accept: "application/json",
@@ -143,6 +139,28 @@ export const apiPatch = (endpoint, body, options = {}) => {
 };
 export const apiDelete = (endpoint, options = {}) => apiCall(endpoint, { method: "DELETE", ...options });
 
+export const apiUpload = async (endpoint, formData) => {
+  const token = localStorage.getItem("accessToken");
+
+  const headers = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Upload Error: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
 export default {
   apiCall,
   apiGet,
@@ -150,4 +168,5 @@ export default {
   apiPut,
   apiPatch,
   apiDelete,
+  apiUpload,
 };

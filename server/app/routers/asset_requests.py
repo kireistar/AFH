@@ -35,6 +35,7 @@ def get_all_requests(
     - Admin/Manager/Finance: bisa lihat semua
     - User biasa: hanya bisa lihat miliki sendiri
     """
+    limit = min(max(1, limit), 200)
     query = db.query(AssetRequest)
     
     if current_user.role == "user":

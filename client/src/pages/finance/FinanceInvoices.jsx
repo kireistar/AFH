@@ -26,6 +26,7 @@ const FinanceInvoices = ({ invoices = [], loading = false }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
+<<<<<<< Updated upstream
               {invoices.map(inv => (
                 <tr key={inv.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="p-4 text-sm font-semibold text-slate-700">{inv.id}</td>
@@ -39,6 +40,24 @@ const FinanceInvoices = ({ invoices = [], loading = false }) => {
                   </td>
                 </tr>
               ))}
+=======
+              {table.pageItems.map((inv, rowIdx) => {
+                const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+                return (
+                  <tr key={inv.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
+                    <td className="p-4 text-sm font-semibold text-slate-700">{inv.id}</td>
+                    <td className="p-4 text-sm font-medium text-slate-800">{inv.user}</td>
+                    <td className="p-4 text-sm text-slate-600">{inv.reason}</td>
+                    <td className="p-4 text-sm font-bold text-slate-700">{inv.amount}</td>
+                    <td className="p-4 text-sm">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                        inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-orange-50 text-orange-700 border-orange-200'
+                      }`}>{inv.status}</span>
+                    </td>
+                  </tr>
+                );
+              })}
+>>>>>>> Stashed changes
             </tbody>
           </table>
         )}

@@ -7,7 +7,8 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.models import Transaction
+from app.core.dependencies import get_current_user
+from app.models import Transaction, User
 from app.schemas import LedgerVerifyResult
 from app.services import ledger_service
 
@@ -18,7 +19,10 @@ router = APIRouter(
 
 @router.get("/verify", response_model=LedgerVerifyResult)
 @router.post("/verify", response_model=LedgerVerifyResult)
-def verify_ledger(db: Session = Depends(get_db)):
+def verify_ledger(
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
     """
     Verifikasi integritas Hash Chain SHA-256 pada Immutable Ledger (D3).
     """

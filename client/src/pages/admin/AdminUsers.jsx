@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { FiEdit, FiTrash2, FiRefreshCw } from 'react-icons/fi';
 import AddUserModal from '../../components/AddUserModal';
 import EditUserModal from '../../components/EditUserModal';
@@ -8,6 +9,7 @@ import { deleteUser, resetUserDeviceKey } from '../../services/userService';
 import { useAuth } from '../../hooks/useAuth';
 
 const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
+  const navigate = useNavigate();
   const auth = useAuth();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -131,10 +133,23 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
+<<<<<<< Updated upstream
                 {filteredUsers.map(user => (
                   <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
+=======
+                {table.pageItems.map((user, rowIdx) => {
+                  const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+                  return (
+                    <tr key={user.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
+>>>>>>> Stashed changes
                     <td className="p-4 text-sm">
-                      <div className="font-semibold text-slate-800">{user.name}</div>
+                      <Link 
+                        to={`/admin/users/view/${user._id}`} 
+                        className="font-semibold text-slate-800 hover:text-[#1E3A8A] hover:underline cursor-pointer transition-colors block"
+                        title="View user profile details"
+                      >
+                        {user.name}
+                      </Link>
                       <div className="text-xs text-slate-500">{user.email}</div>
                     </td>
                     <td className="p-4 text-sm text-slate-600">{user.department}</td>
@@ -161,9 +176,9 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
                     <td className="p-4 text-sm text-right pr-6">
                       <div className="inline-flex gap-2">
                         <button
-                          onClick={() => setEditingUser(user)}
+                          onClick={() => navigate(`/admin/users/view/${user._id}?edit=true`)}
                           className="p-1.5 text-slate-500 hover:text-[#1E3A8A] hover:bg-blue-50 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1 text-xs font-semibold border border-transparent hover:border-blue-100"
-                          title="Edit Profile"
+                          title="Edit User Profile"
                         >
                           <FiEdit size={14} />
                           <span>Edit</span>
@@ -187,7 +202,8 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
                       </div>
                     </td>
                   </tr>
-                ))}
+                );
+              })}
               </tbody>
             </table>
           )}

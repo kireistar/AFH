@@ -39,6 +39,7 @@ const UserIncidents = ({ incidents = [], loading = false, onOpenIncidentModal })
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
+<<<<<<< Updated upstream
               {incidents.map(inc => (
                 <tr key={inc.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="p-4 text-sm font-semibold text-slate-700">{inc.id}</td>
@@ -52,6 +53,24 @@ const UserIncidents = ({ incidents = [], loading = false, onOpenIncidentModal })
                   </td>
                 </tr>
               ))}
+=======
+              {table.pageItems.map((inc, rowIdx) => {
+                const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+                return (
+                  <tr key={inc.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
+                    <td className="p-4 text-sm font-semibold text-slate-700">{inc.id}</td>
+                    <td className="p-4 text-sm font-medium text-slate-800">{inc.asset}</td>
+                    <td className="p-4 text-sm text-slate-600">{inc.description}</td>
+                    <td className="p-4 text-sm text-slate-500">{inc.date}</td>
+                    <td className="p-4 text-sm">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${STATUS_STYLES[inc._status] || STATUS_STYLES.open}`}>
+                        {inc.status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
+>>>>>>> Stashed changes
             </tbody>
           </table>
         )}

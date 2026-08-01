@@ -95,3 +95,4 @@ class TokenPayload(BaseModel):
 
 class RegisterPublicKeyRequest(BaseModel):
     public_key: str = Field(..., min_length=1, description="Base64 encoded Ed25519 public key")
+    signature: str = Field(..., description="Ed25519 signature dari challenge string 'register:{user_id}' untuk proof-of-possession")

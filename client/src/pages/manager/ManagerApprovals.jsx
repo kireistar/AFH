@@ -27,6 +27,7 @@ const ManagerApprovals = ({ approvals = [], loading = false, handleApprove, hand
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
+<<<<<<< Updated upstream
               {approvals.map(req => (
                 <tr key={req._id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="p-4 text-sm font-semibold text-slate-700">{req.id}</td>
@@ -57,6 +58,41 @@ const ManagerApprovals = ({ approvals = [], loading = false, handleApprove, hand
                   </td>
                 </tr>
               ))}
+=======
+              {table.pageItems.map((req, rowIdx) => {
+                const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+                return (
+                  <tr key={req._id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
+                    <td className="p-4 text-sm font-semibold text-slate-700">{req.id}</td>
+                    <td className="p-4 text-sm font-medium text-slate-800">{req.user}</td>
+                    <td className="p-4 text-sm text-slate-600">{req.asset}</td>
+                    <td className="p-4 text-sm">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${TIER_STYLES[req.urgency] || TIER_STYLES.Low}`}>
+                        {req.urgency}
+                      </span>
+                    </td>
+                    <td className="p-4 text-sm text-slate-600 max-w-xs truncate">{req.aiReason}</td>
+                    <td className="p-4 text-sm">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                        req.status === 'Approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        req.status === 'Rejected' ? 'bg-red-50 text-[#B91C1C] border-red-200' :
+                        'bg-orange-50 text-orange-700 border-orange-200'
+                      }`}>{req.status}</span>
+                    </td>
+                    <td className="p-4 text-sm text-right">
+                      {req._status === 'pending_manager' ? (
+                        <div className="flex justify-end space-x-2">
+                          <button onClick={() => handleApprove(req)} className="px-3 py-1.5 bg-[#1E3A8A] text-white rounded-lg text-xs font-bold hover:bg-blue-900 transition-all shadow-sm">Approve</button>
+                          <button onClick={() => handleReject(req)} className="px-3 py-1.5 bg-white text-[#B91C1C] border border-red-200 rounded-lg text-xs font-bold hover:bg-red-50 transition-all shadow-sm">Reject</button>
+                        </div>
+                      ) : (
+                        <span className="text-xs font-medium text-slate-400 mr-2">Processed</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+>>>>>>> Stashed changes
             </tbody>
           </table>
         )}

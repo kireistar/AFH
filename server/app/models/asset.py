@@ -29,6 +29,7 @@ class Asset(Base):
     status = Column(String(20), nullable=False, default="available", index=True)
 
     notes = Column(Text, nullable=True)
+    image_url = Column(String(500), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(),
                         onupdate=func.now(), nullable=False)

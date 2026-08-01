@@ -48,6 +48,7 @@ const AdminHandover = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
+<<<<<<< Updated upstream
                 {handovers.map((h) => (
                   <tr
                     key={h.id}
@@ -82,13 +83,52 @@ const AdminHandover = ({
                     </td>
                   </tr>
                 ))}
+=======
+                {handoverTable.pageItems.map((h, rowIdx) => {
+                  const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+                  return (
+                    <tr
+                      key={h.id}
+                      className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}
+                    >
+                      <td className="p-4 text-sm font-semibold text-slate-700">
+                        {h.id}
+                      </td>
+                      <td className="p-4 text-sm">
+                        <div className="font-semibold text-slate-800">
+                          {h.user}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {h.department}
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm text-slate-600 font-medium">
+                        {h.asset}
+                      </td>
+                      <td className="p-4 text-sm">
+                        <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-yellow-50 text-yellow-700 border-yellow-200">
+                          {h.status}
+                        </span>
+                      </td>
+                      <td className="p-4 text-sm text-right">
+                        <button
+                          onClick={() => handleCompleteHandover(h._id)}
+                          className="px-4 py-1.5 bg-slate-200 text-slate-700 shadow-sm hover:bg-slate-300 rounded-lg transition-all font-semibold text-xs cursor-pointer"
+                        >
+                          Manual Handover
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+>>>>>>> Stashed changes
               </tbody>
             </table>
           )}
         </div>
       </div>
 
-      {/* 2. Active Loans Section (Dulu terpotong, sekarang dikembalikan) */}
+      {/* 2. Active Loans Section */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="p-6 border-b border-slate-100 bg-slate-50/50">
           <h3 className="text-lg font-bold text-slate-800">Active Loans</h3>
@@ -119,6 +159,7 @@ const AdminHandover = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
+<<<<<<< Updated upstream
                 {activeLoans.map((loan) => (
                   <tr
                     key={loan.id}
@@ -156,6 +197,48 @@ const AdminHandover = ({
                     </td>
                   </tr>
                 ))}
+=======
+                {loansTable.pageItems.map((loan, rowIdx) => {
+                  const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+                  return (
+                    <tr
+                      key={loan.id}
+                      className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}
+                    >
+                      <td className="p-4 text-sm font-semibold text-slate-700">
+                        {loan.id}
+                      </td>
+                      <td className="p-4 text-sm">
+                        <div className="font-semibold text-slate-800">
+                          {loan.user}
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {loan.department}
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm text-slate-600 font-medium">
+                        {loan.asset}
+                      </td>
+                      <td className="p-4 text-sm text-slate-500 text-xs">
+                        {loan.startDate} — {loan.endDate}
+                      </td>
+                      <td className="p-4 text-sm">
+                        <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
+                          {loan.status}
+                        </span>
+                      </td>
+                      <td className="p-4 text-sm text-right">
+                        <button
+                          onClick={() => handleProcessReturn(loan._id)}
+                          className="px-4 py-1.5 bg-emerald-600 text-white shadow-sm hover:bg-emerald-700 rounded-lg transition-all font-semibold text-xs cursor-pointer"
+                        >
+                          Process Return
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+>>>>>>> Stashed changes
               </tbody>
             </table>
           )}

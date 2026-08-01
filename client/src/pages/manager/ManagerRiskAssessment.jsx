@@ -27,6 +27,7 @@ const ManagerRiskAssessment = ({ riskLogs = [], loading = false }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
+<<<<<<< Updated upstream
               {riskLogs.map(log => (
                 <tr key={log._id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="p-4 text-sm font-semibold text-slate-700">{log.id}</td>
@@ -42,6 +43,26 @@ const ManagerRiskAssessment = ({ riskLogs = [], loading = false }) => {
                   <td className="p-4 text-sm text-slate-500">{log.date}</td>
                 </tr>
               ))}
+=======
+              {table.pageItems.map((log, rowIdx) => {
+                const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+                return (
+                  <tr key={log._id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
+                    <td className="p-4 text-sm font-semibold text-slate-700">{log.id}</td>
+                    <td className="p-4 text-sm font-medium text-slate-800">{log.user}</td>
+                    <td className="p-4 text-sm text-slate-600">{log.asset}</td>
+                    <td className="p-4 text-sm">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${TIER_STYLES[log.urgency] || TIER_STYLES.Low}`}>
+                        {log.urgency}
+                      </span>
+                    </td>
+                    <td className="p-4 text-sm font-bold text-slate-700">{log.riskScore}/100</td>
+                    <td className="p-4 text-sm text-slate-600 max-w-xs truncate">{log.aiReason}</td>
+                    <td className="p-4 text-sm text-slate-500">{log.date}</td>
+                  </tr>
+                );
+              })}
+>>>>>>> Stashed changes
             </tbody>
           </table>
         )}

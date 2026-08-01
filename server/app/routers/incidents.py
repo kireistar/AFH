@@ -29,6 +29,7 @@ def get_all_incidents(
     _: User = Depends(get_current_user),
 ):
     """Mengambil semua incident reports dari database. Semua role yang login bisa akses."""
+    limit = min(max(1, limit), 200)
     return db.query(Incident).offset(skip).limit(limit).all()
 
 

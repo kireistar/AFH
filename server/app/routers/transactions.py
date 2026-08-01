@@ -12,7 +12,7 @@ from uuid import UUID
 from app.core.database import get_db
 from app.core.dependencies import verify_non_repudiation
 from app.models import Asset, Transaction, User, AssetRequest
-from app.schemas import LedgerVerifyResult, TransactionCreate, TransactionResponse
+from app.schemas import TransactionCreate, TransactionResponse
 from app.services import ledger_service
 from app.services.behavior_service import (
     record_fine_issued,
@@ -37,6 +37,7 @@ def get_all_transactions(
     borrower_id: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
+    limit = min(max(1, limit), 200)
     query = db.query(Transaction)
     if asset_id:
         query = query.filter(Transaction.asset_id == asset_id)
@@ -90,8 +91,8 @@ def create_transaction(
         if not admin:
             raise HTTPException(status_code=404, detail="Admin not found")
 
-    # 3. Ledger Logic
-    last_txn = db.query(Transaction).order_by(Transaction.id.desc()).first()
+    # 3. Ledger Logic (with_for_update to prevent concurrent chain race conditions)
+    last_txn = db.query(Transaction).order_by(Transaction.id.desc()).with_for_update().first()
     previous_hash = cast(Optional[str], last_txn.current_hash) if last_txn else None
 
     occurred_at = datetime.now(timezone.utc)
@@ -150,24 +151,3 @@ def create_transaction(
         record_fine_issued(db, transaction_in.borrower_id, Decimal(str(amount)))
 
     return new_transaction
-
-
-@router.get("/verify/ledger", response_model=LedgerVerifyResult)
-@router.post("/verify/ledger", response_model=LedgerVerifyResult)
-def verify_ledger(db: Session = Depends(get_db)):
-    transactions = db.query(Transaction).order_by(Transaction.id.asc()).all()
-    if not transactions:
-        return LedgerVerifyResult(
-            total_transactions=0,
-            valid=True,
-            tampered_transaction_ids=[],
-            message="Ledger is empty",
-        )
-
-    tampered = ledger_service.verify_ledger_integrity(transactions)
-    return LedgerVerifyResult(
-        total_transactions=len(transactions),
-        valid=len(tampered) == 0,
-        tampered_transaction_ids=tampered,
-        message="Verification complete." if not tampered else "TAMPERING DETECTED!",
-    )
