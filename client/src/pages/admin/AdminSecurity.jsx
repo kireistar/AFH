@@ -135,11 +135,7 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-<<<<<<< Updated upstream
-                {transactions.map((t) => {
-=======
                 {table.pageItems.map((t, rowIdx) => {
->>>>>>> Stashed changes
                   const isTampered = integrityData?.tampered_transaction_ids?.includes(t.id || t._id);
                   const rowBgClass = isTampered ? 'bg-rose-50/50' : (rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70');
 

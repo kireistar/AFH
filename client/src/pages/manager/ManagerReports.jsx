@@ -106,25 +106,6 @@ const ManagerReports = ({ requests = [], incidents = [] }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-<<<<<<< Updated upstream
-                {incidents.map(i => (
-                  <tr key={i.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-4 text-sm font-semibold text-slate-700">{i.id}</td>
-                    <td className="p-4 text-sm font-medium text-slate-800">{i.reporter}</td>
-                    <td className="p-4 text-sm text-slate-600">{i.asset}</td>
-                    <td className="p-4 text-sm text-slate-600">{i.severity}</td>
-                    <td className="p-4 text-sm">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                        i._status === 'open' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                        i._status === 'resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                        'bg-blue-50 text-[#1E3A8A] border-blue-200'
-                      }`}>{i.status}</span>
-                    </td>
-                    <td className="p-4 text-sm text-slate-600 max-w-xs truncate">{i.description}</td>
-                    <td className="p-4 text-sm text-slate-500">{i.date}</td>
-                  </tr>
-                ))}
-=======
                 {incidentTable.pageItems.map((i, rowIdx) => {
                   const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                   return (
@@ -145,7 +126,6 @@ const ManagerReports = ({ requests = [], incidents = [] }) => {
                     </tr>
                   );
                 })}
->>>>>>> Stashed changes
               </tbody>
             </table>
           )}

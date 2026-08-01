@@ -60,22 +60,6 @@ const UserRequests = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-<<<<<<< Updated upstream
-              {requests.map((req) => (
-                <tr
-                  key={req.id}
-                  className="hover:bg-slate-50/50 transition-colors"
-                >
-                  <td className="p-4 text-sm font-semibold text-slate-700">
-                    {req.id}
-                  </td>
-                  <td className="p-4 text-sm font-medium text-slate-800">
-                    {req.asset}
-                  </td>
-                  <td className="p-4 text-sm text-slate-500">{req.date}</td>
-                  <td className="p-4 text-sm">
-                    <div className="flex items-center font-medium text-xs">
-=======
               {table.pageItems.map((req, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 return (
@@ -99,7 +83,6 @@ const UserRequests = ({
                       </div>
                     </td>
                     <td className="p-4 text-sm">
->>>>>>> Stashed changes
                       <span
                         className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
                           req.status === "Approved"

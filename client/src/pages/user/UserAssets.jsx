@@ -26,16 +26,6 @@ const UserAssets = ({ requests = [], loading = false }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-<<<<<<< Updated upstream
-              {borrowedAssets.map(req => (
-                <tr key={req.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="p-4 text-sm font-semibold text-slate-700">{req.id}</td>
-                  <td className="p-4 text-sm font-medium text-slate-800">{req.asset}</td>
-                  <td className="p-4 text-sm text-slate-600">{req.startDate}</td>
-                  <td className="p-4 text-sm text-slate-500">{req.endDate}</td>
-                </tr>
-              ))}
-=======
               {table.pageItems.map((req, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 return (
@@ -47,7 +37,6 @@ const UserAssets = ({ requests = [], loading = false }) => {
                   </tr>
                 );
               })}
->>>>>>> Stashed changes
             </tbody>
           </table>
         )}

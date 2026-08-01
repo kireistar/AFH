@@ -119,15 +119,7 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset, assets = [] }) {
     e.preventDefault();
     setError('');
 
-<<<<<<< Updated upstream
-    const finalBrand = formData.brand === '__new__' ? formData.customBrand.trim() : formData.brand.trim();
-    const finalCategory = formData.category === '__new__' ? formData.customCategory.trim() : formData.category.trim();
-
-    // Basic validation
-    if (!finalBrand) {
-=======
     if (!formData.brand.trim()) {
->>>>>>> Stashed changes
       setError('Brand is required.');
       return;
     }
@@ -145,12 +137,7 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset, assets = [] }) {
       await updateAsset(asset._id, {
         brand: finalBrand,
         asset_name: formData.asset_name.trim(),
-<<<<<<< Updated upstream
-        category: finalCategory,
-        status: formData.status,
-=======
         category: formData.category,
->>>>>>> Stashed changes
         current_condition: formData.current_condition,
         location: formData.location.trim() || null,
         serial_number: formData.serial_number.trim() || null,
@@ -171,17 +158,10 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset, assets = [] }) {
   if (!isOpen || !asset) return null;
 
   const statuses = [
-<<<<<<< Updated upstream
-    { value: 'available', label: 'Ready to Deploy' },
-    { value: 'borrowed', label: 'Deployed' },
-    { value: 'maintenance', label: 'Maintenance (Temporarily Unavailable)' },
-    { value: 'retired', label: 'Retired (Permanently Unavailable)' },
-=======
     { value: 'available', label: 'Available' },
     { value: 'borrowed', label: 'Borrowed' },
     { value: 'maintenance', label: 'Maintenance' },
     { value: 'retired', label: 'Retired' },
->>>>>>> Stashed changes
   ];
 
   const conditions = [
@@ -273,10 +253,7 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset, assets = [] }) {
                 name="brand"
                 value={formData.brand}
                 onChange={handleChange}
-<<<<<<< Updated upstream
-=======
                 placeholder="e.g., Apple, Lenovo"
->>>>>>> Stashed changes
                 required
                 disabled={submitting}
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50 cursor-pointer"
@@ -321,45 +298,6 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset, assets = [] }) {
             </div>
           </div>
 
-<<<<<<< Updated upstream
-            {/* Category */}
-            <div className="space-y-1.5">
-              <label className="block text-sm font-semibold text-slate-700">Category</label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                required
-                disabled={submitting}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50 cursor-pointer"
-              >
-                <option value="" disabled className="text-slate-400">Select category...</option>
-                {allCategoryOptions.map((cat) => (
-                  <option key={cat.value} value={cat.value}>
-                    {cat.label}
-                  </option>
-                ))}
-                <option value="__new__" className="font-bold text-[#1E3A8A] bg-blue-50">
-                  + Add New Category...
-                </option>
-              </select>
-
-              {formData.category === '__new__' && (
-                <div className="pt-1">
-                  <input
-                    type="text"
-                    name="customCategory"
-                    value={formData.customCategory}
-                    onChange={handleChange}
-                    placeholder="Enter new category name (e.g., Camera, Drone)"
-                    required
-                    disabled={submitting}
-                    className="w-full px-4 py-2.5 border border-blue-300 rounded-xl text-sm text-slate-800 bg-blue-50/40 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200"
-                  />
-                </div>
-              )}
-            </div>
-=======
           {/* Category */}
           <div className="space-y-1.5">
             <label className="block text-sm font-semibold text-slate-700">Category</label>
@@ -378,54 +316,11 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset, assets = [] }) {
               ))}
             </select>
           </div>
->>>>>>> Stashed changes
 
           {/* Serial Number & Purchase Cost */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-<<<<<<< Updated upstream
-              <label className="block text-sm font-semibold text-slate-700">Status</label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                required
-                disabled={submitting}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50 cursor-pointer"
-              >
-                {statuses.map((stat) => (
-                  <option key={stat.value} value={stat.value}>
-                    {stat.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Current Condition */}
-            <div className="space-y-1.5">
-              <label className="block text-sm font-semibold text-slate-700">Condition</label>
-              <select
-                name="current_condition"
-                value={formData.current_condition}
-                onChange={handleChange}
-                required
-                disabled={submitting}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50 cursor-pointer"
-              >
-                {conditions.map((cond) => (
-                  <option key={cond.value} value={cond.value}>
-                    {cond.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Serial Number */}
-            <div className="space-y-1.5">
-              <label className="block text-sm font-semibold text-slate-700">Serial Number (Optional)</label>
-=======
               <label className="block text-sm font-semibold text-slate-700">Serial Number</label>
->>>>>>> Stashed changes
               <input
                 type="text"
                 name="serial_number"
@@ -505,22 +400,14 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset, assets = [] }) {
             <button
               type="button"
               onClick={onClose}
-<<<<<<< Updated upstream
-              disabled={submitting}
-=======
               disabled={submitting || uploadingImage}
->>>>>>> Stashed changes
               className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-750 font-semibold rounded-xl text-sm hover:bg-slate-50 active:bg-slate-100 transition-colors duration-250 disabled:opacity-50 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-<<<<<<< Updated upstream
-              disabled={submitting}
-=======
               disabled={submitting || uploadingImage}
->>>>>>> Stashed changes
               className="flex-1 px-4 py-2.5 bg-[#1E3A8A] hover:bg-blue-900 active:bg-blue-950 text-white font-semibold rounded-xl text-sm transition-colors duration-250 shadow-md shadow-blue-900/10 disabled:opacity-50 flex justify-center items-center gap-2 cursor-pointer"
             >
               {submitting ? (

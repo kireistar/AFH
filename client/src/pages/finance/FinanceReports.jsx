@@ -102,23 +102,6 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-<<<<<<< Updated upstream
-                {transactions.map(t => (
-                  <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-4 text-sm font-semibold text-slate-700">{t.id}</td>
-                    <td className="p-4 text-sm font-medium text-slate-800">{t.party}</td>
-                    <td className="p-4 text-sm text-slate-600">{t.asset}</td>
-                    <td className="p-4 text-sm text-slate-600">{t.action}</td>
-                    <td className="p-4 text-sm font-bold text-right text-slate-700">{t.amount}</td>
-                    <td className="p-4 text-sm text-slate-500">{t.date}</td>
-                    <td className="p-4 text-sm">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
-                        {t.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-=======
                 {transactionTable.pageItems.map((t, rowIdx) => {
                   const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                   return (
@@ -137,7 +120,6 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
                     </tr>
                   );
                 })}
->>>>>>> Stashed changes
               </tbody>
             </table>
           )}

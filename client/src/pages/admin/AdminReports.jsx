@@ -93,32 +93,6 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-<<<<<<< Updated upstream
-                {transactions.map(t => (
-                  <tr key={t.id || Math.random()} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-4 text-sm font-semibold text-slate-700">
-                      {renderSafeValue(t.id)}
-                    </td>
-                    <td className="p-4 text-sm font-medium text-slate-800">
-                      {renderSafeValue(t.party || t.borrower || t.user)}
-                    </td>
-                    <td className="p-4 text-sm text-slate-600">
-                      {renderSafeValue(t.asset)}
-                    </td>
-                    <td className="p-4 text-sm text-slate-600 capitalize">
-                      {renderSafeValue(t.action)}
-                    </td>
-                    <td className="p-4 text-sm text-slate-500">
-                      {renderSafeValue(t.date || t.occurred_at)}
-                    </td>
-                    <td className="p-4 text-sm">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200 uppercase">
-                        {renderSafeValue(t.status, 'COMPLETED')}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-=======
                 {transactionTable.pageItems.map((t, rowIdx) => {
                   const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                   return (
@@ -154,7 +128,6 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
                     </tr>
                   );
                 })}
->>>>>>> Stashed changes
               </tbody>
             </table>
           )}
@@ -192,11 +165,7 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-<<<<<<< Updated upstream
-                {incidents.map(i => {
-=======
                 {incidentTable.pageItems.map((i, rowIdx) => {
->>>>>>> Stashed changes
                   const statusVal = renderSafeValue(i.status || i._status, 'open').toLowerCase();
                   const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                   return (

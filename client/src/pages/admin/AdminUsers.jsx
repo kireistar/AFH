@@ -133,15 +133,10 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-<<<<<<< Updated upstream
-                {filteredUsers.map(user => (
-                  <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
-=======
                 {table.pageItems.map((user, rowIdx) => {
                   const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                   return (
                     <tr key={user.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
->>>>>>> Stashed changes
                     <td className="p-4 text-sm">
                       <Link 
                         to={`/admin/users/view/${user._id}`} 

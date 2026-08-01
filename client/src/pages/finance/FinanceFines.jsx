@@ -25,32 +25,6 @@ const FinanceFines = ({ fines = [], loading = false, handleMarkAsPaid }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-<<<<<<< Updated upstream
-              {fines.map(fine => (
-                <tr key={fine._id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="p-4 text-sm font-semibold text-slate-700">{fine.id}</td>
-                  <td className="p-4 text-sm font-medium text-slate-800">{fine.user}</td>
-                  <td className="p-4 text-sm text-slate-600">{fine.reason}</td>
-                  <td className="p-4 text-sm font-bold text-slate-700">{fine.amount}</td>
-                  <td className="p-4 text-sm">
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                      fine._status === 'paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-[#B91C1C] border-red-200'
-                    }`}>{fine.status}</span>
-                  </td>
-                  <td className="p-4 text-sm text-right">
-                    {fine._status === 'unpaid' ? (
-                      // UBAH: Menambahkan event handler onClick
-                      <button 
-                        onClick={() => handleMarkAsPaid(fine)}
-                        className="px-4 py-1.5 bg-[#1E3A8A] text-white shadow-sm hover:bg-blue-900 rounded-lg transition-all font-semibold text-xs"
-                      >
-                        Mark as Paid
-                      </button>
-                    ) : <span className="text-xs font-medium text-slate-400 mr-2">Cleared</span>}
-                  </td>
-                </tr>
-              ))}
-=======
               {table.pageItems.map((fine, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 return (
@@ -77,7 +51,6 @@ const FinanceFines = ({ fines = [], loading = false, handleMarkAsPaid }) => {
                   </tr>
                 );
               })}
->>>>>>> Stashed changes
             </tbody>
           </table>
         )}

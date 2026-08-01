@@ -10,9 +10,6 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
     customBrand: '',
     asset_name: '',
     category: '',
-<<<<<<< Updated upstream
-    customCategory: ''
-=======
     status: 'available',
     current_condition: 'good',
     serial_number: '',
@@ -20,7 +17,6 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
     purchase_value: '',
     image_url: '',
     notes: ''
->>>>>>> Stashed changes
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState('');
@@ -95,19 +91,9 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-<<<<<<< Updated upstream
-
-    const finalBrand = formData.brand === '__new__' ? formData.customBrand.trim() : formData.brand.trim();
-    const finalCategory = formData.category === '__new__' ? formData.customCategory.trim() : formData.category.trim();
-
-    // Basic validation
-    if (!finalBrand) {
-      setError('Brand is required. Select an existing brand or enter a new one.');
-=======
     
     if (!formData.brand.trim()) {
       setError('Brand is required.');
->>>>>>> Stashed changes
       return;
     }
     if (!formData.asset_name.trim()) {
@@ -122,21 +108,6 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
     setSubmitting(true);
     try {
       await createAsset({
-<<<<<<< Updated upstream
-        asset_name: formData.asset_name.trim(),
-        brand: finalBrand,
-        category: finalCategory,
-        serial_number: null,
-        purchase_value: 0,
-        location: '',
-        current_condition: 'good',
-        status: 'available',
-        notes: ''
-      });
-      
-      // Reset form
-      setFormData({ brand: '', customBrand: '', asset_name: '', category: '', customCategory: '' });
-=======
         brand: formData.brand.trim(),
         asset_name: formData.asset_name.trim(),
         category: formData.category,
@@ -162,7 +133,6 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
         notes: ''
       });
       setImagePreview('');
->>>>>>> Stashed changes
       onClose();
       if (onSuccess) onSuccess();
     } catch (err) {
@@ -174,8 +144,6 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
 
   if (!isOpen) return null;
 
-<<<<<<< Updated upstream
-=======
   const categories = [
     { value: 'laptop', label: 'Laptop' },
     { value: 'desktop', label: 'Desktop' },
@@ -203,7 +171,6 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
 
   const currentDisplayImage = imagePreview || (formData.image_url ? (formData.image_url.startsWith('/uploads/') ? `${API_BASE_URL}${formData.image_url}` : formData.image_url) : '');
 
->>>>>>> Stashed changes
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 transition-all duration-300">
       <div className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-lg w-full mx-4 overflow-hidden transform transition-all scale-100 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
@@ -232,41 +199,6 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
             </div>
           )}
 
-<<<<<<< Updated upstream
-          {/* Brand */}
-          <div className="space-y-1.5">
-            <label className="block text-sm font-semibold text-slate-700">Brand</label>
-            <select
-              name="brand"
-              value={formData.brand}
-              onChange={handleChange}
-              required
-              disabled={submitting}
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50 cursor-pointer"
-            >
-              <option value="" disabled className="text-slate-400">Select brand...</option>
-              {allBrands.map((b) => (
-                <option key={b} value={b} className="text-slate-800">{b}</option>
-              ))}
-              <option value="__new__" className="font-bold text-[#1E3A8A] bg-blue-50">
-                + Add New Brand...
-              </option>
-            </select>
-
-            {formData.brand === '__new__' && (
-              <div className="pt-1.5">
-                <input
-                  type="text"
-                  name="customBrand"
-                  value={formData.customBrand}
-                  onChange={handleChange}
-                  placeholder="Enter new brand name (e.g., Sony, Canon, Samsung)"
-                  required
-                  disabled={submitting}
-                  className="w-full px-4 py-2.5 border border-blue-300 rounded-xl text-sm text-slate-800 bg-blue-50/40 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200"
-                />
-              </div>
-=======
           {/* Device Image Upload Box */}
           <div className="space-y-1.5">
             <label className="block text-sm font-semibold text-slate-700">
@@ -306,7 +238,6 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
                   className="hidden"
                 />
               </label>
->>>>>>> Stashed changes
             )}
           </div>
 
@@ -350,11 +281,7 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
               onChange={handleChange}
               required
               disabled={submitting}
-<<<<<<< Updated upstream
-              className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50 cursor-pointer"
-=======
               className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-850 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50 cursor-pointer"
->>>>>>> Stashed changes
             >
               <option value="" disabled className="text-slate-400">Select asset category...</option>
               {allCategoryOptions.map((cat) => (
@@ -466,22 +393,14 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
             <button
               type="button"
               onClick={onClose}
-<<<<<<< Updated upstream
-              disabled={submitting}
-=======
               disabled={submitting || uploadingImage}
->>>>>>> Stashed changes
               className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-750 font-semibold rounded-xl text-sm hover:bg-slate-50 active:bg-slate-100 transition-colors duration-250 disabled:opacity-50 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-<<<<<<< Updated upstream
-              disabled={submitting}
-=======
               disabled={submitting || uploadingImage}
->>>>>>> Stashed changes
               className="flex-1 px-4 py-2.5 bg-[#1E3A8A] hover:bg-blue-900 active:bg-blue-950 text-white font-semibold rounded-xl text-sm transition-colors duration-250 shadow-md shadow-blue-900/10 disabled:opacity-50 flex justify-center items-center gap-2 cursor-pointer"
             >
               {submitting ? (

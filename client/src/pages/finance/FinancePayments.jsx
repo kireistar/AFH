@@ -24,18 +24,6 @@ const FinancePayments = ({ payments = [], loading = false }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-<<<<<<< Updated upstream
-              {payments.map(pay => (
-                <tr key={pay.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="p-4 text-sm font-semibold text-slate-700">{pay.id}</td>
-                  <td className="p-4 text-sm font-medium text-slate-800">{pay.party}</td>
-                  <td className="p-4 text-sm text-slate-600">{pay.asset}</td>
-                  <td className="p-4 text-sm text-slate-600">{pay.action}</td>
-                  <td className="p-4 text-sm text-slate-600">{pay.date}</td>
-                  <td className="p-4 text-sm font-bold text-emerald-600">{pay.amount}</td>
-                </tr>
-              ))}
-=======
               {table.pageItems.map((pay, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 return (
@@ -49,7 +37,6 @@ const FinancePayments = ({ payments = [], loading = false }) => {
                   </tr>
                 );
               })}
->>>>>>> Stashed changes
             </tbody>
           </table>
         )}
