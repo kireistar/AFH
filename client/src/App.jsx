@@ -10,6 +10,8 @@ const UserDashboard = lazy(() => import('./pages/user/UserDashboard'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const ManagerDashboard = lazy(() => import('./pages/manager/ManagerDashboard'));
 const FinanceDashboard = lazy(() => import('./pages/finance/FinanceDashboard'));
+const ViewAsset = lazy(() => import('./pages/admin/ViewAsset'));
+const ViewUser = lazy(() => import('./pages/admin/ViewUser'));
 
 /**
  * Universal Page Loading Spinner
@@ -118,6 +120,10 @@ function App() {
               {/* Protected Routes by Role */}
               <Route element={<ProtectedRoute allowedRoles={['user', 'admin', 'manager', 'finance']} />}>
                 <Route path="/user/*" element={<UserDashboard />} />
+                <Route path="/assets/view/:assetId" element={<ViewAsset />} />
+                <Route path="/admin/assets/view/:assetId" element={<ViewAsset />} />
+                <Route path="/users/view/:userId" element={<ViewUser />} />
+                <Route path="/admin/users/view/:userId" element={<ViewUser />} />
               </Route>
 
               <Route element={<ProtectedRoute allowedRoles={['admin']} />}>

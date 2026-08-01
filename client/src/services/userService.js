@@ -21,6 +21,11 @@ export const fetchUsers = async () => {
   return data.map(mapUser);
 };
 
+export const fetchUserById = async (userId) => {
+  const data = await apiGet(`/api/v1/users/${userId}`);
+  return mapUser(data);
+};
+
 export const fetchMyProfile = async () => {
   const data = await apiGet('/api/v1/users/me');
   return mapUser(data);

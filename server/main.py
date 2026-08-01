@@ -1,8 +1,10 @@
 """
 FastAPI entry point untuk AFH Backend.
 """
+import os
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
@@ -35,6 +37,22 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Mount directory uploads lokal dengan CORS headers
+uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
+os.makedirs(uploads_dir, exist_ok=True)
+
+class CORSStaticFiles(StaticFiles):
+    async def __call__(self, scope, receive, send):
+        async def send_with_cors(message):
+            if message["type"] == "http.response.start":
+                headers = list(message.get("headers", []))
+                headers.append((b"access-control-allow-origin", b"http://localhost:5173"))
+                message["headers"] = headers
+            await send(message)
+        await super().__call__(scope, receive, send_with_cors)
+
+app.mount("/uploads", CORSStaticFiles(directory=uploads_dir), name="uploads")
 
 # ── Register routers ──────────────────────────────────────────────────────────
 app.include_router(auth.router)

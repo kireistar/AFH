@@ -49,35 +49,38 @@ const UserReceipts = ({ receipts = [], loading = false }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {table.pageItems.map((t) => (
-                <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
-                  <td className="p-4 text-sm font-semibold font-mono text-slate-700">
-                    {t.transaction_code || `TX-${t.id || '-'}`}
-                  </td>
-                  <td className="p-4 text-sm font-medium text-slate-800">
-                    {assetLabel(t)}
-                  </td>
-                  <td className="p-4 text-sm text-slate-600 capitalize">
-                    {t.action || 'handover'}
-                  </td>
-                  <td className="p-4 text-sm text-slate-500">
-                    {formatDateTime(t.occurred_at || t.created_at)}
-                  </td>
-                  <td className="p-4 text-sm">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200 uppercase">
-                      {t.status || 'COMPLETED'}
-                    </span>
-                  </td>
-                  <td className="p-4 text-sm text-right whitespace-nowrap">
-                    <button
-                      onClick={() => openReceiptInNewTab(t)}
-                      className="px-2.5 py-1 bg-[#1E3A8A] text-white rounded-lg hover:bg-blue-900 transition-all font-semibold text-xs cursor-pointer"
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {table.pageItems.map((t, rowIdx) => {
+                const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+                return (
+                  <tr key={t.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
+                    <td className="p-4 text-sm font-semibold font-mono text-slate-700">
+                      {t.transaction_code || `TX-${t.id || '-'}`}
+                    </td>
+                    <td className="p-4 text-sm font-medium text-slate-800">
+                      {assetLabel(t)}
+                    </td>
+                    <td className="p-4 text-sm text-slate-600 capitalize">
+                      {t.action || 'handover'}
+                    </td>
+                    <td className="p-4 text-sm text-slate-500">
+                      {formatDateTime(t.occurred_at || t.created_at)}
+                    </td>
+                    <td className="p-4 text-sm">
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200 uppercase">
+                        {t.status || 'COMPLETED'}
+                      </span>
+                    </td>
+                    <td className="p-4 text-sm text-right whitespace-nowrap">
+                      <button
+                        onClick={() => openReceiptInNewTab(t)}
+                        className="px-2.5 py-1 bg-[#1E3A8A] text-white rounded-lg hover:bg-blue-900 transition-all font-semibold text-xs cursor-pointer"
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
             </table>
           )}

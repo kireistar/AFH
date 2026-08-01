@@ -131,21 +131,24 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {transactionTable.pageItems.map(t => (
-                  <tr key={t.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="p-4 text-sm font-semibold text-slate-700">{t.id}</td>
-                    <td className="p-4 text-sm font-medium text-slate-800">{borrowerLabel(t)}</td>
-                    <td className="p-4 text-sm text-slate-600">{assetLabel(t)}</td>
-                    <td className="p-4 text-sm text-slate-600">{t.action}</td>
-                    <td className="p-4 text-sm font-bold text-right text-slate-700">{amountLabel(t)}</td>
-                    <td className="p-4 text-sm text-slate-500">{formatDateTime(t.occurred_at || t.created_at)}</td>
-                    <td className="p-4 text-sm">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
-                        {t.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {transactionTable.pageItems.map((t, rowIdx) => {
+                  const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+                  return (
+                    <tr key={t.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
+                      <td className="p-4 text-sm font-semibold text-slate-700">{t.id}</td>
+                      <td className="p-4 text-sm font-medium text-slate-800">{borrowerLabel(t)}</td>
+                      <td className="p-4 text-sm text-slate-600">{assetLabel(t)}</td>
+                      <td className="p-4 text-sm text-slate-600">{t.action}</td>
+                      <td className="p-4 text-sm font-bold text-right text-slate-700">{amountLabel(t)}</td>
+                      <td className="p-4 text-sm text-slate-500">{formatDateTime(t.occurred_at || t.created_at)}</td>
+                      <td className="p-4 text-sm">
+                        <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
+                          {t.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           )}

@@ -73,14 +73,14 @@ export const getCurrentUser = async () => {
 /**
  * Validate/refresh user session
  * Panggil saat app startup untuk validate token yang di-store
- * @param {string} accessToken - JWT token
  * @returns {Promise<{user object}|null>}
  */
-export const validateSession = async (accessToken) => {
-  if (!accessToken) return null;
+export const validateSession = async () => {
+  const token = localStorage.getItem('accessToken');
+  if (!token) return null;
 
   try {
-    const user = await getCurrentUser(accessToken);
+    const user = await getCurrentUser();
     return user;
   } catch (error) {
     console.error('Session validation failed:', error);
@@ -89,14 +89,12 @@ export const validateSession = async (accessToken) => {
 };
 
 /**
- * Logout (client-side only, since JWT adalah stateless)
- * Di backend tidak ada logout endpoint, cukup hapus token di client
+ * Logout (client-side token cleanup)
  * @returns {Promise<void>}
  */
 export const logoutUser = async () => {
-  // Di sini bisa hit endpoint logout jika di-add ke backend nanti
-  // Untuk sekarang, logout hanya client-side (removeItem dari localStorage)
-  // dilakukan di useAuth.logout()
+  localStorage.removeItem('accessToken');
+  localStorage.removeItem('user');
   console.log('User logged out');
 };
 

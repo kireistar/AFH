@@ -149,8 +149,9 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {table.pageItems.map((t) => {
+                {table.pageItems.map((t, rowIdx) => {
                   const isTampered = integrityData?.tampered_transaction_ids?.includes(t.id || t._id);
+                  const rowBgClass = isTampered ? 'bg-rose-50/50' : (rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70');
 
                   let parsedPayload = {};
                   try {
@@ -162,10 +163,10 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
                   return (
                     <tr
                       key={t.id || t._id}
-                      className={`transition-colors ${
+                      className={`transition-colors border-b border-slate-100/80 ${
                         isTampered
-                          ? 'bg-rose-50/50 hover:bg-rose-50'
-                          : 'hover:bg-slate-50/30'
+                          ? 'hover:bg-rose-100/60'
+                          : `${rowBgClass} hover:bg-blue-50/30`
                       }`}
                     >
                       <td className="p-3 md:p-4 text-xs md:text-sm font-semibold text-slate-800">

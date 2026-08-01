@@ -39,6 +39,7 @@ def get_all_invoices(
     - status_filter: "unpaid", "paid", "overdue"
     - user_id: filter by user UUID
     """
+    limit = min(max(1, limit), 200)
     query = db.query(Invoice)
     
     if status_filter:
@@ -118,11 +119,12 @@ def update_invoice(
             detail=f"Invoice with id {invoice_id} not found",
         )
 
+    original_status = invoice.status
     update_data = invoice_in.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(invoice, key, value)
 
-    if invoice_in.status == "paid" and invoice.status != "paid":
+    if invoice_in.status == "paid" and original_status != "paid":
         record_fine_paid(db, invoice.user_id, invoice.fine_amount)
     db.commit()
     db.refresh(invoice)

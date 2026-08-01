@@ -1,9 +1,16 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { fetchAssets, fetchAvailableAssets } from '../services/assetService';
 
+// In-memory cache for instant UI rendering across tab switches
+let assetCache = {
+  all: null,
+  available: null,
+};
+
 const useAssets = (onlyAvailable = false) => {
-  const [assets, setAssets] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = onlyAvailable ? 'available' : 'all';
+  const [assets, setAssets] = useState(() => assetCache[cacheKey] || []);
+  const [loading, setLoading] = useState(() => !assetCache[cacheKey]);
   const [error, setError] = useState(null);
   const [pollingFailed, setPollingFailed] = useState(false);
   const abortRef = useRef(null);
@@ -15,7 +22,8 @@ const useAssets = (onlyAvailable = false) => {
     const controller = new AbortController();
     abortRef.current = controller;
 
-    if (isInitial) {
+    // Show loading spinner ONLY if we have no cached data
+    if (isInitial && !assetCache[cacheKey]) {
       setLoading(true);
     }
     setError(null);
@@ -24,7 +32,9 @@ const useAssets = (onlyAvailable = false) => {
       const data = onlyAvailable
         ? await fetchAvailableAssets()
         : await fetchAssets();
+      
       if (!controller.signal.aborted && mountedRef.current) {
+        assetCache[cacheKey] = data;
         setAssets(data);
         failureCountRef.current = 0;
         setPollingFailed(false);
@@ -35,7 +45,7 @@ const useAssets = (onlyAvailable = false) => {
         if (failureCountRef.current >= 3) {
           setPollingFailed(true);
         }
-        if (isInitial) {
+        if (isInitial && !assetCache[cacheKey]) {
           setError(err.message || 'Failed to load assets.');
         }
       }
@@ -44,7 +54,7 @@ const useAssets = (onlyAvailable = false) => {
         setLoading(false);
       }
     }
-  }, [onlyAvailable]);
+  }, [onlyAvailable, cacheKey]);
 
   useEffect(() => {
     mountedRef.current = true;

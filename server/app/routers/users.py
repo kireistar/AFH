@@ -6,7 +6,6 @@ import base64
 from typing import List
 from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from cryptography.hazmat.primitives.asymmetric import ed25519
@@ -22,12 +21,6 @@ router = APIRouter(
     prefix="/api/v1/users",
     tags=["Users"],
 )
-
-# --- FASE 2: PYDANTIC SCHEMA & ENDPOINT REGISTRASI KUNCI ---
-
-class RegisterPublicKeyRequest(BaseModel):
-    public_key: str = Field(..., description="Ed25519 Public Key dalam format Base64")
-    signature: str = Field(..., description="Ed25519 signature dari challenge string 'register:{user_id}' untuk proof-of-possession")
 
 
 @router.post("/register-key", response_model=UserResponse)
@@ -103,6 +96,7 @@ def get_all_users(
     db: Session = Depends(get_db),
     _: User = Depends(require_role("admin")),
 ):
+    limit = min(max(1, limit), 200)
     return db.query(User).offset(skip).limit(limit).all()
 
 

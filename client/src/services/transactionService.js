@@ -41,7 +41,7 @@ export const submitTransaction = async (transactionData) => {
 };
 
 export const verifyLedger = async () => {
-  return await apiPost("/api/v1/transactions/verify/ledger", {});
+  return await apiPost("/api/v1/ledger/verify", {});
 };
 
 export const fetchAllTransactions = async () => {
