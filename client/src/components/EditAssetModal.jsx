@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { updateAsset } from '../services/assetService';
 
-function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
+function EditAssetModal({ isOpen, onClose, onSuccess, asset, assets = [] }) {
   const [formData, setFormData] = useState({
     brand: '',
+    customBrand: '',
     asset_name: '',
     category: '',
+    customCategory: '',
     status: '',
     current_condition: '',
     location: '',
@@ -15,14 +17,50 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Default base categories
+  const baseCategoryOptions = [
+    { value: 'Laptop', label: 'Laptop' },
+    { value: 'Desktop', label: 'Desktop' },
+    { value: 'Mobile', label: 'Mobile Phone / Tablet' },
+    { value: 'Peripheral', label: 'Peripheral (Mouse, Keyboard, Monitor)' },
+    { value: 'Projector', label: 'Projector' },
+    { value: 'Server', label: 'Server' },
+    { value: 'Network', label: 'Network Equipment (Router, Switch)' },
+    { value: 'Other', label: 'Other' },
+  ];
+
+  const categoryValues = baseCategoryOptions.map(c => c.value);
+  const extraCategories = Array.from(new Set(
+    assets.map(a => a.category).filter(c => c && !categoryValues.includes(c))
+  ));
+
+  const allCategoryOptions = [
+    ...baseCategoryOptions,
+    ...extraCategories.map(c => ({ value: c, label: c }))
+  ];
+
+  const defaultBrands = ['Apple', 'Lenovo', 'Dell', 'HP', 'Asus', 'Acer', 'Logitech', 'Epson'];
+  const allBrands = Array.from(new Set([
+    ...defaultBrands,
+    ...assets.map(a => a.brand).filter(b => b && b !== '-')
+  ])).sort();
+
   // Populate form data when the modal opens or selected asset changes
   useEffect(() => {
     if (asset) {
+      const assetBrand = asset.brand === '-' ? '' : asset.brand;
+      const isKnownBrand = allBrands.includes(assetBrand);
+      
+      const assetCat = asset.category || asset._category || '';
+      const isKnownCat = allCategoryOptions.some(c => c.value.toLowerCase() === assetCat.toLowerCase());
+
       setFormData({
-        brand: asset.brand === '-' ? '' : asset.brand,
+        brand: isKnownBrand || !assetBrand ? assetBrand : '__new__',
+        customBrand: isKnownBrand ? '' : assetBrand,
         asset_name: asset.name || '',
-        category: asset._category || '',
-        status: asset._status || '',
+        category: isKnownCat || !assetCat ? assetCat : '__new__',
+        customCategory: isKnownCat ? '' : assetCat,
+        status: asset._status || 'available',
         current_condition: asset._condition || 'good',
         location: asset.location === '-' ? '' : asset.location,
         serial_number: asset.serialNumber === '-' ? '' : asset.serialNumber,
@@ -41,8 +79,11 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
     e.preventDefault();
     setError('');
 
+    const finalBrand = formData.brand === '__new__' ? formData.customBrand.trim() : formData.brand.trim();
+    const finalCategory = formData.category === '__new__' ? formData.customCategory.trim() : formData.category.trim();
+
     // Basic validation
-    if (!formData.brand.trim()) {
+    if (!finalBrand) {
       setError('Brand is required.');
       return;
     }
@@ -50,7 +91,7 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
       setError('Device Name is required.');
       return;
     }
-    if (!formData.category) {
+    if (!finalCategory) {
       setError('Category is required.');
       return;
     }
@@ -62,9 +103,9 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
     setSubmitting(true);
     try {
       await updateAsset(asset._id, {
-        brand: formData.brand.trim(),
+        brand: finalBrand,
         asset_name: formData.asset_name.trim(),
-        category: formData.category,
+        category: finalCategory,
         status: formData.status,
         current_condition: formData.current_condition,
         location: formData.location.trim() || null,
@@ -83,20 +124,9 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
 
   if (!isOpen || !asset) return null;
 
-  const categories = [
-    { value: 'laptop', label: 'Laptop' },
-    { value: 'desktop', label: 'Desktop' },
-    { value: 'mobile', label: 'Mobile Phone / Tablet' },
-    { value: 'peripheral', label: 'Peripheral (Mouse, Keyboard, Monitor)' },
-    { value: 'projector', label: 'Projector' },
-    { value: 'server', label: 'Server' },
-    { value: 'network', label: 'Network Equipment (Router, Switch)' },
-    { value: 'other', label: 'Other' },
-  ];
-
   const statuses = [
-    { value: 'available', label: 'Available' },
-    { value: 'borrowed', label: 'Borrowed' },
+    { value: 'available', label: 'Ready to Deploy' },
+    { value: 'borrowed', label: 'Deployed' },
     { value: 'maintenance', label: 'Maintenance (Temporarily Unavailable)' },
     { value: 'retired', label: 'Retired (Permanently Unavailable)' },
   ];
@@ -124,7 +154,7 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
           <button 
             type="button" 
             onClick={onClose} 
-            className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-lg transition-colors"
+            className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-lg transition-colors cursor-pointer"
           >
             ✕
           </button>
@@ -144,16 +174,37 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
             {/* Brand */}
             <div className="space-y-1.5 md:col-span-2">
               <label className="block text-sm font-semibold text-slate-700">Brand</label>
-              <input
-                type="text"
+              <select
                 name="brand"
                 value={formData.brand}
                 onChange={handleChange}
-                placeholder="e.g., Apple, Lenovo, Logitech"
                 required
                 disabled={submitting}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50"
-              />
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50 cursor-pointer"
+              >
+                <option value="" disabled className="text-slate-400">Select brand...</option>
+                {allBrands.map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+                <option value="__new__" className="font-bold text-[#1E3A8A] bg-blue-50">
+                  + Add New Brand...
+                </option>
+              </select>
+
+              {formData.brand === '__new__' && (
+                <div className="pt-1">
+                  <input
+                    type="text"
+                    name="customBrand"
+                    value={formData.customBrand}
+                    onChange={handleChange}
+                    placeholder="Enter new brand name (e.g., Sony, Canon, Samsung)"
+                    required
+                    disabled={submitting}
+                    className="w-full px-4 py-2.5 border border-blue-300 rounded-xl text-sm text-slate-800 bg-blue-50/40 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Device Name */}
@@ -180,14 +231,33 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
                 onChange={handleChange}
                 required
                 disabled={submitting}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50"
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50 cursor-pointer"
               >
-                {categories.map((cat) => (
+                <option value="" disabled className="text-slate-400">Select category...</option>
+                {allCategoryOptions.map((cat) => (
                   <option key={cat.value} value={cat.value}>
                     {cat.label}
                   </option>
                 ))}
+                <option value="__new__" className="font-bold text-[#1E3A8A] bg-blue-50">
+                  + Add New Category...
+                </option>
               </select>
+
+              {formData.category === '__new__' && (
+                <div className="pt-1">
+                  <input
+                    type="text"
+                    name="customCategory"
+                    value={formData.customCategory}
+                    onChange={handleChange}
+                    placeholder="Enter new category name (e.g., Camera, Drone)"
+                    required
+                    disabled={submitting}
+                    className="w-full px-4 py-2.5 border border-blue-300 rounded-xl text-sm text-slate-800 bg-blue-50/40 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Status */}
@@ -199,7 +269,7 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
                 onChange={handleChange}
                 required
                 disabled={submitting}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50"
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50 cursor-pointer"
               >
                 {statuses.map((stat) => (
                   <option key={stat.value} value={stat.value}>
@@ -218,7 +288,7 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
                 onChange={handleChange}
                 required
                 disabled={submitting}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50"
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50 cursor-pointer"
               >
                 {conditions.map((cond) => (
                   <option key={cond.value} value={cond.value}>
@@ -277,14 +347,14 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset }) {
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-750 font-semibold rounded-xl text-sm hover:bg-slate-50 active:bg-slate-100 transition-colors duration-250 disabled:opacity-50"
+              className="flex-1 px-4 py-2.5 border border-slate-200 text-slate-750 font-semibold rounded-xl text-sm hover:bg-slate-50 active:bg-slate-100 transition-colors duration-250 disabled:opacity-50 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 px-4 py-2.5 bg-[#1E3A8A] hover:bg-blue-900 active:bg-blue-950 text-white font-semibold rounded-xl text-sm transition-colors duration-250 shadow-md shadow-blue-900/10 disabled:opacity-50 flex justify-center items-center gap-2"
+              className="flex-1 px-4 py-2.5 bg-[#1E3A8A] hover:bg-blue-900 active:bg-blue-950 text-white font-semibold rounded-xl text-sm transition-colors duration-250 shadow-md shadow-blue-900/10 disabled:opacity-50 flex justify-center items-center gap-2 cursor-pointer"
             >
               {submitting ? (
                 <>

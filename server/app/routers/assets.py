@@ -56,10 +56,12 @@ def create_asset(
 ):
     """Buat asset baru. Admin only."""
     # Generate asset_code automatically based on category
-    asset_code = generate_asset_code(db, asset_in.category.value)
+    cat_str = asset_in.category.value if hasattr(asset_in.category, "value") else str(asset_in.category)
+    asset_code = generate_asset_code(db, cat_str)
     
     asset_data = asset_in.model_dump()
     asset_data["asset_code"] = asset_code
+    asset_data["category"] = cat_str
     
     new_asset = Asset(**asset_data)
     db.add(new_asset)

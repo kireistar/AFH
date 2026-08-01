@@ -380,6 +380,10 @@ const AdminDashboard = () => {
             onRefresh={refreshAssets}
             autoOpenAdd={autoOpenAddAsset}
             onAddModalClosed={() => setAutoOpenAddAsset(false)}
+            activeLoans={activeLoans}
+            users={users}
+            transactions={transactions}
+            onNavigateToUsers={() => setActiveTab('Users')}
           />
         );
       case 'Approvals':

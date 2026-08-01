@@ -105,13 +105,13 @@ const AdminOverview = ({
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between text-xs font-bold mb-1">
-                  <span className="text-emerald-600 uppercase">Available</span>
+                  <span className="text-emerald-600 uppercase">Ready to Deploy</span>
                   <span>{assetStats?.available || 0}</span>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between text-xs font-bold mb-1">
-                  <span className="text-[#1E3A8A] uppercase">Borrowed</span>
+                  <span className="text-[#1E3A8A] uppercase">Deployed</span>
                   <span>{assetStats?.borrowed || 0}</span>
                 </div>
               </div>
