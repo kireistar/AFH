@@ -26,7 +26,7 @@ const UserAssets = ({ requests = [], loading = false }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {table.pageItems.map((req, rowIdx) => {
+              {borrowedAssets.map((req, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 return (
                   <tr key={req.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>

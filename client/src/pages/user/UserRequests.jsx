@@ -60,7 +60,7 @@ const UserRequests = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {table.pageItems.map((req, rowIdx) => {
+              {requests.map((req, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 return (
                   <tr

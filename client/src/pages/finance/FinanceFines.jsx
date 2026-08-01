@@ -25,7 +25,7 @@ const FinanceFines = ({ fines = [], loading = false, handleMarkAsPaid }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {table.pageItems.map((fine, rowIdx) => {
+              {fines.map((fine, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 return (
                   <tr key={fine._id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>

@@ -24,7 +24,7 @@ const FinancePayments = ({ payments = [], loading = false }) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {table.pageItems.map((pay, rowIdx) => {
+              {payments.map((pay, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 return (
                   <tr key={pay.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>

@@ -39,7 +39,7 @@ const UserIncidents = ({ incidents = [], loading = false, onOpenIncidentModal })
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {table.pageItems.map((inc, rowIdx) => {
+              {incidents.map((inc, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 return (
                   <tr key={inc.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
