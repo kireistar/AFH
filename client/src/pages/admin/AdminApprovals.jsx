@@ -29,26 +29,31 @@ const AdminApprovals = ({ approvals = [], loading = false, handleApprove, handle
             <tbody className="divide-y divide-slate-50">
               {approvals.map((req, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+                const userName = typeof req.user === 'object' ? (req.user?.employee_name || 'User') : String(req.user || '-');
+                const assetName = typeof req.asset === 'object' ? (req.asset?.asset_name || 'Asset') : String(req.asset || '-');
+                const reqStatus = req.status || req._status || 'Pending';
+                const isPending = reqStatus === 'pending_admin' || req._status === 'pending_admin' || reqStatus === 'Pending';
+                const tierStyle = TIER_STYLES[req.risk_tier_snapshot] || TIER_STYLES[req.urgency] || TIER_STYLES.Low;
                 return (
-                  <tr key={req._id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
-                    <td className="p-4 text-sm font-semibold text-slate-700">{req.id}</td>
-                    <td className="p-4 text-sm font-medium text-slate-800">{req.user}</td>
-                    <td className="p-4 text-sm text-slate-600">{req.asset}</td>
+                  <tr key={req.id || req._id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
+                    <td className="p-4 text-sm font-semibold text-slate-700">{req.request_code || req.id}</td>
+                    <td className="p-4 text-sm font-medium text-slate-800">{userName}</td>
+                    <td className="p-4 text-sm text-slate-600">{assetName}</td>
                     <td className="p-4 text-sm">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${TIER_STYLES[req.urgency] || TIER_STYLES.Low}`}>
-                        {req.urgency}
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${tierStyle}`}>
+                        {req.risk_tier_snapshot || req.urgency || 'Low'}
                       </span>
                     </td>
-                    <td className="p-4 text-sm text-slate-600 max-w-xs truncate">{req.aiReason}</td>
+                    <td className="p-4 text-sm text-slate-600 max-w-xs truncate">{req.ai_reason || req.aiReason || '-'}</td>
                     <td className="p-4 text-sm">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                        req.status === 'Approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                        req.status === 'Rejected' ? 'bg-red-50 text-[#B91C1C] border-red-200' :
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${
+                        reqStatus === 'approved' || reqStatus === 'Approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                        reqStatus === 'rejected' || reqStatus === 'Rejected' ? 'bg-red-50 text-[#B91C1C] border-red-200' :
                         'bg-orange-50 text-orange-700 border-orange-200'
-                      }`}>{req.status}</span>
+                      }`}>{reqStatus}</span>
                     </td>
                     <td className="p-4 text-sm text-right">
-                      {req._status === 'pending_admin' ? (
+                      {isPending ? (
                         <div className="flex justify-end space-x-2">
                           <button onClick={() => handleApprove(req)} className="px-3 py-1.5 bg-[#1E3A8A] text-white rounded-lg text-xs font-bold hover:bg-blue-900 transition-all shadow-sm cursor-pointer">Approve</button>
                           <button onClick={() => handleReject(req)} className="px-3 py-1.5 bg-white text-[#B91C1C] border border-red-200 rounded-lg text-xs font-bold hover:bg-red-50 transition-all shadow-sm cursor-pointer">Reject</button>

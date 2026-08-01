@@ -28,16 +28,18 @@ const FinanceInvoices = ({ invoices = [], loading = false }) => {
             <tbody className="divide-y divide-slate-50">
               {invoices.map((inv, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+                const userName = typeof inv.user === 'object' ? (inv.user?.employee_name || 'User') : String(inv.user || '-');
+                const isPaid = (inv.status || '').toLowerCase() === 'paid';
                 return (
                   <tr key={inv.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
-                    <td className="p-4 text-sm font-semibold text-slate-700">{inv.id}</td>
-                    <td className="p-4 text-sm font-medium text-slate-800">{inv.user}</td>
-                    <td className="p-4 text-sm text-slate-600">{inv.reason}</td>
-                    <td className="p-4 text-sm font-bold text-slate-700">{inv.amount}</td>
+                    <td className="p-4 text-sm font-semibold text-slate-700">{inv.invoice_code || inv.id}</td>
+                    <td className="p-4 text-sm font-medium text-slate-800">{userName}</td>
+                    <td className="p-4 text-sm text-slate-600">{inv.reason || '-'}</td>
+                    <td className="p-4 text-sm font-bold text-slate-700">{inv.fine_amount ? `Rp ${Number(inv.fine_amount).toLocaleString('id-ID')}` : (inv.amount || '-')}</td>
                     <td className="p-4 text-sm">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                        inv.status === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-orange-50 text-orange-700 border-orange-200'
-                      }`}>{inv.status}</span>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${
+                        isPaid ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-orange-50 text-orange-700 border-orange-200'
+                      }`}>{inv.status || 'Unpaid'}</span>
                     </td>
                   </tr>
                 );

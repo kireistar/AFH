@@ -41,15 +41,17 @@ const UserIncidents = ({ incidents = [], loading = false, onOpenIncidentModal })
             <tbody className="divide-y divide-slate-50">
               {incidents.map((inc, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+                const assetName = typeof inc.asset === 'object' ? (inc.asset?.asset_name || 'Asset') : String(inc.asset || '-');
+                const incStatus = (inc.status || inc._status || 'open').toLowerCase();
                 return (
                   <tr key={inc.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
-                    <td className="p-4 text-sm font-semibold text-slate-700">{inc.id}</td>
-                    <td className="p-4 text-sm font-medium text-slate-800">{inc.asset}</td>
-                    <td className="p-4 text-sm text-slate-600">{inc.description}</td>
-                    <td className="p-4 text-sm text-slate-500">{inc.date}</td>
+                    <td className="p-4 text-sm font-semibold text-slate-700">{inc.incident_code || inc.id}</td>
+                    <td className="p-4 text-sm font-medium text-slate-800">{assetName}</td>
+                    <td className="p-4 text-sm text-slate-600">{inc.description || '-'}</td>
+                    <td className="p-4 text-sm text-slate-500">{inc.created_at ? new Date(inc.created_at).toLocaleDateString() : (inc.date || '-')}</td>
                     <td className="p-4 text-sm">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${STATUS_STYLES[inc._status] || STATUS_STYLES.open}`}>
-                        {inc.status}
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${STATUS_STYLES[incStatus] || STATUS_STYLES.open}`}>
+                        {incStatus}
                       </span>
                     </td>
                   </tr>

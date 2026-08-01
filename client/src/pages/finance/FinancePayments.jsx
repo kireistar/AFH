@@ -1,6 +1,37 @@
 import React from 'react';
 
 const FinancePayments = ({ payments = [], loading = false }) => {
+  const borrowerLabel = (pay) => {
+    if (!pay.borrower) return '-';
+    if (typeof pay.borrower === 'object') {
+      return pay.borrower.employee_name || pay.borrower.name || 'User';
+    }
+    return String(pay.borrower);
+  };
+
+  const assetLabel = (pay) => {
+    if (!pay.asset) return '-';
+    if (typeof pay.asset === 'object') {
+      return pay.asset.asset_name || pay.asset.name || 'Asset';
+    }
+    return String(pay.asset);
+  };
+
+  const formatDateTime = (dtStr) => {
+    if (!dtStr) return '-';
+    try {
+      return new Date(dtStr).toLocaleString();
+    } catch {
+      return String(dtStr);
+    }
+  };
+
+  const amountLabel = (pay) => {
+    const val = pay.amount || pay.fine_amount;
+    if (!val) return '-';
+    return `Rp ${Number(val).toLocaleString('id-ID')}`;
+  };
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -28,10 +59,10 @@ const FinancePayments = ({ payments = [], loading = false }) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 return (
                   <tr key={pay.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
-                    <td className="p-4 text-sm font-semibold text-slate-700">{pay.id}</td>
+                    <td className="p-4 text-sm font-semibold text-slate-700">{pay.transaction_code || pay.id}</td>
                     <td className="p-4 text-sm font-medium text-slate-800">{borrowerLabel(pay)}</td>
                     <td className="p-4 text-sm text-slate-600">{assetLabel(pay)}</td>
-                    <td className="p-4 text-sm text-slate-600">{pay.action}</td>
+                    <td className="p-4 text-sm text-slate-600 capitalize">{pay.action || '-'}</td>
                     <td className="p-4 text-sm text-slate-600">{formatDateTime(pay.occurred_at || pay.created_at)}</td>
                     <td className="p-4 text-sm font-bold text-emerald-600">{amountLabel(pay)}</td>
                   </tr>

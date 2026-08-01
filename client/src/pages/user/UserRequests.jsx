@@ -62,39 +62,44 @@ const UserRequests = ({
             <tbody className="divide-y divide-slate-50">
               {requests.map((req, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+                const assetName = typeof req.asset === 'object' ? (req.asset?.asset_name || 'Asset') : String(req.asset || '-');
+                const reqStatus = req.status || req._status || 'Pending';
+                const isApproved = reqStatus.toLowerCase() === 'approved';
                 return (
                   <tr
                     key={req.id}
                     className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}
                   >
                     <td className="p-4 text-sm font-semibold text-slate-700">
-                      {req.id}
+                      {req.request_code || req.id}
                     </td>
                     <td className="p-4 text-sm font-medium text-slate-800">
-                      {req.asset}
+                      {assetName}
                     </td>
-                    <td className="p-4 text-sm text-slate-500">{req.date}</td>
+                    <td className="p-4 text-sm text-slate-500">
+                      {req.created_at ? new Date(req.created_at).toLocaleDateString() : (req.date || '-')}
+                    </td>
                     <td className="p-4 text-sm">
                       <div className="flex items-center font-medium text-xs">
                         <span
-                          className={`w-1.5 h-1.5 rounded-full mr-1.5 ${req.urgency === "High" ? "bg-red-500" : "bg-blue-500"}`}
+                          className={`w-1.5 h-1.5 rounded-full mr-1.5 ${req.risk_tier_snapshot === "High" || req.urgency === "High" ? "bg-red-500" : "bg-blue-500"}`}
                         ></span>
-                        {req.urgency}
+                        {req.risk_tier_snapshot || req.urgency || "Low"}
                       </div>
                     </td>
                     <td className="p-4 text-sm">
                       <span
-                        className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                          req.status === "Approved"
+                        className={`px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${
+                          isApproved
                             ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                             : "bg-yellow-50 text-yellow-700 border-yellow-200"
                         }`}
                       >
-                        {req.status}
+                        {reqStatus}
                       </span>
                     </td>
                     <td className="p-4 text-sm text-right">
-                      {req.status === "Approved" && (
+                      {isApproved && (
                         <button
                           onClick={() => handleOpenQR(req)}
                           className="px-3 py-1.5 bg-[#1E3A8A] text-white shadow-sm hover:bg-blue-900 rounded-lg transition-all font-semibold text-xs cursor-pointer"
