@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import useAssets from '../../hooks/useAssets';
-import { createRequest } from '../../services/requestService';
+import useAssets from '../hooks/useAssets';
+import { createRequest } from '../services/requestService';
 
 function NewRequestModal({ isOpen, onClose, onSuccess }) {
   const [formData, setFormData] = useState({

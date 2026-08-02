@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiEdit, FiTrash2, FiRefreshCw } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiRefreshCw, FiUpload } from 'react-icons/fi';
 import AddUserModal from '../../components/AddUserModal';
 import EditUserModal from '../../components/EditUserModal';
+import BulkImportModal from '../../components/BulkImportModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import Toast, { createToast } from '../../components/Toast';
 import { deleteUser, resetUserDeviceKey } from '../../services/userService';
@@ -12,6 +13,7 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
   const navigate = useNavigate();
   const auth = useAuth();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [showInactive, setShowInactive] = useState(false);
 
@@ -105,6 +107,13 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
               <span>Show Inactive/Resigned</span>
             </label>
             <button
+              onClick={() => setIsBulkImportOpen(true)}
+              className="px-3.5 py-2 bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-200 transition-colors cursor-pointer flex items-center gap-1.5"
+            >
+              <FiUpload size={13} />
+              <span>Import CSV</span>
+            </button>
+            <button
               onClick={() => setIsAddModalOpen(true)}
               className="px-4 py-2 bg-[#1E3A8A] text-white rounded-xl text-sm font-semibold hover:bg-blue-900 transition-colors cursor-pointer"
             >
@@ -133,7 +142,7 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {table.pageItems.map((user, rowIdx) => {
+                {users.map((user, rowIdx) => {
                   const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                   return (
                     <tr key={user.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
@@ -239,6 +248,13 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
         confirmLabel="Reset Key"
         variant="primary"
         isLoading={isResetting}
+      />
+
+      <BulkImportModal
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+        type="users"
+        onSuccess={onRefresh}
       />
 
       <Toast toasts={toasts} onDismiss={dismissToast} />

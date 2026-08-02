@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { updateAsset, uploadAssetImage } from '../services/assetService';
 import { FiUpload, FiX } from 'react-icons/fi';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import { API_BASE_URL } from '../services/apiClient';
 
 function EditAssetModal({ isOpen, onClose, onSuccess, asset, assets = [] }) {
   const [formData, setFormData] = useState({

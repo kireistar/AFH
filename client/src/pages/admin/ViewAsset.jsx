@@ -8,7 +8,7 @@ import UserProfileModal from '../../components/UserProfileModal';
 import AssetQRModal from '../../components/AssetQRModal';
 import ImageLightboxModal from '../../components/ImageLightboxModal';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import { API_BASE_URL } from '../../services/apiClient';
 
 function ViewAsset() {
   const { assetId } = useParams();
@@ -274,6 +274,30 @@ function ViewAsset() {
               )}
             </div>
             <p className="text-xs text-slate-500 mt-0.5">Comprehensive IT hardware specifications and lifecycle history.</p>
+
+            {/* Warranty Status Banner */}
+            {asset.warranty_expiry_date && (
+              <div className="mt-2 text-xs font-semibold flex items-center gap-2">
+                {new Date(asset.warranty_expiry_date) < new Date() ? (
+                  <span className="px-2.5 py-1 bg-red-100 text-red-800 rounded-full border border-red-200">
+                    🔴 Warranty Expired ({new Date(asset.warranty_expiry_date).toLocaleDateString()})
+                  </span>
+                ) : (new Date(asset.warranty_expiry_date) - new Date()) / (1000 * 3600 * 24) <= 30 ? (
+                  <span className="px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full border border-amber-200">
+                    ⚠️ Warranty Expiring Soon ({new Date(asset.warranty_expiry_date).toLocaleDateString()})
+                  </span>
+                ) : (
+                  <span className="px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-full border border-emerald-200">
+                    🟢 Active Warranty (Expires: {new Date(asset.warranty_expiry_date).toLocaleDateString()})
+                  </span>
+                )}
+                {asset.vendor_name && (
+                  <span className="text-slate-500 text-xs">
+                    Supplier: <strong className="text-slate-700">{asset.vendor_name}</strong>
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { createIncident } from '../../services/incidentService';
+import { createIncident } from '../services/incidentService';
 
 function ReportIncidentModal({ isOpen, onClose, onSuccess, requests = [], requestsLoading = false }) {
   // Filter to only currently borrowed assets (handed_over status)

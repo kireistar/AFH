@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { FiPrinter, FiX, FiExternalLink } from 'react-icons/fi';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 
 function AssetQRModal({ isOpen, onClose, asset }) {
   const printRef = useRef(null);

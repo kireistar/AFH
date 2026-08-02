@@ -1,10 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { verifyLedger } from '../../services/transactionService';
+import { apiGet } from '../../services/apiClient';
 
 const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefreshTransactions }) => {
   const [integrityData, setIntegrityData] = useState(null);
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState(null);
+
+  // Audit Logs state
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [loadingAudit, setLoadingAudit] = useState(false);
+
+  const loadAuditLogs = async () => {
+    setLoadingAudit(true);
+    try {
+      const data = await apiGet('/api/v1/users/audit-logs');
+      setAuditLogs(data || []);
+    } catch (err) {
+      console.error('Failed to fetch audit logs:', err);
+    } finally {
+      setLoadingAudit(false);
+    }
+  };
 
   const runIntegrityCheck = async () => {
     setChecking(true);
@@ -22,6 +39,7 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
 
   useEffect(() => {
     runIntegrityCheck();
+    loadAuditLogs();
   }, []);
 
   const formatHash = (hash) => {
@@ -135,7 +153,7 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {table.pageItems.map((t, rowIdx) => {
+                {transactions.map((t, rowIdx) => {
                   const isTampered = integrityData?.tampered_transaction_ids?.includes(t.id || t._id);
                   const rowBgClass = isTampered ? 'bg-rose-50/50' : (rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70');
 
@@ -212,6 +230,68 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
                     </tr>
                   );
                 })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+
+      {/* System Audit Trail Table */}
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="p-4 md:p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
+          <div>
+            <h3 className="text-base md:text-lg font-bold text-slate-800">System Governance & Audit Log</h3>
+            <p className="text-xs md:text-sm text-slate-500 mt-1">
+              Historical record of administrative actions, key resets, and bulk import operations.
+            </p>
+          </div>
+          <button
+            onClick={loadAuditLogs}
+            disabled={loadingAudit}
+            className="w-full sm:w-auto px-4 py-2 border border-slate-200 text-slate-600 font-semibold text-xs md:text-sm rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
+          >
+            Refresh Audit Logs
+          </button>
+        </div>
+
+        <div className="overflow-x-auto w-full">
+          {loadingAudit ? (
+            <div className="p-8 text-center text-slate-400 text-sm">Loading audit logs...</div>
+          ) : auditLogs.length === 0 ? (
+            <div className="p-8 text-center text-slate-400 text-sm">No administrative audit records logged yet.</div>
+          ) : (
+            <table className="w-full text-left min-w-[700px]">
+              <thead>
+                <tr className="text-slate-400 text-[10px] md:text-xs uppercase tracking-wider border-b border-slate-100">
+                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Timestamp</th>
+                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Administrator</th>
+                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Action Type</th>
+                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Target Entity</th>
+                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Log Details</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {auditLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100">
+                    <td className="p-3 md:p-4 text-xs font-mono text-slate-500">
+                      {log.created_at ? new Date(log.created_at).toLocaleString() : '-'}
+                    </td>
+                    <td className="p-3 md:p-4 text-xs font-bold text-slate-800">
+                      {log.actor_name}
+                    </td>
+                    <td className="p-3 md:p-4 text-xs">
+                      <span className="px-2.5 py-1 bg-slate-100 text-slate-700 font-bold rounded-lg font-mono text-[11px]">
+                        {log.action}
+                      </span>
+                    </td>
+                    <td className="p-3 md:p-4 text-xs text-slate-600">
+                      {log.entity_type} {log.entity_id ? `(${log.entity_id.slice(0, 8)}...)` : ''}
+                    </td>
+                    <td className="p-3 md:p-4 text-xs text-slate-600 font-mono text-[11px]">
+                      {log.details || '-'}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           )}

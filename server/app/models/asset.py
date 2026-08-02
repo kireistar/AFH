@@ -30,6 +30,9 @@ class Asset(Base):
 
     notes = Column(Text, nullable=True)
     image_url = Column(String(500), nullable=True)
+    warranty_expiry_date = Column(DateTime(timezone=True), nullable=True)
+    vendor_name = Column(String(150), nullable=True)
+    is_under_maintenance = Column(Numeric(1, 0), default=0) # 0 = false, 1 = true
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(),
                         onupdate=func.now(), nullable=False)

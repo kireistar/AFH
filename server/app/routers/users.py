@@ -178,4 +178,100 @@ def delete_user(
             status_code=400,
             detail="Cannot delete user: User has existing requests or transactions. Please deactivate the account instead."
         )
-    return None
+
+
+from fastapi import UploadFile, File
+import csv
+import io
+from app.core.security import hash_password
+from app.services.audit_service import log_admin_action
+from app.models.audit_log import AuditLog
+
+@router.post("/bulk-import-csv")
+def bulk_import_users(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_role("admin")),
+):
+    """Bulk import users dari file CSV. Column required: employee_id, employee_name, email, role, department. Default password: password123."""
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="File harus berformat CSV")
+
+    contents = file.file.read().decode("utf-8-sig")
+    reader = csv.DictReader(io.StringIO(contents))
+
+    imported_count = 0
+    errors = []
+    default_pw_hash = hash_password("password123")
+
+    for row_idx, row in enumerate(reader, start=2):
+        emp_id = row.get("employee_id") or row.get("Employee ID") or row.get("id")
+        emp_name = row.get("employee_name") or row.get("Name") or row.get("name")
+        email = row.get("email") or row.get("Email")
+        role = (row.get("role") or row.get("Role") or "user").strip().lower()
+        dept = row.get("department") or row.get("Department") or "IT Operations"
+
+        if not emp_id or not emp_name or not email:
+            errors.append(f"Row {row_idx}: 'employee_id', 'employee_name', and 'email' are required")
+            continue
+
+        try:
+            new_user = User(
+                employee_id=emp_id.strip(),
+                employee_name=emp_name.strip(),
+                email=email.strip().lower(),
+                role=role,
+                department=dept.strip(),
+                clearance_level=3 if role == "admin" else (2 if role in ["manager", "finance"] else 1),
+                employment_status="Active",
+                password_hash=default_pw_hash,
+                risk_score=0.0,
+                risk_score_tier="Low",
+            )
+            db.add(new_user)
+            db.commit()
+            imported_count += 1
+        except Exception as e:
+            db.rollback()
+            errors.append(f"Row {row_idx}: {str(e)}")
+
+    log_admin_action(
+        db,
+        actor_id=admin_user.id,
+        action="BULK_IMPORT_USERS",
+        entity_type="User",
+        details=f"Imported {imported_count} users via CSV. Errors: {len(errors)}",
+    )
+
+    return {
+        "status": "Success",
+        "imported_count": imported_count,
+        "errors": errors,
+    }
+
+
+@router.get("/audit-logs")
+def get_admin_audit_logs(
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("admin")),
+):
+    """Ambil daftar log audit aktivitas admin."""
+    logs = (
+        db.query(AuditLog)
+        .order_by(AuditLog.created_at.desc())
+        .limit(100)
+        .all()
+    )
+    result = []
+    for l in logs:
+        actor_name = l.actor.employee_name if l.actor else "System"
+        result.append({
+            "id": str(l.id),
+            "actor_name": actor_name,
+            "action": l.action,
+            "entity_type": l.entity_type,
+            "entity_id": l.entity_id,
+            "details": l.details,
+            "created_at": l.created_at.isoformat() if l.created_at else None,
+        })
+    return result

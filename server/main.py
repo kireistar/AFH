@@ -17,7 +17,8 @@ from app.routers import (
     transactions,
     incidents,
     invoices,
-    ledger
+    ledger,
+    notifications
 )
 
 app = FastAPI(
@@ -26,33 +27,19 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS — Membatasi akses hanya untuk Frontend Vite lokal
+# CORS — Membatasi akses untuk Frontend lokal
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ], # PERBAIKAN M3: Keamanan CORS yang lebih ketat
+    allow_origin_regex=r"http://(localhost|127\.0\.0\.1):\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Mount directory uploads lokal dengan CORS headers
+# Mount directory uploads lokal
 uploads_dir = os.path.join(os.path.dirname(__file__), "uploads")
 os.makedirs(uploads_dir, exist_ok=True)
-
-class CORSStaticFiles(StaticFiles):
-    async def __call__(self, scope, receive, send):
-        async def send_with_cors(message):
-            if message["type"] == "http.response.start":
-                headers = list(message.get("headers", []))
-                headers.append((b"access-control-allow-origin", b"http://localhost:5173"))
-                message["headers"] = headers
-            await send(message)
-        await super().__call__(scope, receive, send_with_cors)
-
-app.mount("/uploads", CORSStaticFiles(directory=uploads_dir), name="uploads")
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
 # ── Register routers ──────────────────────────────────────────────────────────
 app.include_router(auth.router)
@@ -63,6 +50,7 @@ app.include_router(transactions.router)
 app.include_router(incidents.router)
 app.include_router(invoices.router)
 app.include_router(ledger.router)
+app.include_router(notifications.router)
 
 @app.get("/", tags=["Health"])
 def health_check():

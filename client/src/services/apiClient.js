@@ -1,6 +1,14 @@
 import { getOrGenerateKeyPair, createCanonicalPayload, signPayload } from "../utils/crypto";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+export const API_BASE_URL = "http://127.0.0.1:8000";
+
+export const resolveImageUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith('/uploads/')) {
+    return `${API_BASE_URL}${url}`;
+  }
+  return url;
+};
 
 const injectEd25519Signature = async (endpoint, config) => {
   const isProtectedEndpoint =
@@ -119,15 +127,6 @@ export const apiPost = (endpoint, body, options = {}) => {
     ...restOptions,
   });
 };
-export const apiPut = (endpoint, body, options = {}) => {
-  const { headers, ...restOptions } = options;
-  return apiCall(endpoint, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json", ...headers },
-    body: JSON.stringify(body),
-    ...restOptions,
-  });
-};
 export const apiPatch = (endpoint, body, options = {}) => {
   const { headers, ...restOptions } = options;
   return apiCall(endpoint, {
@@ -162,10 +161,11 @@ export const apiUpload = async (endpoint, formData) => {
 };
 
 export default {
+  API_BASE_URL,
+  resolveImageUrl,
   apiCall,
   apiGet,
   apiPost,
-  apiPut,
   apiPatch,
   apiDelete,
   apiUpload,

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiEdit, FiTrash2, FiUser, FiMonitor, FiSmartphone, FiServer, FiGlobe, FiHardDrive, FiMapPin } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiUser, FiMonitor, FiSmartphone, FiServer, FiGlobe, FiHardDrive, FiMapPin, FiUpload } from 'react-icons/fi';
 import { BsQrCode } from 'react-icons/bs';
 import AddAssetModal from '../../components/AddAssetModal';
 import EditAssetModal from '../../components/EditAssetModal';
+import BulkImportModal from '../../components/BulkImportModal';
 import UserProfileModal from '../../components/UserProfileModal';
 import ImageLightboxModal from '../../components/ImageLightboxModal';
 import AssetQRModal from '../../components/AssetQRModal';
@@ -11,7 +12,7 @@ import ColumnToggleDropdown from '../../components/ColumnToggleDropdown';
 import MultiSelectFilterDropdown from '../../components/MultiSelectFilterDropdown';
 import ConfirmModal from '../../components/ConfirmModal';
 import Toast, { createToast } from '../../components/Toast';
-import SortHeader from '../../components/SortHeader';
+import SortHeader from '../../components/SortHeader.jsx';
 import Pagination from '../../components/Pagination';
 import useTable from '../../hooks/useTable';
 import { deleteAsset } from '../../services/assetService';
@@ -33,6 +34,7 @@ const ALL_COLUMNS = [
 const AdminAssets = ({ assets = [], loading = false, onRefresh, autoOpenAdd = false, onAddModalClosed }) => {
   const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState(null);
 
   // Deletion Modal & Toast state
@@ -322,6 +324,14 @@ const AdminAssets = ({ assets = [], loading = false, onRefresh, autoOpenAdd = fa
             />
 
             <button 
+              onClick={() => setIsBulkImportOpen(true)}
+              className="px-3.5 py-2 bg-slate-100 border border-slate-200 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-200 transition-colors cursor-pointer whitespace-nowrap shadow-sm flex items-center gap-1.5"
+            >
+              <FiUpload size={13} />
+              <span>Import CSV</span>
+            </button>
+
+            <button 
               onClick={() => setIsModalOpen(true)}
               className="px-4 py-2 bg-[#1E3A8A] text-[#ffffff] rounded-xl text-xs font-semibold hover:bg-blue-900 transition-colors cursor-pointer whitespace-nowrap shadow-sm ml-1"
             >
@@ -576,6 +586,13 @@ const AdminAssets = ({ assets = [], loading = false, onRefresh, autoOpenAdd = fa
         isOpen={!!selectedQRAsset}
         onClose={() => setSelectedQRAsset(null)}
         asset={selectedQRAsset}
+      />
+
+      <BulkImportModal
+        isOpen={isBulkImportOpen}
+        onClose={() => setIsBulkImportOpen(false)}
+        type="assets"
+        onSuccess={onRefresh}
       />
 
       <Toast toasts={toasts} onDismiss={dismissToast} />

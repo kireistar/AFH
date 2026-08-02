@@ -1,15 +1,5 @@
-import { apiGet, apiPost, apiPatch, apiDelete, apiUpload } from './apiClient';
+import { apiGet, apiPost, apiPatch, apiDelete, apiUpload, resolveImageUrl } from './apiClient';
 import { formatStatus, formatCondition } from '../utils/formatters';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-
-const resolveImageUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith('/uploads/')) {
-    return `${API_BASE_URL}${url}`;
-  }
-  return url;
-};
 
 /**
  * Mapper: backend Asset object → format yang dipakai komponen

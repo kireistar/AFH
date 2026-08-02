@@ -80,3 +80,28 @@ def logout(_: User = Depends(get_current_user)):
     Penghapusan token sepenuhnya harus dilakukan di sisi frontend.
     """
     return {"message": "Logged out successfully. Silakan hapus token di sisi client (Frontend)."}
+
+
+from pydantic import BaseModel, Field
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=6)
+
+@router.post("/change-password")
+def change_password(
+    body: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Ganti password user yang sedang login."""
+    if not verify_password(body.current_password, current_user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password lama salah",
+        )
+    
+    from app.core.security import hash_password
+    current_user.password_hash = hash_password(body.new_password)
+    db.commit()
+    return {"status": "Success", "message": "Password berhasil diperbarui"}

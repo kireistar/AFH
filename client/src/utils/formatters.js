@@ -1,22 +1,16 @@
 /// Formatters, helper untuk mengubah nilai backend ke format yang siap ditampilkan di UI
 
-/// Ubah status snake_case dari backend ke format Title Case untuk UI. contoh: 'pending_admin' → 'Pending Admin'
-export const formatStatus = (status) => {
-    if (!status) return '-';
-    return status
+/// Ubah string snake_case ke Title Case (contoh: 'pending_admin' → 'Pending Admin')
+export const toTitleCase = (str) => {
+    if (!str) return '-';
+    return str
         .split('_')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
 };
 
-/// Ubah nilai kondisi asset ke format Title Case, contoh: 'minor_damage' -> 'Minor Damage'
-export const formatCondition = (condition) => {
-    if (!condition) return '-';
-    return condition
-        .split('_')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-};
+export const formatStatus = toTitleCase;
+export const formatCondition = toTitleCase;
 
 /// Format angka Decimal dari backend ke format Rupiah, contoh: 50000 → 'Rp 50.000'
 export const formatCurrency = (amount) => {

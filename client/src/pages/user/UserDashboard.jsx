@@ -4,8 +4,8 @@ import UserAssets from './UserAssets';
 import UserRequests from './UserRequests';
 import UserIncidents from './UserIncidents';
 // Import komponen Modal
-import NewRequestModal from './NewRequestModal';
-import ReportIncidentModal from './ReportIncidentModal';
+import NewRequestModal from '../../components/NewRequestModal';
+import ReportIncidentModal from '../../components/ReportIncidentModal';
 import { useAuth } from '../../hooks/useAuth';
 import useRequests from '../../hooks/useRequests';
 import useIncidents from '../../hooks/useIncidents';
@@ -74,7 +74,7 @@ const UserDashboard = () => {
           </div>
         );
       case 'Assets':
-        return <UserAssets requests={requests} loading={loading} />;
+        return <UserAssets requests={requests} loading={loading} onRefresh={refresh} />;
       case 'Requests':
         return <UserRequests requests={requests} loading={loading} onOpenRequestModal={() => setIsRequestModalOpen(true)} onRefresh={refresh} />;
       case 'Incidents':

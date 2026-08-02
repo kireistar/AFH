@@ -43,16 +43,33 @@ const UserIncidents = ({ incidents = [], loading = false, onOpenIncidentModal })
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 const assetName = typeof inc.asset === 'object' ? (inc.asset?.asset_name || 'Asset') : String(inc.asset || '-');
                 const incStatus = (inc.status || inc._status || 'open').toLowerCase();
+
+                // Calculate progress step index (0 = reported, 1 = investigating, 2 = repairing, 3 = resolved)
+                const stepIdx = incStatus === 'resolved' || incStatus === 'closed' ? 3 : (incStatus === 'investigating' ? 1 : 0);
+
                 return (
                   <tr key={inc.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
                     <td className="p-4 text-sm font-semibold text-slate-700">{inc.incident_code || inc.id}</td>
                     <td className="p-4 text-sm font-medium text-slate-800">{assetName}</td>
-                    <td className="p-4 text-sm text-slate-600">{inc.description || '-'}</td>
+                    <td className="p-4 text-sm text-slate-600 max-w-xs truncate">{inc.description || '-'}</td>
                     <td className="p-4 text-sm text-slate-500">{inc.created_at ? new Date(inc.created_at).toLocaleDateString() : (inc.date || '-')}</td>
-                    <td className="p-4 text-sm">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${STATUS_STYLES[incStatus] || STATUS_STYLES.open}`}>
-                        {incStatus}
-                      </span>
+                    <td className="p-4 text-sm min-w-[240px]">
+                      {/* Visual Repair Stepper */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-bold text-slate-500">
+                          <span className={stepIdx >= 0 ? 'text-amber-600' : ''}>Reported</span>
+                          <span className={stepIdx >= 1 ? 'text-blue-600' : ''}>Review</span>
+                          <span className={stepIdx >= 2 ? 'text-purple-600' : ''}>Repair</span>
+                          <span className={stepIdx >= 3 ? 'text-emerald-600' : ''}>Resolved</span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden flex">
+                          <div className={`h-full transition-all duration-300 ${
+                            stepIdx === 3 ? 'w-full bg-emerald-500' :
+                            stepIdx === 2 ? 'w-3/4 bg-purple-500' :
+                            stepIdx === 1 ? 'w-1/2 bg-blue-500' : 'w-1/4 bg-amber-500'
+                          }`} />
+                        </div>
+                      </div>
                     </td>
                   </tr>
                 );

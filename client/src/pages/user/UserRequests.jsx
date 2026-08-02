@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import ProduceQRModal from "./ProduceQRModal";
+import ProduceQRModal from "../../components/ProduceQRModal";
 import { useAuth } from "../../hooks/useAuth";
 
 // Helper function placed outside to ensure React purity compliance

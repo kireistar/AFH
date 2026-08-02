@@ -43,7 +43,14 @@ def get_all_requests(
         query = query.filter(AssetRequest.user_id == current_user.id)
     elif user_id:
         # Admin/Manager bisa filter by user_id
-        query = query.filter(AssetRequest.user_id == UUID(user_id))
+        try:
+            target_uuid = UUID(user_id)
+            query = query.filter(AssetRequest.user_id == target_uuid)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid UUID format for user_id: '{user_id}'",
+            )
 
     if status_filter:
         query = query.filter(AssetRequest.status == status_filter)
@@ -152,6 +159,19 @@ def approve_request(request_id: int, db: Session = Depends(get_db), current_user
     request.status = "approved"
     request.approved_by = current_user.id # Inject dari JWT
     request.approved_at = datetime.now(timezone.utc)
+
+    # Emit notification to employee
+    try:
+        from app.models.notification import Notification
+        notif = Notification(
+            user_id=request.user_id,
+            title="Asset Request Approved! 🎉",
+            message=f"Permintaan asset #{request.request_code} Anda telah disetujui. Silakan generate QR Code untuk proses handover.",
+            type="request_approved"
+        )
+        db.add(notif)
+    except Exception as e:
+        print(f"Failed to create notification: {e}")
     
     db.commit()
     db.refresh(request)
@@ -185,6 +205,19 @@ def reject_request(
     request.rejection_reason = rejection_reason
     request.approved_by = current_user.id  # Track siapa yang reject
     request.approved_at = datetime.now(timezone.utc)
+
+    # Emit notification to employee
+    try:
+        from app.models.notification import Notification
+        notif = Notification(
+            user_id=request.user_id,
+            title="Asset Request Rejected",
+            message=f"Permintaan asset #{request.request_code} Anda ditolak. Alasan: {rejection_reason}",
+            type="request_rejected"
+        )
+        db.add(notif)
+    except Exception as e:
+        print(f"Failed to create notification: {e}")
     
     db.commit()
     db.refresh(request)

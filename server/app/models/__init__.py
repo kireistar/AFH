@@ -13,6 +13,8 @@ from app.models.transaction import Transaction
 from app.models.invoice import Invoice
 from app.models.incident import Incident
 from app.models.user_behavior_stats import UserBehaviorStats
+from app.models.audit_log import AuditLog
+from app.models.notification import Notification
 
 __all__ = [
     "Base",
@@ -23,4 +25,6 @@ __all__ = [
     "Invoice",
     "Incident",
     "UserBehaviorStats",
+    "AuditLog",
+    "Notification",
 ]

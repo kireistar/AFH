@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { createAsset, uploadAssetImage } from '../services/assetService';
 import { FiUpload, FiX } from 'react-icons/fi';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+import { API_BASE_URL } from '../services/apiClient';
 
 function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
   const [formData, setFormData] = useState({
@@ -16,6 +16,8 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
     location: '',
     purchase_value: '',
     image_url: '',
+    warranty_expiry_date: '',
+    vendor_name: '',
     notes: ''
   });
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -91,7 +93,7 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (!formData.brand.trim()) {
       setError('Brand is required.');
       return;
@@ -119,7 +121,7 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
         image_url: formData.image_url.trim() || null,
         notes: formData.notes.trim() || null
       });
-      
+
       setFormData({
         brand: '',
         asset_name: '',
@@ -174,16 +176,16 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 transition-all duration-300">
       <div className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-lg w-full mx-4 overflow-hidden transform transition-all scale-100 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
-        
+
         {/* Header */}
         <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
           <div>
             <h2 className="text-xl font-bold text-slate-800">Add New Asset</h2>
             <p className="text-xs text-slate-500 mt-1">Register a new IT hardware or device with full specs.</p>
           </div>
-          <button 
-            type="button" 
-            onClick={onClose} 
+          <button
+            type="button"
+            onClick={onClose}
             className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 p-1.5 rounded-lg transition-colors cursor-pointer"
           >
             ✕
@@ -337,6 +339,34 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
                 placeholder="e.g., 15000000"
                 disabled={submitting}
                 className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50"
+              />
+            </div>
+          </div>
+
+          {/* Vendor Name & Warranty Expiry */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="block text-sm font-semibold text-slate-700">Vendor / Supplier</label>
+              <input
+                type="text"
+                name="vendor_name"
+                value={formData.vendor_name}
+                onChange={handleChange}
+                placeholder="e.g., PT Apple Indonesia"
+                disabled={submitting}
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-sm font-semibold text-slate-700">Warranty Expiration Date</label>
+              <input
+                type="date"
+                name="warranty_expiry_date"
+                value={formData.warranty_expiry_date}
+                onChange={handleChange}
+                disabled={submitting}
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50"
               />
             </div>
           </div>

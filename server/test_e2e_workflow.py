@@ -27,7 +27,7 @@ def run_e2e_test():
     print("STEP 1: Authenticating Admin and User...")
     admin_login_res = requests.post(f"{BASE_URL}/auth/login", data={
         "username": "admin@afh.com",
-        "password": "Password123!",
+        "password": "password123",
         "grant_type": "password"
     })
     if admin_login_res.status_code != 200:
@@ -51,7 +51,7 @@ def run_e2e_test():
     # Login target user
     user_login_res = requests.post(f"{BASE_URL}/auth/login", data={
         "username": target_user["email"],
-        "password": "Password123!",
+        "password": "password123",
         "grant_type": "password"
     })
     if user_login_res.status_code != 200:

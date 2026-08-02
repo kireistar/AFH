@@ -38,6 +38,9 @@ class AssetBase(BaseModel):
     status: AssetStatus = AssetStatus.AVAILABLE
     notes: Optional[str] = None
     image_url: Optional[str] = Field(None, max_length=500)
+    warranty_expiry_date: Optional[datetime] = None
+    vendor_name: Optional[str] = Field(None, max_length=150)
+    is_under_maintenance: Optional[int] = 0
 
 
 class AssetCreate(AssetBase):
@@ -55,6 +58,9 @@ class AssetUpdate(BaseModel):
     status: Optional[AssetStatus] = None
     notes: Optional[str] = None
     image_url: Optional[str] = Field(None, max_length=500)
+    warranty_expiry_date: Optional[datetime] = None
+    vendor_name: Optional[str] = None
+    is_under_maintenance: Optional[int] = None
 
 
 class AssetResponse(AssetBase):

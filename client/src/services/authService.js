@@ -1,11 +1,8 @@
 /**
  * Auth Service — API calls untuk authentication
- * Base URL: http://localhost:8000 (atau dari .env)
  */
 
-import { apiGet } from './apiClient';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+import { API_BASE_URL } from './apiClient';
 
 /**
  * Login dengan email + password
@@ -53,54 +50,3 @@ export const loginUser = async (email, password) => {
   }
 };
 
-/**
- * Get current user profile (requires valid JWT token)
- * @param {string} accessToken - JWT token dari login (optional, akan diambil dari localStorage)
- * @returns {Promise<{user object}>}
- * @throws {Error} Jika token invalid/expired atau network error
- */
-export const getCurrentUser = async () => {
-  try {
-    // Gunakan apiGet yang auto-add Authorization header
-    const user = await apiGet('/api/v1/auth/me');
-    return user;
-  } catch (error) {
-    console.error('Get current user error:', error);
-    throw error;
-  }
-};
-
-/**
- * Validate/refresh user session
- * Panggil saat app startup untuk validate token yang di-store
- * @returns {Promise<{user object}|null>}
- */
-export const validateSession = async () => {
-  const token = localStorage.getItem('accessToken');
-  if (!token) return null;
-
-  try {
-    const user = await getCurrentUser();
-    return user;
-  } catch (error) {
-    console.error('Session validation failed:', error);
-    return null;
-  }
-};
-
-/**
- * Logout (client-side token cleanup)
- * @returns {Promise<void>}
- */
-export const logoutUser = async () => {
-  localStorage.removeItem('accessToken');
-  localStorage.removeItem('user');
-  console.log('User logged out');
-};
-
-export default {
-  loginUser,
-  getCurrentUser,
-  validateSession,
-  logoutUser,
-};

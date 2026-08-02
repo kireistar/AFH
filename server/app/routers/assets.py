@@ -238,3 +238,71 @@ def delete_asset(
     db.delete(asset)
     db.commit()
     return None
+
+
+from fastapi import UploadFile, File
+import csv
+import io
+from app.services.code_generator import generate_asset_code
+from app.services.audit_service import log_admin_action
+
+@router.post("/bulk-import-csv")
+def bulk_import_assets(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_role("admin")),
+):
+    """Bulk import assets dari file CSV. Column required: asset_name, category. Optional: brand, serial_number, purchase_value, location, notes, vendor_name."""
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(status_code=400, detail="File harus berformat CSV")
+
+    contents = file.file.read().decode("utf-8-sig")
+    reader = csv.DictReader(io.StringIO(contents))
+
+    imported_count = 0
+    errors = []
+
+    for row_idx, row in enumerate(reader, start=2):
+        asset_name = row.get("asset_name") or row.get("Name") or row.get("name")
+        category = row.get("category") or row.get("Category")
+
+        if not asset_name or not category:
+            errors.append(f"Row {row_idx}: 'asset_name' and 'category' are required")
+            continue
+
+        try:
+            asset_code = generate_asset_code(db)
+            purchase_val = float(row.get("purchase_value") or row.get("Purchase Value") or 0)
+            new_asset = Asset(
+                asset_code=asset_code,
+                asset_name=asset_name.strip(),
+                category=category.strip().lower(),
+                brand=row.get("brand") or row.get("Brand") or None,
+                serial_number=row.get("serial_number") or row.get("Serial Number") or None,
+                purchase_value=purchase_val,
+                location=row.get("location") or row.get("Location") or None,
+                vendor_name=row.get("vendor_name") or row.get("Vendor") or None,
+                notes=row.get("notes") or row.get("Notes") or None,
+                current_condition="good",
+                status="available",
+            )
+            db.add(new_asset)
+            db.commit()
+            imported_count += 1
+        except Exception as e:
+            db.rollback()
+            errors.append(f"Row {row_idx}: {str(e)}")
+
+    log_admin_action(
+        db,
+        actor_id=admin_user.id,
+        action="BULK_IMPORT_ASSETS",
+        entity_type="Asset",
+        details=f"Imported {imported_count} assets via CSV. Errors: {len(errors)}",
+    )
+
+    return {
+        "status": "Success",
+        "imported_count": imported_count,
+        "errors": errors,
+    }

@@ -1,6 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
+import { apiGet } from '../services/apiClient';
+
 const AuthContext = createContext(null);
 
 // ── Helper: Cek apakah token sudah expired ────────────────────────────────────
@@ -87,11 +89,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const token = localStorage.getItem('accessToken');
       if (!token) return null;
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/v1/users/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) throw new Error(`Failed to fetch user: ${response.status}`);
-      const updatedUser = await response.json();
+      const updatedUser = await apiGet('/api/v1/users/me');
       localStorage.setItem('user', JSON.stringify(updatedUser));
       setUser(updatedUser);
       setIsAuth(true);

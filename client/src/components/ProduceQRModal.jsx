@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { QRCodeSVG } from "qrcode.react";
 
-import { getOrGenerateKeyPair, createCanonicalPayload, signPayload } from "../../utils/crypto";
-import { apiGet } from "../../services/apiClient";
+import { getOrGenerateKeyPair, createCanonicalPayload, signPayload } from "../utils/crypto";
+import { apiGet } from "../services/apiClient";
 
 const QR_TTL_SECONDS = 30;
 
