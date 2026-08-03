@@ -107,6 +107,42 @@ async def verify_non_repudiation(
         if not all([action, borrower_id, asset_id, timestamp]):
             raise ValueError("Missing canonical payload fields.")
 
+        # 2b. QR (dual-party) flow consistency guard.
+        # The borrower signs the NESTED QR payload; the server verifies BOTH signatures
+        # against the canonical built from the ROOT fields. Therefore the root fields MUST
+        # be byte-identical to the nested QR payload. This prevents a client from ever
+        # re-signing with a different timestamp/expiry (the historical cause of
+        # "Signature mismatch for canonical payload" on QR handovers).
+        nested = payload.get("payload")
+        if isinstance(nested, dict):
+            nested_action = nested.get("action")
+            nested_borrower_id = nested.get("borrower_id")
+            nested_asset_id = nested.get("asset_id")
+            nested_timestamp = nested.get("timestamp")
+            nested_expires_at = nested.get("expires_at")
+
+            if any(
+                v is None
+                for v in [nested_action, nested_borrower_id, nested_asset_id, nested_timestamp]
+            ):
+                raise ValueError("QR payload is missing canonical fields.")
+            if str(nested_action) != str(action):
+                raise ValueError("Canonical action mismatch between request root and QR payload.")
+            if str(nested_borrower_id) != str(borrower_id):
+                raise ValueError("Canonical borrower_id mismatch between request root and QR payload.")
+            if str(nested_asset_id) != str(asset_id):
+                raise ValueError("Canonical asset_id mismatch between request root and QR payload.")
+            if str(nested_timestamp) != str(timestamp):
+                raise ValueError(
+                    "Canonical timestamp mismatch: root timestamp must preserve the QR timestamp "
+                    "(re-signing with a new time is rejected)."
+                )
+            if nested_expires_at is not None:
+                if expires_at is None:
+                    raise ValueError("Canonical expires_at missing from request root.")
+                if str(nested_expires_at) != str(expires_at):
+                    raise ValueError("Canonical expires_at mismatch between request root and QR payload.")
+
         # Replay Attack Prevention (1 Minute Window)
         if abs(time.time() - int(timestamp)) > 60:
             raise ValueError("Payload timestamp expired or out of tolerance.")

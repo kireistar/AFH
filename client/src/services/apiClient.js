@@ -26,19 +26,27 @@ const injectEd25519Signature = async (endpoint, config) => {
 
       const isQRFlow = payload.signature && payload.public_key;
 
-      // Ambil expires_at dari QR payload jika ada (untuk canonical string)
-      const qrExpiresAt = isQRFlow && payload.payload?.expires_at ? payload.payload.expires_at : null;
+      // QR flow: the borrower already signed the canonical over the QR's own timestamp
+      // and expiry. The admin MUST sign that SAME canonical string (server verifies both
+      // signatures against one string), so reuse the QR values and mirror them to the
+      // ROOT of the body — otherwise the server reconstructs a different canonical and
+      // every QR handover fails with "Signature mismatch".
+      const qrPayload = isQRFlow ? payload.payload : null;
 
-      // Generate admin canonical string dengan timestamp SEKARANG, bukan dari QR
       const { privKey, pubKeyBase64 } = await getOrGenerateKeyPair();
 
       const action = payload.action || "handover";
       const borrowerId = payload.borrower_id;
       const assetId = payload.asset_id;
-      const ts = Math.floor(Date.now() / 1000);
-      const expiresAt = qrExpiresAt;
+      const ts = isQRFlow
+        ? String(qrPayload?.timestamp ?? Math.floor(Date.now() / 1000))
+        : String(Math.floor(Date.now() / 1000));
+      const expiresAt = isQRFlow ? qrPayload?.expires_at : null;
 
       payload.timestamp = ts;
+      if (expiresAt != null && expiresAt !== "") {
+        payload.expires_at = String(expiresAt);
+      }
       config.body = JSON.stringify(payload);
 
       const canonicalString = createCanonicalPayload(action, borrowerId, assetId, ts, expiresAt);

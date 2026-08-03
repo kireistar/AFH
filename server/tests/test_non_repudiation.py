@@ -557,3 +557,198 @@ def test_verify_non_repudiation_dual_party_expired_qr(keypair, mock_user):
     assert "expired" in response.json()["detail"].lower()
 
     test_app.dependency_overrides.clear()
+
+
+# --- REGRESSION TESTS: QR Dual-Party Canonical Consistency (GH issue) ---
+# The admin's request root MUST mirror the nested QR payload exactly. Re-signing with a
+# fresh timestamp used to break every QR handover ("Signature mismatch for canonical
+# payload"). These tests lock that invariant in so it can never regress.
+
+def test_verify_non_repudiation_dual_party_qr_nested_success(keypair, mock_user):
+    """
+    QR dual-party with nested QR payload where ROOT canonical fields match the
+    nested payload byte-for-byte -> must verify successfully (200).
+    """
+    borrower_priv, borrower_pub_b64 = keypair
+    admin_priv = ed25519.Ed25519PrivateKey.generate()
+    admin_pub_bytes = admin_priv.public_key().public_bytes_raw()
+    admin_pub_b64 = base64.b64encode(admin_pub_bytes).decode("utf-8")
+
+    mock_user.public_key = admin_pub_b64
+    current_time = int(time.time())
+    expires_at = current_time + 25
+
+    test_app.dependency_overrides[get_current_user] = lambda: mock_user
+    client = TestClient(test_app)
+
+    nested = {
+        "action": "handover",
+        "asset_id": 101,
+        "borrower_id": mock_user.id,
+        "request_id": 55,
+        "timestamp": str(current_time),
+        "expires_at": str(expires_at),
+    }
+
+    canonical = f"handover|{mock_user.id}|101|{current_time}|{expires_at}"
+    borrower_sig = base64.b64encode(
+        borrower_priv.sign(canonical.encode("utf-8"))
+    ).decode("utf-8")
+    admin_sig = base64.b64encode(
+        admin_priv.sign(canonical.encode("utf-8"))
+    ).decode("utf-8")
+
+    payload = {
+        "action": "handover",
+        "asset_id": 101,
+        "borrower_id": mock_user.id,
+        "request_id": 55,
+        "admin_id": mock_user.id,
+        "timestamp": str(current_time),
+        "expires_at": str(expires_at),
+        "payload": nested,
+        "signature": borrower_sig,
+        "public_key": borrower_pub_b64,
+    }
+
+    response = client.post(
+        "/test-signature",
+        json=payload,
+        headers={
+            "x-ed25519-signature": borrower_sig,
+            "x-ed25519-admin-signature": admin_sig,
+            "x-ed25519-public-key": borrower_pub_b64,
+        }
+    )
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "success"
+
+    test_app.dependency_overrides.clear()
+
+
+def test_verify_non_repudiation_dual_party_qr_reject_resigned_timestamp(keypair, mock_user):
+    """
+    Regression: admin re-signs with a FRESH root timestamp that differs from the nested
+    QR payload timestamp (the historical bug). Must be rejected with a clear 400.
+    """
+    borrower_priv, borrower_pub_b64 = keypair
+    admin_priv = ed25519.Ed25519PrivateKey.generate()
+    admin_pub_bytes = admin_priv.public_key().public_bytes_raw()
+    admin_pub_b64 = base64.b64encode(admin_pub_bytes).decode("utf-8")
+
+    mock_user.public_key = admin_pub_b64
+    current_time = int(time.time())
+    expires_at = current_time + 25
+
+    test_app.dependency_overrides[get_current_user] = lambda: mock_user
+    client = TestClient(test_app)
+
+    nested = {
+        "action": "handover",
+        "asset_id": 101,
+        "borrower_id": mock_user.id,
+        "request_id": 55,
+        "timestamp": str(current_time),
+        "expires_at": str(expires_at),
+    }
+
+    canonical = f"handover|{mock_user.id}|101|{current_time}|{expires_at}"
+    borrower_sig = base64.b64encode(
+        borrower_priv.sign(canonical.encode("utf-8"))
+    ).decode("utf-8")
+    admin_sig = base64.b64encode(
+        admin_priv.sign(canonical.encode("utf-8"))
+    ).decode("utf-8")
+
+    # Root timestamp deliberately DIFFERENT from the nested QR timestamp (fresh re-sign)
+    payload = {
+        "action": "handover",
+        "asset_id": 101,
+        "borrower_id": mock_user.id,
+        "request_id": 55,
+        "admin_id": mock_user.id,
+        "timestamp": str(current_time + 5),
+        "expires_at": str(expires_at),
+        "payload": nested,
+        "signature": borrower_sig,
+        "public_key": borrower_pub_b64,
+    }
+
+    response = client.post(
+        "/test-signature",
+        json=payload,
+        headers={
+            "x-ed25519-signature": borrower_sig,
+            "x-ed25519-admin-signature": admin_sig,
+            "x-ed25519-public-key": borrower_pub_b64,
+        }
+    )
+
+    assert response.status_code == 400
+    assert "timestamp mismatch" in response.json()["detail"].lower()
+
+    test_app.dependency_overrides.clear()
+
+
+def test_verify_non_repudiation_dual_party_qr_reject_missing_root_expiry(keypair, mock_user):
+    """
+    Regression: nested QR payload carries expires_at but the ROOT omits it -> the server
+    would build a canonical without expiry and reject valid signatures. Must be a 400.
+    """
+    borrower_priv, borrower_pub_b64 = keypair
+    admin_priv = ed25519.Ed25519PrivateKey.generate()
+    admin_pub_bytes = admin_priv.public_key().public_bytes_raw()
+    admin_pub_b64 = base64.b64encode(admin_pub_bytes).decode("utf-8")
+
+    mock_user.public_key = admin_pub_b64
+    current_time = int(time.time())
+    expires_at = current_time + 25
+
+    test_app.dependency_overrides[get_current_user] = lambda: mock_user
+    client = TestClient(test_app)
+
+    nested = {
+        "action": "handover",
+        "asset_id": 101,
+        "borrower_id": mock_user.id,
+        "request_id": 55,
+        "timestamp": str(current_time),
+        "expires_at": str(expires_at),
+    }
+
+    canonical = f"handover|{mock_user.id}|101|{current_time}|{expires_at}"
+    borrower_sig = base64.b64encode(
+        borrower_priv.sign(canonical.encode("utf-8"))
+    ).decode("utf-8")
+    admin_sig = base64.b64encode(
+        admin_priv.sign(canonical.encode("utf-8"))
+    ).decode("utf-8")
+
+    # expires_at only inside nested payload, MISSING at root
+    payload = {
+        "action": "handover",
+        "asset_id": 101,
+        "borrower_id": mock_user.id,
+        "request_id": 55,
+        "admin_id": mock_user.id,
+        "timestamp": str(current_time),
+        "payload": nested,
+        "signature": borrower_sig,
+        "public_key": borrower_pub_b64,
+    }
+
+    response = client.post(
+        "/test-signature",
+        json=payload,
+        headers={
+            "x-ed25519-signature": borrower_sig,
+            "x-ed25519-admin-signature": admin_sig,
+            "x-ed25519-public-key": borrower_pub_b64,
+        }
+    )
+
+    assert response.status_code == 400
+    assert "expires_at" in response.json()["detail"].lower()
+
+    test_app.dependency_overrides.clear()
