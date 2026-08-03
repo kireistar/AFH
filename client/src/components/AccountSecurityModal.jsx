@@ -57,7 +57,7 @@ function AccountSecurityModal({ isOpen, onClose, user }) {
 
   return (
     <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-all">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full overflow-hidden animate-in fade-in duration-200">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-100 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto animate-in fade-in duration-200">
         
         {/* Header */}
         <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">

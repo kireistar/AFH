@@ -23,7 +23,7 @@ export default function InputModal({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 transition-opacity">
-      <div className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-md w-full overflow-hidden transform transition-all">
+      <div className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto transform transition-all">
         {/* Header */}
         <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
           <div className="flex items-center gap-3">

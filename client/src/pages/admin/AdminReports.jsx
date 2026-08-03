@@ -102,7 +102,7 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
     <div className="space-y-8">
       {/* Transaction Report */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-bold text-slate-800">Transaction Report</h3>
             <p className="text-sm text-slate-500 mt-1">All asset handover, return, and incident transactions.</p>
@@ -176,7 +176,7 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
 
       {/* Incident Report */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-bold text-slate-800">Incident Report</h3>
             <p className="text-sm text-slate-500 mt-1">All reported device damages and malfunctions.</p>

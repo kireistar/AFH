@@ -23,7 +23,7 @@ const UserIncidents = ({ incidents = [], loading = false, onOpenIncidentModal })
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-      <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+      <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h3 className="text-lg font-bold text-slate-800">Reported Incidents</h3>
           <p className="text-sm text-slate-500">View logs and real-time status of technical damages you reported.</p>

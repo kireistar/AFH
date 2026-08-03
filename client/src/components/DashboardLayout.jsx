@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiLogOut, FiBell, FiShield, FiCheck } from 'react-icons/fi';
+import { FiLogOut, FiBell, FiShield, FiCheck, FiMenu, FiX } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import AccountSecurityModal from './AccountSecurityModal';
@@ -19,6 +19,7 @@ const DashboardLayout = ({
   const navigate = useNavigate();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [securityModalOpen, setSecurityModalOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Notification state
   const [notifOpen, setNotifOpen] = useState(false);
@@ -62,19 +63,38 @@ const DashboardLayout = ({
   };
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="flex h-dvh bg-slate-50">
       
+      {/* Mobile Sidebar Backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-slate-900/50 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-slate-200 flex flex-col">
-        <div className="p-6">
+      <aside className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-slate-200 flex flex-col transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 lg:transition-none ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-6 flex items-center justify-between">
           <h1 className="text-2xl font-black text-[#1E3A8A]">AFH {roleTitle}</h1>
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(false)}
+            className="lg:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+            aria-label="Close menu"
+          >
+            <FiX size={20} />
+          </button>
         </div>
         
         <nav className="flex-1 px-4 space-y-1">
           {menuItems.map((item) => (
             <button
               key={item.name}
-              onClick={() => setActiveTab(item.name)}
+              onClick={() => {
+                setActiveTab(item.name);
+                setSidebarOpen(false);
+              }}
               className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 ${
                 activeTab === item.name
                   ? 'bg-blue-50/80 text-[#1E3A8A] font-bold shadow-sm'
@@ -180,14 +200,25 @@ const DashboardLayout = ({
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Dynamic Header */}
-        <header className="bg-white border-b border-slate-200 px-8 py-5 shadow-sm z-10 flex justify-between items-center">
-          <div>
-            <h2 className="text-xl font-bold text-slate-800">{pageHeaderTitle}</h2>
-            <p className="text-sm text-slate-500 mt-1">{pageHeaderSubtitle}</p>
+        <header className="bg-white border-b border-slate-200 px-4 sm:px-8 py-4 sm:py-5 shadow-sm z-10 flex justify-between items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            {/* Mobile Menu Toggle */}
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 transition-colors shrink-0 cursor-pointer"
+              aria-label="Open menu"
+            >
+              <FiMenu size={18} />
+            </button>
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold text-slate-800 truncate">{pageHeaderTitle}</h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1 truncate">{pageHeaderSubtitle}</p>
+            </div>
           </div>
 
           {/* Notification Bell Dropdown */}
-          <div className="relative">
+          <div className="relative shrink-0">
             <button
               type="button"
               onClick={() => setNotifOpen(!notifOpen)}
@@ -204,7 +235,7 @@ const DashboardLayout = ({
             {notifOpen && (
               <>
                 <div className="fixed inset-0 z-20 cursor-default" onClick={() => setNotifOpen(false)} />
-                <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-100 rounded-2xl shadow-2xl z-30 p-4 space-y-3 animate-in fade-in duration-150">
+                <div className="fixed left-4 right-4 top-20 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 sm:w-80 sm:max-w-sm bg-white border border-slate-100 rounded-2xl shadow-2xl z-30 p-4 space-y-3 animate-in fade-in duration-150">
                   <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
                     <span className="text-xs font-bold text-slate-800">Notifications</span>
                     {unreadCount > 0 && (
@@ -245,7 +276,7 @@ const DashboardLayout = ({
         </header>
         
         {/* Konten Halaman (AdminAssets, AdminOverview, dll) */}
-        <div className="flex-1 overflow-auto p-8 bg-slate-50">
+        <div className="flex-1 overflow-auto p-4 sm:p-8 bg-slate-50">
           {children}
         </div>
       </main>

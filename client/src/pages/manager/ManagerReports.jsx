@@ -49,7 +49,7 @@ const ManagerReports = ({ requests = [], incidents = [] }) => {
     <div className="space-y-8">
       {/* Request Risk Report */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-bold text-slate-800">Request & Risk Analysis Report</h3>
             <p className="text-sm text-slate-500 mt-1">All asset requests with AI risk scoring data.</p>
@@ -105,7 +105,7 @@ const ManagerReports = ({ requests = [], incidents = [] }) => {
 
       {/* Incident Analysis Report */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-bold text-slate-800">Incident Analysis Report</h3>
             <p className="text-sm text-slate-500 mt-1">Device damage trends and severity breakdown.</p>

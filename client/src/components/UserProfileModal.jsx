@@ -34,7 +34,7 @@ const UserProfileModal = ({ isOpen, onClose, user, assetInfo, onEditUser }) => {
 
   return (
     <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-md flex items-center justify-center z-50 transition-all duration-300">
-      <div className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-md w-full mx-4 overflow-hidden transform transition-all scale-100 animate-in fade-in zoom-in-95 duration-200 flex flex-col">
+      <div className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-md w-full mx-4 max-h-[90vh] flex flex-col transform transition-all scale-100 animate-in fade-in zoom-in-95 duration-200">
         
         {/* Header banner */}
         <div className="bg-gradient-to-r from-[#1E3A8A] to-blue-900 p-6 text-white relative">
@@ -64,7 +64,7 @@ const UserProfileModal = ({ isOpen, onClose, user, assetInfo, onEditUser }) => {
         </div>
 
         {/* Content Details */}
-        <div className="p-6 space-y-4 text-sm">
+        <div className="p-6 space-y-4 text-sm flex-1 overflow-y-auto">
           <div className="grid grid-cols-2 gap-3">
             <div className="p-3 bg-slate-50 rounded-xl border border-slate-100">
               <div className="text-xs text-slate-400 font-medium flex items-center gap-1.5 mb-1">

@@ -48,7 +48,7 @@ const FinancePayments = ({ payments = [], loading = false }) => {
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-      <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+      <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-lg font-bold text-slate-800">Payment Logs</h3>
       </div>
       <div className="overflow-x-auto">

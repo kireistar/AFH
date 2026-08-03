@@ -70,7 +70,7 @@ const UserAssets = ({ requests = [], loading = false, onRefresh }) => {
 
       {/* Borrowed Assets Table Card */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-bold text-slate-800">My Borrowed Assets</h3>
             <p className="text-sm text-slate-500">List of devices currently assigned to you for corporate operations.</p>

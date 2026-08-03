@@ -53,7 +53,7 @@ export default function Toast({ toasts = [], onDismiss }) {
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-[70] flex flex-col gap-2 items-end pointer-events-none">
+    <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:right-6 z-[70] flex flex-col gap-2 items-stretch sm:items-end pointer-events-none">
       {toasts.map((t) => (
         <div key={t.id} className="pointer-events-auto">
           <ToastItem toast={t} onDismiss={onDismiss} />
