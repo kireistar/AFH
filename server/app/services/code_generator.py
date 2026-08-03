@@ -1,6 +1,7 @@
 # Format: PREFIX-YYYY-NNNN
 
 from datetime import datetime, timezone
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from app.models import Incident, AssetRequest, Transaction, Invoice
 
@@ -83,7 +84,7 @@ def generate_asset_code(db: Session, category: str) -> str:
     prefix = category_prefixes.get(category.lower(), "008")
     existing_codes = (
         db.query(Asset.asset_code)
-        .filter(Asset.category == category)
+        .filter(func.lower(Asset.category) == category.lower())
         .filter(Asset.asset_code.like(f"{prefix}%"))
         .all()
     )

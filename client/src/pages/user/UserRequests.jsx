@@ -4,6 +4,7 @@ import { useAuth } from "../../hooks/useAuth";
 import SortHeader from "../../components/SortHeader";
 import Pagination from "../../components/Pagination";
 import useTable from "../../hooks/useTable";
+import { tierRank } from "../../utils/styles";
 
 // Helper function placed outside to ensure React purity compliance
 const generateCurrentTimestamp = () => Math.floor(Date.now() / 1000);
@@ -30,7 +31,7 @@ const UserRequests = ({
       id: (r) => r.request_code || r.id,
       asset: (r) => (typeof r.asset === 'object' ? (r.asset?.asset_name || '') : String(r.asset || '')),
       date: (r) => r.created_at || r.date,
-      risk: (r) => r.risk_tier_snapshot || r.urgency || 'Low',
+      risk: (r) => tierRank(r.risk_tier_snapshot || r.urgency || 'Low'),
       status: (r) => r.status || r._status,
     },
   });

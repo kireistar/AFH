@@ -1,6 +1,7 @@
 import React from 'react';
 import { exportToCSV } from '../../utils/exportCSV';
 import { openReceiptInNewTab } from '../../utils/receipt';
+import { severityRank } from '../../utils/styles';
 import SortHeader from '../../components/SortHeader';
 import Pagination from '../../components/Pagination';
 import useTable from '../../hooks/useTable';
@@ -61,7 +62,7 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
         if (v && typeof v === 'object') return v.asset_name || v.name || '';
         return typeof v === 'string' ? v : '';
       },
-      severity: (i) => i.severity || '',
+      severity: (i) => severityRank(i.severity),
       status: (i) => i.status || i._status || '',
       description: (i) => i.description || '',
       date: (i) => i.date || i.created_at,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { TIER_STYLES } from '../../utils/styles';
+import { TIER_STYLES, tierRank } from '../../utils/styles';
 import SortHeader from '../../components/SortHeader';
 import Pagination from '../../components/Pagination';
 import useTable from '../../hooks/useTable';
@@ -10,7 +10,7 @@ const ManagerRiskAssessment = ({ riskLogs = [], loading = false }) => {
       id: (log) => log.request_code || log.id,
       user: (log) => (typeof log.user === 'object' ? (log.user?.employee_name || '') : String(log.user || '')),
       asset: (log) => (typeof log.asset === 'object' ? (log.asset?.asset_name || '') : String(log.asset || '')),
-      tier: (log) => log.risk_tier_snapshot || log.urgency || 'Low',
+      tier: (log) => tierRank(log.risk_tier_snapshot || log.urgency || 'Low'),
       score: (log) => (log.risk_score !== undefined ? log.risk_score : (log.riskScore || 0)),
       aiReason: (log) => log.ai_reason || log.aiReason || '',
       date: (log) => log.created_at || log.date,

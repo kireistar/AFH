@@ -1,6 +1,6 @@
 import React from 'react';
 import { exportToCSV } from '../../utils/exportCSV';
-import { TIER_STYLES } from '../../utils/styles';
+import { TIER_STYLES, tierRank, severityRank } from '../../utils/styles';
 import SortHeader from '../../components/SortHeader';
 import Pagination from '../../components/Pagination';
 import useTable from '../../hooks/useTable';
@@ -11,7 +11,7 @@ const ManagerReports = ({ requests = [], incidents = [] }) => {
       id: (r) => r.id || r._id || '',
       user: (r) => (r.user && typeof r.user === 'object' ? (r.user?.employee_name || '') : String(r.user || '')),
       asset: (r) => (r.asset && typeof r.asset === 'object' ? (r.asset?.asset_name || '') : String(r.asset || '')),
-      tier: (r) => r.urgency || '',
+      tier: (r) => tierRank(r.urgency),
       score: (r) => r.riskScore || 0,
       aiReason: (r) => r.aiReason || '',
       status: (r) => r.status || '',
@@ -24,7 +24,7 @@ const ManagerReports = ({ requests = [], incidents = [] }) => {
       id: (i) => i.id || i._id || '',
       reporter: (i) => (i.reporter && typeof i.reporter === 'object' ? (i.reporter?.employee_name || '') : String(i.reporter || '')),
       asset: (i) => (i.asset && typeof i.asset === 'object' ? (i.asset?.asset_name || '') : String(i.asset || '')),
-      severity: (i) => i.severity || '',
+      severity: (i) => severityRank(i.severity),
       status: (i) => i.status || i._status || '',
       description: (i) => i.description || '',
       date: (i) => i.date || i.created_at,

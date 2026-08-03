@@ -1,5 +1,5 @@
 import React from 'react';
-import { TIER_STYLES } from '../../utils/styles';
+import { TIER_STYLES, tierRank } from '../../utils/styles';
 import SortHeader from '../../components/SortHeader';
 import Pagination from '../../components/Pagination';
 import useTable from '../../hooks/useTable';
@@ -10,7 +10,7 @@ const AdminApprovals = ({ approvals = [], loading = false, handleApprove, handle
       id: (r) => r.request_code || r.id,
       user: (r) => (typeof r.user === 'object' ? (r.user?.employee_name || '') : String(r.user || '')),
       asset: (r) => (typeof r.asset === 'object' ? (r.asset?.asset_name || '') : String(r.asset || '')),
-      risk: (r) => r.risk_tier_snapshot || r.urgency || 'Low',
+      risk: (r) => tierRank(r.risk_tier_snapshot || r.urgency || 'Low'),
       aiReason: (r) => r.ai_reason || r.aiReason || '',
       status: (r) => r.status || r._status,
     },

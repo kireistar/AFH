@@ -271,7 +271,7 @@ def bulk_import_assets(
             continue
 
         try:
-            asset_code = generate_asset_code(db)
+            asset_code = generate_asset_code(db, category.strip().lower())
             purchase_val = float(row.get("purchase_value") or row.get("Purchase Value") or 0)
             new_asset = Asset(
                 asset_code=asset_code,

@@ -115,6 +115,9 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset, assets = [] }) {
     setImagePreview('');
   };
 
+  const finalBrand = formData.brand === '__new__' ? formData.customBrand : formData.brand;
+  const finalCategory = formData.category === '__new__' ? formData.customCategory : formData.category;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -137,7 +140,7 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset, assets = [] }) {
       await updateAsset(asset._id, {
         brand: finalBrand,
         asset_name: formData.asset_name.trim(),
-        category: formData.category,
+        category: finalCategory,
         current_condition: formData.current_condition,
         location: formData.location.trim() || null,
         serial_number: formData.serial_number.trim() || null,
@@ -309,12 +312,31 @@ function EditAssetModal({ isOpen, onClose, onSuccess, asset, assets = [] }) {
               disabled={submitting}
               className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-850 bg-white focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200 disabled:opacity-50 cursor-pointer"
             >
-              {categories.map((cat) => (
+              <option value="" disabled className="text-slate-400">Select asset category...</option>
+              {allCategoryOptions.map((cat) => (
                 <option key={cat.value} value={cat.value}>
                   {cat.label}
                 </option>
               ))}
+              <option value="__new__" className="font-bold text-[#1E3A8A] bg-blue-50">
+                + Add New Category...
+              </option>
             </select>
+
+            {formData.category === '__new__' && (
+              <div className="pt-1">
+                <input
+                  type="text"
+                  name="customCategory"
+                  value={formData.customCategory}
+                  onChange={handleChange}
+                  placeholder="Enter new category name (e.g., Camera, Drone, Smartboard)"
+                  required
+                  disabled={submitting}
+                  className="w-full px-4 py-2.5 border border-blue-300 rounded-xl text-sm text-slate-800 bg-blue-50/40 focus:outline-none focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all duration-200"
+                />
+              </div>
+            )}
           </div>
 
           {/* Serial Number & Purchase Cost */}

@@ -23,8 +23,9 @@ function RequestExtensionModal({ isOpen, onClose, onSuccess, asset }) {
 
     try {
       await createRequest({
-        asset_id: asset._id || asset.id,
-        endDate: extensionDate,
+        asset_id: parseInt(asset._id || asset.id, 10),
+        requested_start: new Date().toISOString().split('T')[0],
+        requested_end: extensionDate,
         reason: `[EXTENSION REQUEST] ${reason || 'Requesting loan period extension.'}`,
       });
       if (typeof onSuccess === 'function') {
