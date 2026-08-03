@@ -91,6 +91,7 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
                   <th className="p-4 font-semibold">Action</th>
                   <th className="p-4 font-semibold">Date</th>
                   <th className="p-4 font-semibold">Status</th>
+                  <th className="p-4 font-semibold text-right">Receipt</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
