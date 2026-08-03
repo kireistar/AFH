@@ -30,14 +30,30 @@ const FinanceDashboard = () => {
   const { transactions, loading: loadingTransactions } = useTransactions();
 
   const recentTransactions = useMemo(() => {
-    return transactions.slice(0, 5).map(trx => ({
-      id: trx.id,
-      description: `${trx.action} - ${trx.asset}`,
-      user: trx.party,
-      time: trx.date,
-      type: trx._action === 'fine_paid' ? 'Income' : 'Expense',
-      amount: trx.amount,
-    }));
+    return transactions.slice(0, 5).map(trx => {
+      const borrower = trx.borrower || trx.party;
+      const userName = borrower
+        ? (typeof borrower === 'object'
+            ? (borrower.employee_name || borrower.username || borrower.full_name || 'User')
+            : String(borrower))
+        : 'Unknown';
+      const asset = trx.asset;
+      const assetName = asset
+        ? (typeof asset === 'object'
+            ? (asset.asset_name || asset.asset_code || 'Asset')
+            : String(asset))
+        : 'Asset';
+      return {
+        id: trx.id,
+        description: `${trx.action} - ${assetName}`,
+        user: userName,
+        time: trx.occurred_at || trx.created_at || trx.date
+          ? new Date(trx.occurred_at || trx.created_at || trx.date).toLocaleString()
+          : '',
+        type: trx.action === 'fine_paid' ? 'Income' : 'Expense',
+        amount: trx.amount ?? trx.payload?.fine_amount ?? trx.payload?.amount,
+      };
+    });
   }, [transactions]);
 
   // Payment confirm modal

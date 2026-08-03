@@ -301,12 +301,14 @@ const AdminDashboard = () => {
 
   const recentActivities = transactions.slice(0, 5).map(txn => ({
     id: txn.id || txn._id,
-    user: txn.party,
+    user: txn.borrower || txn.party,
     action: txn.action?.toLowerCase().includes('handover') ? 'handed over' :
             txn.action?.toLowerCase().includes('return') ? 'returned' :
             'reported on',
     asset: txn.asset,
-    time: txn.date,
+    time: txn.occurred_at || txn.created_at || txn.date
+      ? new Date(txn.occurred_at || txn.created_at || txn.date).toLocaleString()
+      : '',
     status: txn.status,
   }));
 
