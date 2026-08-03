@@ -12,8 +12,7 @@ export const resolveImageUrl = (url) => {
 
 const injectEd25519Signature = async (endpoint, config) => {
   const isProtectedEndpoint =
-    endpoint.includes("/transactions") ||
-    endpoint.includes("/handover-tokens/scan");
+    endpoint.includes("/transactions");
 
   const isPost = config.method && config.method.toUpperCase() === "POST";
 
