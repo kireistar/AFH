@@ -28,3 +28,7 @@ __pycache__/
 *.njsproj
 *.sln
 *.sw?
+
+# Study / defense materials
+docs/study/
+*.docx

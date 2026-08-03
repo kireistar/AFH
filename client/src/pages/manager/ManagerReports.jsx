@@ -53,7 +53,7 @@ const ManagerReports = ({ requests = [], incidents = [] }) => {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {requests.map(r => (
-                  <tr key={r._id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={r.id || r._id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4 text-sm font-semibold text-slate-700">{r.id}</td>
                     <td className="p-4 text-sm font-medium text-slate-800">{r.user}</td>
                     <td className="p-4 text-sm text-slate-600">{r.asset}</td>
@@ -106,7 +106,7 @@ const ManagerReports = ({ requests = [], incidents = [] }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {incidentTable.pageItems.map((i, rowIdx) => {
+                {incidents.map((i, rowIdx) => {
                   const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                   return (
                     <tr key={i.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>

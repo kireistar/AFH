@@ -2,6 +2,38 @@ import React from 'react';
 import { exportToCSV } from '../../utils/exportCSV';
 
 const FinanceReports = ({ invoices = [], transactions = [] }) => {
+  const borrowerLabel = (trx) => {
+    const borrower = trx.borrower || trx.party;
+    if (!borrower) return '-';
+    if (typeof borrower === 'object') {
+      return borrower.employee_name || borrower.name || 'User';
+    }
+    return String(borrower);
+  };
+
+  const assetLabel = (trx) => {
+    if (!trx.asset) return '-';
+    if (typeof trx.asset === 'object') {
+      return trx.asset.asset_name || trx.asset.name || 'Asset';
+    }
+    return String(trx.asset);
+  };
+
+  const formatDateTime = (dtStr) => {
+    if (!dtStr) return '-';
+    try {
+      return new Date(dtStr).toLocaleString();
+    } catch {
+      return String(dtStr);
+    }
+  };
+
+  const amountLabel = (trx) => {
+    const val = trx.amount || trx.fine_amount;
+    if (!val) return '-';
+    return `Rp ${Number(val).toLocaleString('id-ID')}`;
+  };
+
   const handleExportInvoices = () => {
     exportToCSV('finance_invoice_report',
       ['Invoice ID', 'User', 'Reason', 'Amount', 'Status', 'Due Date', 'Paid At'],
@@ -12,7 +44,7 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
   const handleExportTransactions = () => {
     exportToCSV('finance_transaction_report',
       ['Transaction ID', 'User', 'Asset', 'Action', 'Amount', 'Date', 'Status'],
-      transactions.map(t => [t.id, t.party, t.asset, t.action, t.amount, t.date, t.status])
+      transactions.map(t => [t.id, borrowerLabel(t), assetLabel(t), t.action, amountLabel(t), formatDateTime(t.occurred_at || t.created_at), t.status])
     );
   };
 
@@ -102,7 +134,7 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {transactionTable.pageItems.map((t, rowIdx) => {
+                {transactions.map((t, rowIdx) => {
                   const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                   return (
                     <tr key={t.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
