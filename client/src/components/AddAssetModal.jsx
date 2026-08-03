@@ -10,6 +10,7 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
     customBrand: '',
     asset_name: '',
     category: '',
+    customCategory: '',
     status: 'available',
     current_condition: 'good',
     serial_number: '',
@@ -90,6 +91,8 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
     setImagePreview('');
   };
 
+  const finalCategory = formData.category === '__new__' ? formData.customCategory : formData.category;
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -112,7 +115,7 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
       await createAsset({
         brand: formData.brand.trim(),
         asset_name: formData.asset_name.trim(),
-        category: formData.category,
+        category: finalCategory,
         status: formData.status,
         current_condition: formData.current_condition,
         serial_number: formData.serial_number.trim() || null,
@@ -126,6 +129,7 @@ function AddAssetModal({ isOpen, onClose, onSuccess, assets = [] }) {
         brand: '',
         asset_name: '',
         category: '',
+        customCategory: '',
         status: 'available',
         current_condition: 'good',
         serial_number: '',

@@ -1,5 +1,8 @@
 import React from 'react';
 import { exportToCSV } from '../../utils/exportCSV';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 const FinanceReports = ({ invoices = [], transactions = [] }) => {
   const borrowerLabel = (trx) => {
@@ -34,6 +37,33 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
     return `Rp ${Number(val).toLocaleString('id-ID')}`;
   };
 
+  const invoiceTable = useTable(invoices, {
+    accessors: {
+      id: (i) => i.id,
+      user: (i) => (i.user && typeof i.user === 'object' ? (i.user?.employee_name || '') : String(i.user || '')),
+      reason: (i) => i.reason || '',
+      amount: (i) => Number(i.amount || 0),
+      status: (i) => i.status || i._status || '',
+      dueDate: (i) => i.dueDate || '',
+    },
+  });
+
+  const transactionTable = useTable(transactions, {
+    accessors: {
+      id: (t) => t.id,
+      user: (t) => {
+        const borrower = t.borrower || t.party;
+        if (!borrower) return '';
+        return typeof borrower === 'object' ? (borrower.employee_name || '') : String(borrower);
+      },
+      asset: (t) => (t.asset && typeof t.asset === 'object' ? (t.asset.asset_name || '') : String(t.asset || '')),
+      action: (t) => t.action || '',
+      amount: (t) => Number(t.amount || t.fine_amount || 0),
+      date: (t) => t.occurred_at || t.created_at,
+      status: (t) => t.status || '',
+    },
+  });
+
   const handleExportInvoices = () => {
     exportToCSV('finance_invoice_report',
       ['Invoice ID', 'User', 'Reason', 'Amount', 'Status', 'Due Date', 'Paid At'],
@@ -52,7 +82,7 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
     <div className="space-y-8">
       {/* Invoice / Fine Report */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-bold text-slate-800">Invoice & Fine Report</h3>
             <p className="text-sm text-slate-500 mt-1">All invoices with payment status and amounts.</p>
@@ -72,16 +102,16 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
             <table className="w-full text-left">
               <thead>
                 <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-4 font-semibold">Invoice ID</th>
-                  <th className="p-4 font-semibold">User</th>
-                  <th className="p-4 font-semibold">Reason</th>
-                  <th className="p-4 font-semibold text-right">Amount</th>
-                  <th className="p-4 font-semibold">Status</th>
-                  <th className="p-4 font-semibold">Due Date</th>
+                  <SortHeader label="Invoice ID" sortKey="id" onSort={invoiceTable.onSort} activeKey={invoiceTable.sortKey} sortDir={invoiceTable.sortDir} />
+                  <SortHeader label="User" sortKey="user" onSort={invoiceTable.onSort} activeKey={invoiceTable.sortKey} sortDir={invoiceTable.sortDir} />
+                  <SortHeader label="Reason" sortKey="reason" onSort={invoiceTable.onSort} activeKey={invoiceTable.sortKey} sortDir={invoiceTable.sortDir} />
+                  <SortHeader label="Amount" sortKey="amount" onSort={invoiceTable.onSort} activeKey={invoiceTable.sortKey} sortDir={invoiceTable.sortDir} className="text-right" />
+                  <SortHeader label="Status" sortKey="status" onSort={invoiceTable.onSort} activeKey={invoiceTable.sortKey} sortDir={invoiceTable.sortDir} />
+                  <SortHeader label="Due Date" sortKey="dueDate" onSort={invoiceTable.onSort} activeKey={invoiceTable.sortKey} sortDir={invoiceTable.sortDir} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {invoices.map(i => (
+                {invoiceTable.pageItems.map(i => (
                   <tr key={i.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="p-4 text-sm font-semibold text-slate-700">{i.id}</td>
                     <td className="p-4 text-sm font-medium text-slate-800">{i.user}</td>
@@ -100,11 +130,10 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
             </table>
           )}
         </div>
+        {invoiceTable.count > 0 && <Pagination {...invoiceTable} />}
       </div>
-
-      {/* Transaction Ledger Report */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-lg font-bold text-slate-800">Transaction Ledger Report</h3>
             <p className="text-sm text-slate-500 mt-1">Complete financial transaction history.</p>
@@ -124,17 +153,17 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
             <table className="w-full text-left">
               <thead>
                 <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-4 font-semibold">Transaction ID</th>
-                  <th className="p-4 font-semibold">User</th>
-                  <th className="p-4 font-semibold">Asset</th>
-                  <th className="p-4 font-semibold">Action</th>
-                  <th className="p-4 font-semibold text-right">Amount</th>
-                  <th className="p-4 font-semibold">Date</th>
-                  <th className="p-4 font-semibold">Status</th>
+                  <SortHeader label="Transaction ID" sortKey="id" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
+                  <SortHeader label="User" sortKey="user" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
+                  <SortHeader label="Asset" sortKey="asset" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
+                  <SortHeader label="Action" sortKey="action" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
+                  <SortHeader label="Amount" sortKey="amount" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} className="text-right" />
+                  <SortHeader label="Date" sortKey="date" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
+                  <SortHeader label="Status" sortKey="status" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {transactions.map((t, rowIdx) => {
+                {transactionTable.pageItems.map((t, rowIdx) => {
                   const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                   return (
                     <tr key={t.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
@@ -156,6 +185,7 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
             </table>
           )}
         </div>
+        {transactionTable.count > 0 && <Pagination {...transactionTable} />}
       </div>
     </div>
   );

@@ -1,7 +1,22 @@
 import React from 'react';
-import { TIER_STYLES } from '../../utils/styles';
+import { TIER_STYLES, tierRank } from '../../utils/styles';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 const ManagerRiskAssessment = ({ riskLogs = [], loading = false }) => {
+  const table = useTable(riskLogs, {
+    accessors: {
+      id: (log) => log.request_code || log.id,
+      user: (log) => (typeof log.user === 'object' ? (log.user?.employee_name || '') : String(log.user || '')),
+      asset: (log) => (typeof log.asset === 'object' ? (log.asset?.asset_name || '') : String(log.asset || '')),
+      tier: (log) => tierRank(log.risk_tier_snapshot || log.urgency || 'Low'),
+      score: (log) => (log.risk_score !== undefined ? log.risk_score : (log.riskScore || 0)),
+      aiReason: (log) => log.ai_reason || log.aiReason || '',
+      date: (log) => log.created_at || log.date,
+    },
+  });
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="p-6 border-b border-slate-100 bg-slate-50/50">
@@ -17,17 +32,17 @@ const ManagerRiskAssessment = ({ riskLogs = [], loading = false }) => {
           <table className="w-full text-left">
             <thead>
               <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                <th className="p-4 font-semibold">Request ID</th>
-                <th className="p-4 font-semibold">Requester</th>
-                <th className="p-4 font-semibold">Asset</th>
-                <th className="p-4 font-semibold">Risk Tier</th>
-                <th className="p-4 font-semibold">Risk Score</th>
-                <th className="p-4 font-semibold">AI Reason</th>
-                <th className="p-4 font-semibold">Date</th>
+                <SortHeader label="Request ID" sortKey="id" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Requester" sortKey="user" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Asset" sortKey="asset" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Risk Tier" sortKey="tier" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Risk Score" sortKey="score" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="AI Reason" sortKey="aiReason" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Date" sortKey="date" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {riskLogs.map((log, rowIdx) => {
+              {table.pageItems.map((log, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 const userName = typeof log.user === 'object' ? (log.user?.employee_name || 'User') : String(log.user || '-');
                 const assetName = typeof log.asset === 'object' ? (log.asset?.asset_name || 'Asset') : String(log.asset || '-');
@@ -52,6 +67,7 @@ const ManagerRiskAssessment = ({ riskLogs = [], loading = false }) => {
           </table>
         )}
       </div>
+      {table.count > 0 && <Pagination {...table} />}
     </div>
   );
 };

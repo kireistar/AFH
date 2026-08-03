@@ -1,9 +1,22 @@
 import React from 'react';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 const FinanceInvoices = ({ invoices = [], loading = false }) => {
+  const table = useTable(invoices, {
+    accessors: {
+      id: (inv) => inv.invoice_code || inv.id,
+      user: (inv) => (inv.user && typeof inv.user === 'object' ? (inv.user?.employee_name || '') : String(inv.user || '')),
+      reason: (inv) => inv.reason || '',
+      amount: (inv) => Number(inv.fine_amount ?? inv.amount ?? 0),
+      status: (inv) => inv.status || inv._status || '',
+    },
+  });
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-      <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+      <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-lg font-bold text-slate-800">Asset Invoices</h3>
         <button className="px-4 py-2 bg-[#1E3A8A] text-white rounded-xl text-sm font-semibold hover:bg-blue-900 transition-colors">
           + New Invoice
@@ -18,15 +31,15 @@ const FinanceInvoices = ({ invoices = [], loading = false }) => {
           <table className="w-full text-left">
             <thead>
               <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                <th className="p-4 font-semibold">Invoice ID</th>
-                <th className="p-4 font-semibold">User</th>
-                <th className="p-4 font-semibold">Reason</th>
-                <th className="p-4 font-semibold">Amount</th>
-                <th className="p-4 font-semibold">Status</th>
+                <SortHeader label="Invoice ID" sortKey="id" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="User" sortKey="user" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Reason" sortKey="reason" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Amount" sortKey="amount" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Status" sortKey="status" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {invoices.map((inv, rowIdx) => {
+              {table.pageItems.map((inv, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 const userName = typeof inv.user === 'object' ? (inv.user?.employee_name || 'User') : String(inv.user || '-');
                 const isPaid = (inv.status || '').toLowerCase() === 'paid';
@@ -48,6 +61,7 @@ const FinanceInvoices = ({ invoices = [], loading = false }) => {
           </table>
         )}
       </div>
+      {table.count > 0 && <Pagination {...table} />}
     </div>
   );
 };

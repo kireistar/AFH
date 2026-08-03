@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { verifyLedger } from '../../services/transactionService';
 import { apiGet } from '../../services/apiClient';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefreshTransactions }) => {
   const [integrityData, setIntegrityData] = useState(null);
@@ -46,6 +49,38 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
     if (!hash) return 'GENESIS (NULL)';
     return `${hash.slice(0, 8)}...${hash.slice(-8)}`;
   };
+
+  const payloadSummary = (t) => {
+    let parsed = {};
+    try {
+      parsed = typeof t.payload === 'string' ? JSON.parse(t.payload) : (t.payload || {});
+    } catch (e) {
+      parsed = { notes: t.payload };
+    }
+    return parsed.notes || JSON.stringify(parsed);
+  };
+
+  const ledgerTable = useTable(transactions, {
+    accessors: {
+      code: (t) => t.transaction_code || t.id,
+      date: (t) => t.occurred_at || t.date,
+      action: (t) => t.action || t._action,
+      payload: (t) => payloadSummary(t),
+      prevHash: (t) => t.previous_hash || '',
+      curHash: (t) => t.current_hash || '',
+      status: (t) => (integrityData?.tampered_transaction_ids?.includes(t.id || t._id) ? 'Tampered' : 'Verified'),
+    },
+  });
+
+  const auditTable = useTable(auditLogs, {
+    accessors: {
+      timestamp: (log) => log.created_at,
+      actor: (log) => log.actor_name || '',
+      action: (log) => log.action || '',
+      target: (log) => log.entity_type || '',
+      details: (log) => log.details || '',
+    },
+  });
 
   return (
     <div className="space-y-6 md:space-y-8">
@@ -144,16 +179,16 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
             <table className="w-full text-left min-w-[800px]">
               <thead>
                 <tr className="text-slate-400 text-[10px] md:text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Block Code</th>
-                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Action</th>
-                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Payload Snapshot</th>
-                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Previous Hash</th>
-                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Current Hash</th>
-                  <th className="p-3 md:p-4 font-semibold text-center whitespace-nowrap">Status</th>
+                  <SortHeader label="Block Code" sortKey="code" onSort={ledgerTable.onSort} activeKey={ledgerTable.sortKey} sortDir={ledgerTable.sortDir} className="whitespace-nowrap" />
+                  <SortHeader label="Action" sortKey="action" onSort={ledgerTable.onSort} activeKey={ledgerTable.sortKey} sortDir={ledgerTable.sortDir} className="whitespace-nowrap" />
+                  <SortHeader label="Payload Snapshot" sortKey="payload" onSort={ledgerTable.onSort} activeKey={ledgerTable.sortKey} sortDir={ledgerTable.sortDir} className="whitespace-nowrap" />
+                  <SortHeader label="Previous Hash" sortKey="prevHash" onSort={ledgerTable.onSort} activeKey={ledgerTable.sortKey} sortDir={ledgerTable.sortDir} className="whitespace-nowrap" />
+                  <SortHeader label="Current Hash" sortKey="curHash" onSort={ledgerTable.onSort} activeKey={ledgerTable.sortKey} sortDir={ledgerTable.sortDir} className="whitespace-nowrap" />
+                  <SortHeader label="Status" sortKey="status" onSort={ledgerTable.onSort} activeKey={ledgerTable.sortKey} sortDir={ledgerTable.sortDir} className="text-center whitespace-nowrap" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {transactions.map((t, rowIdx) => {
+                {ledgerTable.pageItems.map((t, rowIdx) => {
                   const isTampered = integrityData?.tampered_transaction_ids?.includes(t.id || t._id);
                   const rowBgClass = isTampered ? 'bg-rose-50/50' : (rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70');
 
@@ -234,6 +269,7 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
             </table>
           )}
         </div>
+        {ledgerTable.count > 0 && <Pagination {...ledgerTable} />}
       </div>
 
       {/* System Audit Trail Table */}
@@ -263,15 +299,15 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
             <table className="w-full text-left min-w-[700px]">
               <thead>
                 <tr className="text-slate-400 text-[10px] md:text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Timestamp</th>
-                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Administrator</th>
-                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Action Type</th>
-                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Target Entity</th>
-                  <th className="p-3 md:p-4 font-semibold whitespace-nowrap">Log Details</th>
+                  <SortHeader label="Timestamp" sortKey="timestamp" onSort={auditTable.onSort} activeKey={auditTable.sortKey} sortDir={auditTable.sortDir} className="whitespace-nowrap" />
+                  <SortHeader label="Administrator" sortKey="actor" onSort={auditTable.onSort} activeKey={auditTable.sortKey} sortDir={auditTable.sortDir} className="whitespace-nowrap" />
+                  <SortHeader label="Action Type" sortKey="action" onSort={auditTable.onSort} activeKey={auditTable.sortKey} sortDir={auditTable.sortDir} className="whitespace-nowrap" />
+                  <SortHeader label="Target Entity" sortKey="target" onSort={auditTable.onSort} activeKey={auditTable.sortKey} sortDir={auditTable.sortDir} className="whitespace-nowrap" />
+                  <SortHeader label="Log Details" sortKey="details" onSort={auditTable.onSort} activeKey={auditTable.sortKey} sortDir={auditTable.sortDir} className="whitespace-nowrap" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {auditLogs.map((log) => (
+                {auditTable.pageItems.map((log) => (
                   <tr key={log.id} className="hover:bg-slate-50 transition-colors border-b border-slate-100">
                     <td className="p-3 md:p-4 text-xs font-mono text-slate-500">
                       {log.created_at ? new Date(log.created_at).toLocaleString() : '-'}
@@ -296,6 +332,7 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
             </table>
           )}
         </div>
+        {auditTable.count > 0 && <Pagination {...auditTable} />}
       </div>
     </div>
   );

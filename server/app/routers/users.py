@@ -183,6 +183,8 @@ def delete_user(
 from fastapi import UploadFile, File
 import csv
 import io
+import secrets
+from datetime import date
 from app.core.security import hash_password
 from app.services.audit_service import log_admin_action
 from app.models.audit_log import AuditLog
@@ -193,7 +195,7 @@ def bulk_import_users(
     db: Session = Depends(get_db),
     admin_user: User = Depends(require_role("admin")),
 ):
-    """Bulk import users dari file CSV. Column required: employee_id, employee_name, email, role, department. Default password: password123."""
+    """Bulk import users dari file CSV. Column required: employee_id, employee_name, email, role, department. Optional: password (jika kosong, generate acak)."""
     if not file.filename.endswith(".csv"):
         raise HTTPException(status_code=400, detail="File harus berformat CSV")
 
@@ -202,7 +204,7 @@ def bulk_import_users(
 
     imported_count = 0
     errors = []
-    default_pw_hash = hash_password("password123")
+    generated_credentials = []
 
     for row_idx, row in enumerate(reader, start=2):
         emp_id = row.get("employee_id") or row.get("Employee ID") or row.get("id")
@@ -210,12 +212,14 @@ def bulk_import_users(
         email = row.get("email") or row.get("Email")
         role = (row.get("role") or row.get("Role") or "user").strip().lower()
         dept = row.get("department") or row.get("Department") or "IT Operations"
+        provided_pw = row.get("password") or row.get("Password")
 
         if not emp_id or not emp_name or not email:
             errors.append(f"Row {row_idx}: 'employee_id', 'employee_name', and 'email' are required")
             continue
 
         try:
+            plain_password = provided_pw if provided_pw and len(provided_pw) >= 8 else secrets.token_urlsafe(10)
             new_user = User(
                 employee_id=emp_id.strip(),
                 employee_name=emp_name.strip(),
@@ -224,13 +228,20 @@ def bulk_import_users(
                 department=dept.strip(),
                 clearance_level=3 if role == "admin" else (2 if role in ["manager", "finance"] else 1),
                 employment_status="Active",
-                password_hash=default_pw_hash,
+                hire_date=date.today(),
+                password_hash=hash_password(plain_password),
                 risk_score=0.0,
                 risk_score_tier="Low",
             )
             db.add(new_user)
             db.commit()
             imported_count += 1
+            if not provided_pw or len(provided_pw) < 8:
+                generated_credentials.append({
+                    "employee_id": emp_id.strip(),
+                    "email": email.strip().lower(),
+                    "password": plain_password,
+                })
         except Exception as e:
             db.rollback()
             errors.append(f"Row {row_idx}: {str(e)}")
@@ -247,6 +258,7 @@ def bulk_import_users(
         "status": "Success",
         "imported_count": imported_count,
         "errors": errors,
+        "generated_credentials": generated_credentials,
     }
 
 

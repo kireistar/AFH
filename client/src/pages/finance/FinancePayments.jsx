@@ -1,4 +1,7 @@
 import React from 'react';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 const FinancePayments = ({ payments = [], loading = false }) => {
   const borrowerLabel = (pay) => {
@@ -32,9 +35,20 @@ const FinancePayments = ({ payments = [], loading = false }) => {
     return `Rp ${Number(val).toLocaleString('id-ID')}`;
   };
 
+  const table = useTable(payments, {
+    accessors: {
+      id: (pay) => pay.transaction_code || pay.id,
+      user: (pay) => (pay.borrower && typeof pay.borrower === 'object' ? (pay.borrower.employee_name || '') : String(pay.borrower || '')),
+      asset: (pay) => (pay.asset && typeof pay.asset === 'object' ? (pay.asset.asset_name || '') : String(pay.asset || '')),
+      action: (pay) => pay.action || '',
+      date: (pay) => pay.occurred_at || pay.created_at,
+      amount: (pay) => Number(pay.amount || pay.fine_amount || 0),
+    },
+  });
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-      <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+      <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h3 className="text-lg font-bold text-slate-800">Payment Logs</h3>
       </div>
       <div className="overflow-x-auto">
@@ -46,16 +60,16 @@ const FinancePayments = ({ payments = [], loading = false }) => {
           <table className="w-full text-left">
             <thead>
               <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                <th className="p-4 font-semibold">Transaction ID</th>
-                <th className="p-4 font-semibold">User</th>
-                <th className="p-4 font-semibold">Asset</th>
-                <th className="p-4 font-semibold">Action</th>
-                <th className="p-4 font-semibold">Date</th>
-                <th className="p-4 font-semibold">Amount</th>
+                <SortHeader label="Transaction ID" sortKey="id" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="User" sortKey="user" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Asset" sortKey="asset" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Action" sortKey="action" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Date" sortKey="date" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Amount" sortKey="amount" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {payments.map((pay, rowIdx) => {
+              {table.pageItems.map((pay, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 return (
                   <tr key={pay.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
@@ -72,6 +86,7 @@ const FinancePayments = ({ payments = [], loading = false }) => {
           </table>
         )}
       </div>
+      {table.count > 0 && <Pagination {...table} />}
     </div>
   );
 };

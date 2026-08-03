@@ -19,7 +19,7 @@ export default function ManualHandoverModal({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4 transition-opacity">
-      <div className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-md w-full overflow-hidden transform transition-all">
+      <div className="bg-white rounded-2xl shadow-xl border border-slate-100 max-w-md w-full mx-4 max-h-[90vh] overflow-y-auto transform transition-all">
         {isSuccess ? (
           <div className="p-8 text-center">
             <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-5">

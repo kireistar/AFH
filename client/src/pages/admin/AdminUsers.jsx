@@ -8,6 +8,9 @@ import ConfirmModal from '../../components/ConfirmModal';
 import Toast, { createToast } from '../../components/Toast';
 import { deleteUser, resetUserDeviceKey } from '../../services/userService';
 import { useAuth } from '../../hooks/useAuth';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
   const navigate = useNavigate();
@@ -91,6 +94,15 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
     ? users
     : users.filter(u => u.status === 'Active' || u.status === 'On Leave');
 
+  const table = useTable(filteredUsers, {
+    accessors: {
+      name: (u) => u.name || u.employee_name || '',
+      department: (u) => u.department || '',
+      status: (u) => u.status || '',
+      device: (u) => (u.public_key ? 'Registered' : 'Not Registered'),
+    },
+  });
+
   return (
     <>
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
@@ -134,15 +146,15 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
             <table className="w-full text-left">
               <thead>
                 <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-4 font-semibold">User</th>
-                  <th className="p-4 font-semibold">Department</th>
-                  <th className="p-4 font-semibold">Status</th>
-                  <th className="p-4 font-semibold">Device</th>
+                  <SortHeader label="User" sortKey="name" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                  <SortHeader label="Department" sortKey="department" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                  <SortHeader label="Status" sortKey="status" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                  <SortHeader label="Device" sortKey="device" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
                   <th className="p-4 font-semibold text-right pr-6">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {users.map((user, rowIdx) => {
+                {table.pageItems.map((user, rowIdx) => {
                   const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                   return (
                     <tr key={user.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
@@ -212,6 +224,7 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
             </table>
           )}
         </div>
+        {table.count > 0 && <Pagination {...table} />}
       </div>
 
       <AddUserModal

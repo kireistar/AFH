@@ -111,7 +111,7 @@ def create_request(request_in: AssetRequestCreate, db: Session = Depends(get_db)
 
 @router.patch("/{request_id}", response_model=AssetRequestResponse)
 def update_request(request_id: int, request_in: AssetRequestUpdate, db: Session = Depends(get_db), _: User = Depends(require_role("admin", "manager"))):
-    """Update partial asset request (approve/reject)."""
+    """Update partial asset request (rejection_reason only — status is managed by dedicated approve/reject/return endpoints)."""
     request = db.query(AssetRequest).filter(AssetRequest.id == request_id).first()
     if not request:
         raise HTTPException(
@@ -119,6 +119,9 @@ def update_request(request_id: int, request_in: AssetRequestUpdate, db: Session 
             detail=f"Asset request with id {request_id} not found",
         )
     update_data = request_in.model_dump(exclude_unset=True)
+    # Status must NOT be freely settable here — it would bypass notifications,
+    # ledger, and behavior tracking. Only metadata fields are editable.
+    update_data.pop("status", None)
     for key, value in update_data.items():
         setattr(request, key, value)
 
@@ -142,8 +145,8 @@ def delete_request(request_id: int, db: Session = Depends(get_db), _: User = Dep
 @router.patch("/{request_id}/approve", response_model=AssetRequestResponse)
 def approve_request(request_id: int, db: Session = Depends(get_db), current_user: User = Depends(require_role("admin", "manager"))): # Inject dari JWT
     """
-    Admin approve requst biasa. Manager approve request high risk.
-    approved_by_id harus di-inject dari JWT token, bukan dari parameter.
+    Admin approve request biasa (pending_admin). Manager approve request high risk (pending_manager).
+    approved_by harus di-inject dari JWT token, bukan dari parameter.
     """
     request = db.query(AssetRequest).filter(AssetRequest.id == request_id).first()
     if not request:
@@ -156,6 +159,27 @@ def approve_request(request_id: int, db: Session = Depends(get_db), current_user
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Cannot approve request with status {request.status}",
+        )
+    
+    # Role separation: high-risk requests routed to pending_manager must be approved by a manager,
+    # not an admin. Admin may approve normal (pending_admin) requests.
+    if request.status == "pending_manager" and current_user.role != "manager":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="High-risk requests must be approved by a manager.",
+        )
+    
+    # Re-check asset availability — it may have been handed over or taken meanwhile.
+    asset = db.query(Asset).filter(Asset.id == request.asset_id).first()
+    if not asset:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Asset with id {request.asset_id} not found",
+        )
+    if asset.status != "available":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Asset is currently '{asset.status}' and cannot be approved for request.",
         )
     
     request.status = "approved"

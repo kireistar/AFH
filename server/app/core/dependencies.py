@@ -71,6 +71,7 @@ async def verify_non_repudiation(
     x_ed25519_admin_signature: str = Header(None, description="Base64 Ed25519 admin signature (QR path only)"),
     x_ed25519_public_key: str = Header(None, description="Borrower's Ed25519 public key from QR (QR path only)"),
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> User:
     """
     Guards endpoints requiring True Non-Repudiation.
@@ -78,13 +79,14 @@ async def verify_non_repudiation(
     Two modes of operation:
       - Single-party (manual handover): Verifies x-ed25519-signature against current_user's registered key.
       - Dual-party (QR code flow): Verifies BOTH borrower's signature (x-ed25519-signature) against the
-        borrower's public key (x-ed25519-public-key header) AND admin's signature (x-ed25519-admin-signature)
-        against the admin's registered key (current_user.public_key).
+        borrower's REGISTERED key in the database (borrower.public_key, resolved from borrower_id — no TOFU)
+        AND admin's signature (x-ed25519-admin-signature) against the admin's registered key
+        (current_user.public_key).
 
     Also enforces:
       - Registered public key check (no TOFU).
-      - Replay attack prevention (5-minute timestamp window).
-      - QR expiry enforcement (30-second TTL if expires_at is present).
+      - Replay attack prevention (timestamp window).
+      - QR expiry enforcement (TTL if expires_at is present).
     """
     # 1. Reject if JWT holder has no registered Public Key
     if not current_user.public_key:
@@ -176,13 +178,15 @@ async def verify_non_repudiation(
     try:
         if x_ed25519_admin_signature:
             # ── DUAL-PARTY MODE (QR Code Flow) ──
-            # Verify borrower's signature against borrower's public key from QR header
-            if not x_ed25519_public_key:
+            # Verify borrower's signature against the borrower's REGISTERED key in the
+            # database (no TOFU — never trust the client-supplied header key).
+            borrower = db.query(User).filter(User.id == borrower_id).first()
+            if not borrower or not borrower.public_key:
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Missing borrower public key header for dual-party verification."
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Borrower device not registered. Borrower must register their cryptographic key first."
                 )
-            borrower_pub_bytes = decode_crypto_string(x_ed25519_public_key)
+            borrower_pub_bytes = decode_crypto_string(borrower.public_key)
             borrower_sig_bytes = decode_crypto_string(x_ed25519_signature)
             borrower_pub = ed25519.Ed25519PublicKey.from_public_bytes(borrower_pub_bytes)
             borrower_pub.verify(borrower_sig_bytes, canonical_bytes)

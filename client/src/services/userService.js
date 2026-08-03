@@ -12,6 +12,9 @@ const mapUser = (raw) => ({
   status: raw.employment_status,
   riskScore: raw.risk_score,
   riskTier: raw.risk_score_tier,
+  clearanceLevel: raw.clearance_level,
+  resignationDate: raw.resignation_date,
+  hireDate: raw.hire_date,
   public_key: raw.public_key,
   _id: raw.id,
 });

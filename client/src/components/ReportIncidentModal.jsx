@@ -11,6 +11,7 @@ function ReportIncidentModal({ isOpen, onClose, onSuccess, requests = [], reques
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({
     asset_id: '',
+    severity: 'medium',
     description: '',
   });
 
@@ -20,7 +21,7 @@ function ReportIncidentModal({ isOpen, onClose, onSuccess, requests = [], reques
   };
 
   const resetForm = () => {
-    setFormData({ asset_id: '', description: '' });
+    setFormData({ asset_id: '', severity: 'medium', description: '' });
     setError(null);
   };
 
@@ -36,6 +37,7 @@ function ReportIncidentModal({ isOpen, onClose, onSuccess, requests = [], reques
     try {
       await createIncident({
         asset_id: Number(formData.asset_id),
+        severity: formData.severity,
         description: formData.description,
       });
       resetForm();
@@ -87,6 +89,26 @@ function ReportIncidentModal({ isOpen, onClose, onSuccess, requests = [], reques
                   {req.asset}
                 </option>
               ))}
+            </select>
+          </div>
+
+          {/* SEVERITY */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              Severity
+            </label>
+            <select
+              name="severity"
+              value={formData.severity}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="low">Low - Minor cosmetic issue</option>
+              <option value="medium">Medium - Functional issue</option>
+              <option value="severe">Severe - Device broken / unusable</option>
+              <option value="lost">Lost - Device is missing</option>
+              <option value="critical">Critical - Data breach / theft</option>
             </select>
           </div>
 

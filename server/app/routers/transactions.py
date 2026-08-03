@@ -10,7 +10,7 @@ from typing import List, Optional, cast
 from uuid import UUID
 
 from app.core.database import get_db
-from app.core.dependencies import verify_non_repudiation
+from app.core.dependencies import get_current_user, verify_non_repudiation
 from app.models import Asset, Transaction, User, AssetRequest
 from app.schemas import TransactionCreate, TransactionResponse
 from app.services import ledger_service
@@ -36,6 +36,7 @@ def get_all_transactions(
     asset_id: Optional[int] = None,
     borrower_id: Optional[str] = None,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     limit = min(max(1, limit), 200)
     query = db.query(Transaction)
@@ -49,7 +50,11 @@ def get_all_transactions(
 
 
 @router.get("/{transaction_id}", response_model=TransactionResponse)
-def get_transaction(transaction_id: int, db: Session = Depends(get_db)):
+def get_transaction(
+    transaction_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     transaction = db.query(Transaction).filter(Transaction.id == transaction_id).first()
     if not transaction:
         raise HTTPException(
@@ -122,12 +127,32 @@ def create_transaction(
 
     # Update request and asset status for handovers
     if transaction_in.action == "handover":
+        asset_obj = db.query(Asset).filter(Asset.id == transaction_in.asset_id).first()
+        if asset_obj and asset_obj.status != "available":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Asset is currently '{asset_obj.status}' and cannot be handed over.",
+            )
+
         if transaction_in.request_id is not None:
             req_obj = db.query(AssetRequest).filter(AssetRequest.id == transaction_in.request_id).first()
-            if req_obj:
-                req_obj.status = "handed_over"
+            if not req_obj:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Associated asset request not found.",
+                )
+            if req_obj.status != "approved":
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Asset request is '{req_obj.status}', only 'approved' requests can be handed over.",
+                )
+            if str(req_obj.user_id) != str(transaction_in.borrower_id):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Asset request belongs to a different borrower.",
+                )
+            req_obj.status = "handed_over"
 
-        asset_obj = db.query(Asset).filter(Asset.id == transaction_in.asset_id).first()
         if asset_obj:
             asset_obj.status = "borrowed"
 
