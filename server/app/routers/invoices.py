@@ -15,7 +15,7 @@ from app.core.dependencies import get_current_user, require_role
 from app.models import Invoice, Transaction, User
 from app.schemas import InvoiceCreate, InvoiceResponse, InvoiceUpdate
 from app.schemas.enums import PaymentMethod
-from app.services.code_generator import generate_invoice_code
+from app.services.code_generator import generate_invoice_code, generate_transaction_code
 from app.services.behavior_service import record_fine_paid
 
 router = APIRouter(
@@ -41,12 +41,15 @@ def get_all_invoices(
     """
     limit = min(max(1, limit), 200)
     query = db.query(Invoice)
+
+    if current_user.role == "user":
+        # User biasa hanya boleh lihat invoice miliknya sendiri
+        query = query.filter(Invoice.user_id == current_user.id)
+    elif user_id:
+        query = query.filter(Invoice.user_id == UUID(user_id))
     
     if status_filter:
         query = query.filter(Invoice.status == status_filter)
-    
-    if user_id:
-        query = query.filter(Invoice.user_id == UUID(user_id))
     
     return query.offset(skip).limit(limit).all()
 
@@ -63,6 +66,11 @@ def get_invoice(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Invoice with id {invoice_id} not found",
+        )
+    if current_user.role == "user" and invoice.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: you can only view your own invoices.",
         )
     return invoice
 
@@ -185,7 +193,45 @@ def verify_payment(
     
     # Update user behavior stats: unpaid_fines turun
     record_fine_paid(db, invoice.user_id, invoice.fine_amount)
-    
+
+    # Record payment on the immutable ledger (action = fine_paid)
+    now = datetime.now(timezone.utc)
+    last_txn = db.query(Transaction).order_by(Transaction.id.desc()).first()
+    previous_hash = last_txn.current_hash if last_txn else None
+
+    # Resolve the originating transaction for asset_id (transaction_id may be None for manual fines)
+    linked_txn = db.query(Transaction).filter(Transaction.id == invoice.transaction_id).first() if invoice.transaction_id else None
+    asset_id = linked_txn.asset_id if linked_txn else None
+
+    from app.services import ledger_service
+    payload_data = {
+        "invoice_id": invoice.id,
+        "invoice_code": invoice.invoice_code,
+        "fine_amount": str(invoice.fine_amount),
+        "payment_method": payment_method.value if hasattr(payment_method, "value") else str(payment_method),
+        "payment_notes": payment_notes or "",
+    }
+    current_hash = ledger_service.calculate_transaction_hash(
+        previous_hash=previous_hash,
+        payload=payload_data,
+        occurred_at=now,
+    )
+
+    transaction = Transaction(
+        transaction_code=generate_transaction_code(db),
+        request_id=invoice.transaction_id,
+        asset_id=asset_id,
+        borrower_id=invoice.user_id,
+        admin_id=current_user.id,
+        action="fine_paid",
+        payload=payload_data,
+        previous_hash=previous_hash,
+        current_hash=current_hash,
+        status="committed",
+        occurred_at=now,
+    )
+    db.add(transaction)
+
     db.commit()
     db.refresh(invoice)
     
