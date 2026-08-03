@@ -3,6 +3,9 @@ import { FiShield, FiClock, FiCheckCircle, FiRefreshCw } from 'react-icons/fi';
 import { useAuth } from '../../hooks/useAuth';
 import RequestExtensionModal from '../../components/RequestExtensionModal';
 import ProduceQRModal from '../../components/ProduceQRModal';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 const UserAssets = ({ requests = [], loading = false, onRefresh }) => {
   const { user } = useAuth();
@@ -11,6 +14,15 @@ const UserAssets = ({ requests = [], loading = false, onRefresh }) => {
 
   // Filter currently borrowed assets from active requests
   const borrowedAssets = requests.filter(req => req.status === 'handed_over' || req._status === 'handed_over');
+
+  const table = useTable(borrowedAssets, {
+    accessors: {
+      id: (r) => r.request_code || r.id,
+      asset: (r) => (typeof r.asset === 'object' ? (r.asset?.asset_name || '') : String(r.asset || '')),
+      start: (r) => r.requested_start || r.startDate,
+      end: (r) => r.requested_end || r.endDate,
+    },
+  });
 
   const renderAssetLabel = (req) => {
     if (!req.asset) return '-';
@@ -73,15 +85,15 @@ const UserAssets = ({ requests = [], loading = false, onRefresh }) => {
             <table className="w-full text-left">
               <thead>
                 <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-4 font-semibold">Request ID</th>
-                  <th className="p-4 font-semibold">Device Name</th>
-                  <th className="p-4 font-semibold">Start Date</th>
-                  <th className="p-4 font-semibold">End Date</th>
+                  <SortHeader label="Request ID" sortKey="id" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                  <SortHeader label="Device Name" sortKey="asset" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                  <SortHeader label="Start Date" sortKey="start" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                  <SortHeader label="End Date" sortKey="end" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
                   <th className="p-4 font-semibold text-right pr-6">Quick Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {borrowedAssets.map((req, rowIdx) => {
+                {table.pageItems.map((req, rowIdx) => {
                   const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                   return (
                     <tr key={req.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
@@ -114,6 +126,7 @@ const UserAssets = ({ requests = [], loading = false, onRefresh }) => {
             </table>
           )}
         </div>
+        {table.count > 0 && <Pagination {...table} />}
       </div>
 
       <RequestExtensionModal

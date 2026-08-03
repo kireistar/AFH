@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import ProduceQRModal from "../../components/ProduceQRModal";
 import { useAuth } from "../../hooks/useAuth";
+import SortHeader from "../../components/SortHeader";
+import Pagination from "../../components/Pagination";
+import useTable from "../../hooks/useTable";
 
 // Helper function placed outside to ensure React purity compliance
 const generateCurrentTimestamp = () => Math.floor(Date.now() / 1000);
@@ -21,6 +24,16 @@ const UserRequests = ({
     setQrTimestamp(generateCurrentTimestamp());
     setIsQRModalOpen(true);
   };
+
+  const table = useTable(requests, {
+    accessors: {
+      id: (r) => r.request_code || r.id,
+      asset: (r) => (typeof r.asset === 'object' ? (r.asset?.asset_name || '') : String(r.asset || '')),
+      date: (r) => r.created_at || r.date,
+      risk: (r) => r.risk_tier_snapshot || r.urgency || 'Low',
+      status: (r) => r.status || r._status,
+    },
+  });
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
@@ -51,16 +64,16 @@ const UserRequests = ({
           <table className="w-full text-left">
             <thead>
               <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                <th className="p-4 font-semibold">Request ID</th>
-                <th className="p-4 font-semibold">Asset Requested</th>
-                <th className="p-4 font-semibold">Application Date</th>
-                <th className="p-4 font-semibold">Risk Level</th>
-                <th className="p-4 font-semibold">Status</th>
+                <SortHeader label="Request ID" sortKey="id" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Asset Requested" sortKey="asset" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Application Date" sortKey="date" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Risk Level" sortKey="risk" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Status" sortKey="status" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
                 <th className="p-4 font-semibold text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {requests.map((req, rowIdx) => {
+              {table.pageItems.map((req, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 const assetName = typeof req.asset === 'object' ? (req.asset?.asset_name || 'Asset') : String(req.asset || '-');
                 const reqStatus = req.status || req._status || 'Pending';
@@ -115,6 +128,7 @@ const UserRequests = ({
           </table>
         )}
       </div>
+      {table.count > 0 && <Pagination {...table} />}
 
       <ProduceQRModal
         isOpen={isQRModalOpen}

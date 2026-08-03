@@ -1,7 +1,21 @@
 import React from 'react';
 import { TIER_STYLES } from '../../utils/styles';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 const AdminApprovals = ({ approvals = [], loading = false, handleApprove, handleReject }) => {
+  const table = useTable(approvals, {
+    accessors: {
+      id: (r) => r.request_code || r.id,
+      user: (r) => (typeof r.user === 'object' ? (r.user?.employee_name || '') : String(r.user || '')),
+      asset: (r) => (typeof r.asset === 'object' ? (r.asset?.asset_name || '') : String(r.asset || '')),
+      risk: (r) => r.risk_tier_snapshot || r.urgency || 'Low',
+      aiReason: (r) => r.ai_reason || r.aiReason || '',
+      status: (r) => r.status || r._status,
+    },
+  });
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="p-6 border-b border-slate-100 bg-slate-50/50">
@@ -17,17 +31,17 @@ const AdminApprovals = ({ approvals = [], loading = false, handleApprove, handle
           <table className="w-full text-left">
             <thead>
               <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                <th className="p-4 font-semibold">ID</th>
-                <th className="p-4 font-semibold">Requester</th>
-                <th className="p-4 font-semibold">Asset</th>
-                <th className="p-4 font-semibold">Risk Tier</th>
-                <th className="p-4 font-semibold">AI Reason</th>
-                <th className="p-4 font-semibold">Status</th>
+                <SortHeader label="ID" sortKey="id" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Requester" sortKey="user" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Asset" sortKey="asset" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Risk Tier" sortKey="risk" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="AI Reason" sortKey="aiReason" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
+                <SortHeader label="Status" sortKey="status" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
                 <th className="p-4 font-semibold text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {approvals.map((req, rowIdx) => {
+              {table.pageItems.map((req, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 const userName = typeof req.user === 'object' ? (req.user?.employee_name || 'User') : String(req.user || '-');
                 const assetName = typeof req.asset === 'object' ? (req.asset?.asset_name || 'Asset') : String(req.asset || '-');
@@ -69,6 +83,7 @@ const AdminApprovals = ({ approvals = [], loading = false, handleApprove, handle
           </table>
         )}
       </div>
+      {table.count > 0 && <Pagination {...table} />}
     </div>
   );
 };

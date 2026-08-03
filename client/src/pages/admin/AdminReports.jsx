@@ -1,6 +1,9 @@
 import React from 'react';
 import { exportToCSV } from '../../utils/exportCSV';
 import { openReceiptInNewTab } from '../../utils/receipt';
+import SortHeader from '../../components/SortHeader';
+import Pagination from '../../components/Pagination';
+import useTable from '../../hooks/useTable';
 
 /**
  * Helper function untuk mengekstrak nilai string aman dari variabel yang bisa berupa
@@ -31,6 +34,40 @@ const renderSafeValue = (val, fallback = 'N/A') => {
 };
 
 const AdminReports = ({ transactions = [], incidents = [] }) => {
+  const transactionTable = useTable(transactions, {
+    accessors: {
+      id: (t) => t.id || t._id || '',
+      user: (t) => {
+        const v = t.party || t.borrower || t.user;
+        if (v && typeof v === 'object') return v.employee_name || v.full_name || v.username || v.name || '';
+        return typeof v === 'string' ? v : '';
+      },
+      asset: (t) => {
+        const v = t.asset;
+        if (v && typeof v === 'object') return v.asset_name || v.name || '';
+        return typeof v === 'string' ? v : '';
+      },
+      action: (t) => t.action || '',
+      date: (t) => t.date || t.occurred_at,
+      status: (t) => t.status || '',
+    },
+  });
+
+  const incidentTable = useTable(incidents, {
+    accessors: {
+      id: (i) => i.id || i._id || '',
+      asset: (i) => {
+        const v = i.asset;
+        if (v && typeof v === 'object') return v.asset_name || v.name || '';
+        return typeof v === 'string' ? v : '';
+      },
+      severity: (i) => i.severity || '',
+      status: (i) => i.status || i._status || '',
+      description: (i) => i.description || '',
+      date: (i) => i.date || i.created_at,
+    },
+  });
+
   const handleExportTransactions = () => {
     exportToCSV(
       'admin_transaction_report',
@@ -85,16 +122,17 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
             <table className="w-full text-left">
               <thead>
                 <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-4 font-semibold">Transaction ID</th>
-                  <th className="p-4 font-semibold">User</th>
-                  <th className="p-4 font-semibold">Asset</th>
-                  <th className="p-4 font-semibold">Action</th>
-                  <th className="p-4 font-semibold">Date</th>
-                  <th className="p-4 font-semibold">Status</th>
+                  <SortHeader label="Transaction ID" sortKey="id" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
+                  <SortHeader label="User" sortKey="user" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
+                  <SortHeader label="Asset" sortKey="asset" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
+                  <SortHeader label="Action" sortKey="action" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
+                  <SortHeader label="Date" sortKey="date" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
+                  <SortHeader label="Status" sortKey="status" onSort={transactionTable.onSort} activeKey={transactionTable.sortKey} sortDir={transactionTable.sortDir} />
+                  <th className="p-4 font-semibold text-right">View</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {transactions.map((t, rowIdx) => {
+                {transactionTable.pageItems.map((t, rowIdx) => {
                   const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                   return (
                     <tr key={t.id || Math.random()} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
@@ -133,6 +171,7 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
             </table>
           )}
         </div>
+        {transactionTable.count > 0 && <Pagination {...transactionTable} />}
       </div>
 
       {/* Incident Report */}
@@ -157,16 +196,16 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
             <table className="w-full text-left">
               <thead>
                 <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-4 font-semibold">Incident ID</th>
-                  <th className="p-4 font-semibold">Asset</th>
-                  <th className="p-4 font-semibold">Severity</th>
-                  <th className="p-4 font-semibold">Status</th>
-                  <th className="p-4 font-semibold">Description</th>
-                  <th className="p-4 font-semibold">Reported Date</th>
+                  <SortHeader label="Incident ID" sortKey="id" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
+                  <SortHeader label="Asset" sortKey="asset" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
+                  <SortHeader label="Severity" sortKey="severity" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
+                  <SortHeader label="Status" sortKey="status" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
+                  <SortHeader label="Description" sortKey="description" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
+                  <SortHeader label="Reported Date" sortKey="date" onSort={incidentTable.onSort} activeKey={incidentTable.sortKey} sortDir={incidentTable.sortDir} />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {incidents.map((i, rowIdx) => {
+                {incidentTable.pageItems.map((i, rowIdx) => {
                   const statusVal = renderSafeValue(i.status || i._status, 'open').toLowerCase();
                   const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                   return (
@@ -202,6 +241,7 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
             </table>
           )}
         </div>
+        {incidentTable.count > 0 && <Pagination {...incidentTable} />}
       </div>
     </div>
   );

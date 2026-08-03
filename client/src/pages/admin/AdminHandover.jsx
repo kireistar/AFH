@@ -1,4 +1,7 @@
 import React from "react";
+import SortHeader from "../../components/SortHeader";
+import Pagination from "../../components/Pagination";
+import useTable from "../../hooks/useTable";
 
 const AdminHandover = ({
   handovers = [],
@@ -9,6 +12,35 @@ const AdminHandover = ({
   loadingLoans = false,
   refreshHandovers = () => {},
 }) => {
+
+  const borrowerLabel = (row) => {
+    if (row.user && typeof row.user === 'object') return row.user?.employee_name || row.user?.name || '';
+    return String(row.user || '');
+  };
+
+  const assetLabel = (row) => {
+    if (row.asset && typeof row.asset === 'object') return row.asset?.asset_name || '';
+    return String(row.asset || '');
+  };
+
+  const handoverTable = useTable(handovers, {
+    accessors: {
+      id: (h) => h.id || h._id || '',
+      user: (h) => borrowerLabel(h),
+      asset: (h) => assetLabel(h),
+      status: (h) => h.status || '',
+    },
+  });
+
+  const loansTable = useTable(activeLoans, {
+    accessors: {
+      id: (loan) => loan.id || loan._id || '',
+      user: (loan) => borrowerLabel(loan),
+      asset: (loan) => assetLabel(loan),
+      duration: (loan) => loan.startDate || loan.requested_start || '',
+      status: (loan) => loan.status || '',
+    },
+  });
 
   return (
     <div className="space-y-8">
@@ -38,17 +70,17 @@ const AdminHandover = ({
             <table className="w-full text-left">
               <thead>
                 <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-4 font-semibold">ID</th>
-                  <th className="p-4 font-semibold">Borrower</th>
-                  <th className="p-4 font-semibold">Asset</th>
-                  <th className="p-4 font-semibold">Status</th>
+                  <SortHeader label="ID" sortKey="id" onSort={handoverTable.onSort} activeKey={handoverTable.sortKey} sortDir={handoverTable.sortDir} />
+                  <SortHeader label="Borrower" sortKey="user" onSort={handoverTable.onSort} activeKey={handoverTable.sortKey} sortDir={handoverTable.sortDir} />
+                  <SortHeader label="Asset" sortKey="asset" onSort={handoverTable.onSort} activeKey={handoverTable.sortKey} sortDir={handoverTable.sortDir} />
+                  <SortHeader label="Status" sortKey="status" onSort={handoverTable.onSort} activeKey={handoverTable.sortKey} sortDir={handoverTable.sortDir} />
                   <th className="p-4 font-semibold text-right">
                     Action (Manual Fallback)
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {handovers.map((h, rowIdx) => {
+                {handoverTable.pageItems.map((h, rowIdx) => {
                   const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                   return (
                     <tr
@@ -89,6 +121,7 @@ const AdminHandover = ({
             </table>
           )}
         </div>
+        {handoverTable.count > 0 && <Pagination {...handoverTable} />}
       </div>
 
       {/* 2. Active Loans Section */}
@@ -113,16 +146,16 @@ const AdminHandover = ({
             <table className="w-full text-left">
               <thead>
                 <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
-                  <th className="p-4 font-semibold">ID</th>
-                  <th className="p-4 font-semibold">Borrower</th>
-                  <th className="p-4 font-semibold">Asset</th>
-                  <th className="p-4 font-semibold">Duration</th>
-                  <th className="p-4 font-semibold">Status</th>
+                  <SortHeader label="ID" sortKey="id" onSort={loansTable.onSort} activeKey={loansTable.sortKey} sortDir={loansTable.sortDir} />
+                  <SortHeader label="Borrower" sortKey="user" onSort={loansTable.onSort} activeKey={loansTable.sortKey} sortDir={loansTable.sortDir} />
+                  <SortHeader label="Asset" sortKey="asset" onSort={loansTable.onSort} activeKey={loansTable.sortKey} sortDir={loansTable.sortDir} />
+                  <SortHeader label="Duration" sortKey="duration" onSort={loansTable.onSort} activeKey={loansTable.sortKey} sortDir={loansTable.sortDir} />
+                  <SortHeader label="Status" sortKey="status" onSort={loansTable.onSort} activeKey={loansTable.sortKey} sortDir={loansTable.sortDir} />
                   <th className="p-4 font-semibold text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {activeLoans.map((loan, rowIdx) => {
+                {loansTable.pageItems.map((loan, rowIdx) => {
                   const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                   return (
                     <tr
@@ -166,6 +199,7 @@ const AdminHandover = ({
             </table>
           )}
         </div>
+        {loansTable.count > 0 && <Pagination {...loansTable} />}
       </div>
     </div>
   );
