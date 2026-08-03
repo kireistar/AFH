@@ -23,8 +23,8 @@ function Login() {
       // Update auth context with token + user from backend
       login(accessToken, user);
 
-      // Navigate based on role
-      navigate(`/${user.role}`);
+      // Navigate based on role (replace so Back never returns to /login)
+      navigate(`/${user.role}`, { replace: true });
     } catch (err) {
       // Show error message from backend or generic error
       setError(err.message || 'Login failed. Please try again.');

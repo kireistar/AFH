@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './hooks/useAuth';
 import ProtectedRoute from './components/ProtectedRoute';
+import PublicOnlyRoute from './components/PublicOnlyRoute';
 import RegisterDeviceModal from './components/RegisterDeviceModal';
 
 // Lazy-loaded pages
@@ -115,7 +116,9 @@ function App() {
               <Route path="/" element={<Navigate to="/login" replace />} />
 
               {/* Public Route */}
-              <Route path="/login" element={<Login />} />
+              <Route element={<PublicOnlyRoute />}>
+                <Route path="/login" element={<Login />} />
+              </Route>
 
               {/* Protected Routes by Role */}
               <Route element={<ProtectedRoute allowedRoles={['user', 'admin', 'manager', 'finance']} />}>
