@@ -42,7 +42,7 @@ const ManagerRiskAssessment = ({ riskLogs = [], loading = false }) => {
                         {log.risk_tier_snapshot || log.urgency || 'Low'}
                       </span>
                     </td>
-                    <td className="p-4 text-sm font-bold text-slate-700">{log.risk_score !== undefined ? log.risk_score : (log.riskScore || 0)}/100</td>
+                    <td className="p-4 text-sm font-bold text-slate-700">{log.risk_score !== undefined ? log.risk_score : (log.riskScore || 0)}/10</td>
                     <td className="p-4 text-sm text-slate-600 max-w-xs truncate">{log.ai_reason || log.aiReason || '-'}</td>
                     <td className="p-4 text-sm text-slate-500">{log.created_at ? new Date(log.created_at).toLocaleDateString() : (log.date || '-')}</td>
                   </tr>
