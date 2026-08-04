@@ -32,7 +32,7 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
   };
 
   const amountLabel = (trx) => {
-    const val = trx.amount || trx.fine_amount;
+    const val = trx.amount || trx.fine_amount || trx.payload?.fine_amount;
     if (!val) return '-';
     return `Rp ${Number(val).toLocaleString('id-ID')}`;
   };
@@ -58,7 +58,7 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
       },
       asset: (t) => (t.asset && typeof t.asset === 'object' ? (t.asset.asset_name || '') : String(t.asset || '')),
       action: (t) => t.action || '',
-      amount: (t) => Number(t.amount || t.fine_amount || 0),
+      amount: (t) => Number(t.amount || t.fine_amount || t.payload?.fine_amount || 0),
       date: (t) => t.occurred_at || t.created_at,
       status: (t) => t.status || '',
     },
