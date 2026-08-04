@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TIER_STYLES, tierRank } from '../../utils/styles';
 import SortHeader from '../../components/SortHeader';
 import Pagination from '../../components/Pagination';
 import useTable from '../../hooks/useTable';
 
 const ManagerRiskAssessment = ({ riskLogs = [], loading = false }) => {
+  const [expandedId, setExpandedId] = useState(null);
+
   const table = useTable(riskLogs, {
     accessors: {
       id: (log) => log.request_code || log.id,
@@ -16,6 +18,10 @@ const ManagerRiskAssessment = ({ riskLogs = [], loading = false }) => {
       date: (log) => log.created_at || log.date,
     },
   });
+
+  const toggleExpand = (id) => {
+    setExpandedId(prev => prev === id ? null : id);
+  };
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
@@ -47,20 +53,41 @@ const ManagerRiskAssessment = ({ riskLogs = [], loading = false }) => {
                 const userName = typeof log.user === 'object' ? (log.user?.employee_name || 'User') : String(log.user || '-');
                 const assetName = typeof log.asset === 'object' ? (log.asset?.asset_name || 'Asset') : String(log.asset || '-');
                 const tierStyle = TIER_STYLES[log.risk_tier_snapshot] || TIER_STYLES[log.urgency] || TIER_STYLES.Low;
+                const aiReason = log.ai_reason || log.aiReason || '-';
+                const rowKey = log.id || log._id;
+                const isExpanded = expandedId === rowKey;
+
                 return (
-                  <tr key={log.id || log._id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
-                    <td className="p-4 text-sm font-semibold text-slate-700">{log.request_code || log.id}</td>
-                    <td className="p-4 text-sm font-medium text-slate-800">{userName}</td>
-                    <td className="p-4 text-sm text-slate-600">{assetName}</td>
-                    <td className="p-4 text-sm">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${tierStyle}`}>
-                        {log.risk_tier_snapshot || log.urgency || 'Low'}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm font-bold text-slate-700">{log.risk_score !== undefined ? log.risk_score : (log.riskScore || 0)}/10</td>
-                    <td className="p-4 text-sm text-slate-600 max-w-xs truncate">{log.ai_reason || log.aiReason || '-'}</td>
-                    <td className="p-4 text-sm text-slate-500">{log.created_at ? new Date(log.created_at).toLocaleDateString() : (log.date || '-')}</td>
-                  </tr>
+                  <React.Fragment key={rowKey}>
+                    <tr className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80 cursor-pointer`} onClick={() => toggleExpand(rowKey)}>
+                      <td className="p-4 text-sm font-semibold text-slate-700">{log.request_code || log.id}</td>
+                      <td className="p-4 text-sm font-medium text-slate-800">{userName}</td>
+                      <td className="p-4 text-sm text-slate-600">{assetName}</td>
+                      <td className="p-4 text-sm">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${tierStyle}`}>
+                          {log.risk_tier_snapshot || log.urgency || 'Low'}
+                        </span>
+                      </td>
+                      <td className="p-4 text-sm font-bold text-slate-700">{log.risk_score !== undefined ? log.risk_score : (log.riskScore || 0)}/10</td>
+                      <td className="p-4 text-sm text-slate-600">
+                        <div className="flex items-center gap-2 max-w-xs">
+                          <span className="truncate min-w-0">{aiReason}</span>
+                          <span className={`text-[10px] text-slate-400 transition-transform shrink-0 ${isExpanded ? 'rotate-180' : ''}`}>▼</span>
+                        </div>
+                      </td>
+                      <td className="p-4 text-sm text-slate-500">{log.created_at ? new Date(log.created_at).toLocaleDateString() : (log.date || '-')}</td>
+                    </tr>
+                    {isExpanded && (
+                      <tr className="bg-slate-50/80">
+                        <td colSpan={7} className="px-6 py-4">
+                          <div className="bg-white rounded-xl border border-slate-200 p-4">
+                            <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">AI Decision Reason</div>
+                            <div className="text-sm text-slate-800 leading-relaxed">{aiReason}</div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </tbody>

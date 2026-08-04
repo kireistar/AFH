@@ -52,3 +52,7 @@ export const resetUserDeviceKey = async (userId) => {
   // Tembak endpoint reset key yang kita buat di users.py
   return await apiPatch(`/api/v1/users/${userId}/reset-device-key`);
 };
+
+export const fetchUserBehaviorStats = async (userId) => {
+  return await apiGet(`/api/v1/users/${userId}/behavior-stats`);
+};

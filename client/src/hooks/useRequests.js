@@ -60,30 +60,18 @@ const useRequests = (mode = 'all', statusFilter = null) => {
   }, [load]);
 
   const approve = async (requestId) => {
-    try {
-      await approveRequest(requestId);
-      await load(true);
-    } catch (err) {
-      setError(err.message || 'Failed to approve request.');
-    }
+    await approveRequest(requestId);
+    await load(true);
   };
 
   const reject = async (requestId, reason) => {
-    try {
-      await rejectRequest(requestId, reason);
-      await load(true);
-    } catch (err) {
-      setError(err.message || 'Failed to reject request.');
-    }
+    await rejectRequest(requestId, reason);
+    await load(true);
   };
 
-  const returnAsset = async (requestId, conditionNotes = "") => {
-    try {
-      await returnRequest(requestId, conditionNotes);
-      await load(true);
-    } catch (err) {
-      setError(err.message || 'Failed to process return.');
-    }
+  const returnAsset = async (requestId, conditionNotes = "", returnCondition = null) => {
+    await returnRequest(requestId, conditionNotes, returnCondition);
+    await load(true);
   };
 
   const refresh = () => load(false);

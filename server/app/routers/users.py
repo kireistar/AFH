@@ -14,8 +14,9 @@ from cryptography.exceptions import InvalidSignature
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_role
 from app.core.security import hash_password
-from app.models import User
-from app.schemas import UserCreate, UserResponse, UserUpdate, RegisterPublicKeyRequest
+from app.models import User, UserBehaviorStats
+from app.schemas import UserCreate, UserResponse, UserUpdate, RegisterPublicKeyRequest, UserBehaviorStatsResponse
+
 
 router = APIRouter(
     prefix="/api/v1/users",
@@ -79,6 +80,25 @@ def reset_device_key(
     db.refresh(user)
     return user
 
+@router.get("/{user_id}/behavior-stats", response_model=UserBehaviorStatsResponse)
+def get_user_behavior_stats(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("admin", "manager")),
+):
+    """
+    Ambil detail 8 fitur behavior stats user (input untuk Random Forest).
+    Admin & Manager only.
+    """
+    stats = db.query(UserBehaviorStats).filter(
+        UserBehaviorStats.user_id == user_id
+    ).first()
+    if not stats:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Behavior stats for user {user_id} not found",
+        )
+    return stats
 
 # --- EXISTING CRUD ENDPOINTS ---
 

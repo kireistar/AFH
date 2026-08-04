@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { FiArrowLeft, FiEdit, FiUser, FiMail, FiBriefcase, FiShield, FiKey, FiCheck, FiX, FiMonitor } from 'react-icons/fi';
-import { fetchUserById, updateUser, resetUserDeviceKey } from '../../services/userService';
+import { fetchUserById, updateUser, resetUserDeviceKey, fetchUserBehaviorStats } from '../../services/userService';
 import { fetchAssets } from '../../services/assetService';
 import ConfirmModal from '../../components/ConfirmModal';
 import Toast, { createToast } from '../../components/Toast';
@@ -25,6 +25,7 @@ function ViewUser() {
   const [isResetKeyOpen, setIsResetKeyOpen] = useState(false);
   const [isResettingKey, setIsResettingKey] = useState(false);
   const [toasts, setToasts] = useState([]);
+  const [behaviorStats, setBehaviorStats] = useState(null);
 
   const addToast = (message, type) => {
     setToasts(prev => [...prev, createToast(message, type)]);
@@ -67,6 +68,14 @@ function ViewUser() {
         setUserAssets(borrowed);
       } catch {
         setUserAssets([]);
+      }
+
+      // Fetch user behavior stats
+      try {
+        const stats = await fetchUserBehaviorStats(uData._id);
+        setBehaviorStats(stats);
+      } catch {
+        setBehaviorStats(null);
       }
 
     } catch (err) {
@@ -416,8 +425,12 @@ function ViewUser() {
               <tr className="border-b border-slate-100 bg-white">
                 <td className="py-3.5 px-6 text-xs font-semibold text-slate-500 w-1/3 border-r border-slate-100">Risk Score & Tier</td>
                 <td className="py-3.5 px-6 text-xs text-slate-800">
-                  <span className="px-2.5 py-1 bg-slate-100 text-slate-800 rounded-md font-mono text-xs font-bold">
-                    {user.riskScore || 0} ({user.riskTier || 'Low Risk'})
+                  <span className={`px-2.5 py-1 rounded-md font-mono text-xs font-bold ${
+                    (user.riskTier || 'Low') === 'High' ? 'bg-red-50 text-red-700 border border-red-200' :
+                    (user.riskTier || 'Low') === 'Medium' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                    'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  }`}>
+                    {user.riskScore || 0}/10 — {user.riskTier || 'Low'} Risk
                   </span>
                 </td>
               </tr>
@@ -442,6 +455,35 @@ function ViewUser() {
             </tbody>
           </table>
         </div>
+
+        {/* AI Behavior Stats Breakdown */}
+        {behaviorStats && (
+          <div className="lg:col-span-12 mt-2">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+              <div className="p-5 border-b border-slate-100 bg-slate-50/50">
+                <h3 className="text-sm font-bold text-slate-800">AI Risk Factor Breakdown</h3>
+                <p className="text-xs text-slate-500 mt-0.5">Input features used by the Random Forest model to calculate this user's risk score.</p>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-0 divide-x divide-y divide-slate-100">
+                {[
+                  { label: 'Total Borrows', value: behaviorStats.total_borrows, color: 'text-blue-700', bg: 'bg-blue-50' },
+                  { label: 'Total Returns', value: behaviorStats.total_returns, color: 'text-slate-700', bg: 'bg-slate-50' },
+                  { label: 'On-Time Returns', value: behaviorStats.on_time_returns, color: 'text-emerald-700', bg: 'bg-emerald-50' },
+                  { label: 'Late Returns', value: behaviorStats.late_returns, color: 'text-red-700', bg: 'bg-red-50' },
+                  { label: 'Damage Count', value: behaviorStats.damage_count, color: 'text-amber-700', bg: 'bg-amber-50' },
+                  { label: 'Lost Count', value: behaviorStats.lost_count, color: 'text-red-700', bg: 'bg-red-50' },
+                  { label: 'Total Fines', value: `Rp ${Number(behaviorStats.total_fines).toLocaleString('id-ID')}`, color: 'text-slate-700', bg: 'bg-slate-50' },
+                  { label: 'Unpaid Fines', value: `Rp ${Number(behaviorStats.unpaid_fines).toLocaleString('id-ID')}`, color: 'text-red-700', bg: 'bg-red-50' },
+                ].map((item) => (
+                  <div key={item.label} className="p-4 text-center">
+                    <div className={`text-2xl font-bold ${item.color}`}>{item.value}</div>
+                    <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-1">{item.label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Right Column: Currently Borrowed Devices Card (5 cols) */}
         <div className="lg:col-span-5 space-y-6">

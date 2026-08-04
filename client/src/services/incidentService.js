@@ -12,6 +12,7 @@ const mapIncident = (raw) => ({
   _id: raw.id,
   _status: raw.status,
   _severity: raw.severity,
+  _assetId: raw.asset_id,
 });
 
 export const fetchAllIncidents = async () => {
