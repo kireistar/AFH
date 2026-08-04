@@ -22,6 +22,7 @@ const mapRequest = (raw) => ({
   _status: raw.status,                   // status raw untuk logic kondisional
   _assetId: raw.asset_id,
   _borrowerId: raw.user_id,
+  _requestedEnd: raw.requested_end,
 });
 
 export const fetchAllRequests = async (statusFilter = null) => {
