@@ -90,8 +90,9 @@ def create_incident(
     severity = incident_in.severity if hasattr(incident_in, 'severity') else None
 
     if severity in ["severe", "lost"] and asset:
-        # Rumus denda kerusakan/hilang: purchase_value * 2 (sesuai Form 3)
-        fine_amount = Decimal(str(asset.purchase_value)) * Decimal("2")
+        # Rumus denda: severe (rusak, device masih ada) = 1x, lost (hilang total) = 2x
+        multiplier = Decimal("2") if severity == "lost" else Decimal("1")
+        fine_amount = Decimal(str(asset.purchase_value)) * multiplier
 
         # Buat Transaction record dulu (Invoice butuh transaction_id)
         last_txn = db.query(Transaction).order_by(Transaction.id.desc()).first()
