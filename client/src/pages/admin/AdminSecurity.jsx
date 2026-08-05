@@ -4,6 +4,7 @@ import { apiGet } from '../../services/apiClient';
 import SortHeader from '../../components/SortHeader';
 import Pagination from '../../components/Pagination';
 import useTable from '../../hooks/useTable';
+import { statusBadge } from '../../utils/styles';
 
 const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefreshTransactions }) => {
   const [integrityData, setIntegrityData] = useState(null);
@@ -252,12 +253,12 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
                       </td>
                       <td className="p-3 md:p-4 text-xs md:text-sm text-center">
                         {isTampered ? (
-                          <span className="px-2.5 py-1 rounded-full text-[10px] md:text-xs font-bold border bg-rose-50 text-rose-700 border-rose-200 inline-flex items-center gap-1 shadow-sm whitespace-nowrap">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] md:text-xs font-bold border ${statusBadge('tampered')} inline-flex items-center gap-1 shadow-sm whitespace-nowrap`}>
                             <span className="w-1.5 h-1.5 rounded-full bg-rose-600 animate-ping"></span>
                             Tampered
                           </span>
                         ) : (
-                          <span className="px-2.5 py-1 rounded-full text-[10px] md:text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200 whitespace-nowrap">
+                          <span className={`px-2.5 py-1 rounded-full text-[10px] md:text-xs font-bold border ${statusBadge('verified')} whitespace-nowrap`}>
                             Verified
                           </span>
                         )}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { exportToCSV } from '../../utils/exportCSV';
-import { TIER_STYLES, tierRank, severityRank } from '../../utils/styles';
+import { TIER_STYLES, tierRank, severityRank, statusBadge } from '../../utils/styles';
 import SortHeader from '../../components/SortHeader';
 import Pagination from '../../components/Pagination';
 import useTable from '../../hooks/useTable';
@@ -92,7 +92,9 @@ const ManagerReports = ({ requests = [], incidents = [] }) => {
                     </td>
                     <td className="p-4 text-sm font-bold text-slate-700">{r.riskScore}/10</td>
                     <td className="p-4 text-sm text-slate-600 max-w-xs truncate">{r.aiReason}</td>
-                    <td className="p-4 text-sm text-slate-600">{r.status}</td>
+                    <td className="p-4 text-sm">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${statusBadge(r.status)}`}>{r.status}</span>
+                    </td>
                     <td className="p-4 text-sm text-slate-500">{r.date}</td>
                   </tr>
                 ))}
@@ -144,11 +146,7 @@ const ManagerReports = ({ requests = [], incidents = [] }) => {
                       <td className="p-4 text-sm text-slate-600">{i.asset}</td>
                       <td className="p-4 text-sm text-slate-600">{i.severity}</td>
                       <td className="p-4 text-sm">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                          i._status === 'open' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                          i._status === 'resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                          'bg-blue-50 text-[#1E3A8A] border-blue-200'
-                        }`}>{i.status}</span>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${statusBadge(i._status || i.status)}`}>{i.status}</span>
                       </td>
                       <td className="p-4 text-sm text-slate-600 max-w-xs truncate">{i.description}</td>
                       <td className="p-4 text-sm text-slate-500">{i.date}</td>

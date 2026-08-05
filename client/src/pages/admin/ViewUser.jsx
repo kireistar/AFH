@@ -5,6 +5,7 @@ import { fetchUserById, updateUser, resetUserDeviceKey, fetchUserBehaviorStats }
 import { fetchAssets } from '../../services/assetService';
 import ConfirmModal from '../../components/ConfirmModal';
 import Toast, { createToast } from '../../components/Toast';
+import { statusBadge } from '../../utils/styles';
 
 function ViewUser() {
   const { userId } = useParams();
@@ -411,9 +412,7 @@ function ViewUser() {
                       <option value="Terminated">Terminated</option>
                     </select>
                   ) : (
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                      user.status === 'Active' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'
-                    }`}>
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border ${statusBadge(user.status)}`}>
                       <span className={`w-1.5 h-1.5 rounded-full ${user.status === 'Active' ? 'bg-emerald-500' : 'bg-red-500'}`}></span>
                       <span>{user.status || 'Active'}</span>
                     </span>

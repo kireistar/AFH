@@ -2,6 +2,7 @@ import React from 'react';
 import SortHeader from '../../components/SortHeader';
 import Pagination from '../../components/Pagination';
 import useTable from '../../hooks/useTable';
+import { statusBadge } from '../../utils/styles';
 
 // UBAH: Menerima props handleMarkAsPaid
 const FinanceFines = ({ fines = [], loading = false, handleMarkAsPaid }) => {
@@ -49,9 +50,7 @@ const FinanceFines = ({ fines = [], loading = false, handleMarkAsPaid }) => {
                     <td className="p-4 text-sm text-slate-600">{fine.reason || '-'}</td>
                     <td className="p-4 text-sm font-bold text-slate-700">{fine.fine_amount ? `Rp ${Number(fine.fine_amount).toLocaleString('id-ID')}` : (fine.amount || '-')}</td>
                     <td className="p-4 text-sm">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${
-                        isPaid ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-[#B91C1C] border-red-200'
-                      }`}>{fine.status || fine._status || 'Unpaid'}</span>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${statusBadge(fine.status || fine._status)}`}>{fine.status || fine._status || 'Unpaid'}</span>
                     </td>
                     <td className="p-4 text-sm text-right">
                       {!isPaid ? (

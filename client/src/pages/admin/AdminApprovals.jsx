@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TIER_STYLES, tierRank } from '../../utils/styles';
+import { TIER_STYLES, tierRank, statusBadge } from '../../utils/styles';
 import SortHeader from '../../components/SortHeader';
 import Pagination from '../../components/Pagination';
 import useTable from '../../hooks/useTable';
@@ -76,11 +76,7 @@ const AdminApprovals = ({ approvals = [], loading = false, handleApprove, handle
                         </div>
                       </td>
                       <td className="p-4 text-sm">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${
-                          reqStatus === 'approved' || reqStatus === 'Approved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                          reqStatus === 'rejected' || reqStatus === 'Rejected' ? 'bg-red-50 text-[#B91C1C] border-red-200' :
-                          'bg-orange-50 text-orange-700 border-orange-200'
-                        }`}>{reqStatus}</span>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${statusBadge(reqStatus)}`}>{reqStatus}</span>
                       </td>
                       <td className="p-4 text-sm text-right">
                         {isPending ? (

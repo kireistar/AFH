@@ -2,6 +2,7 @@ import React from "react";
 import SortHeader from "../../components/SortHeader";
 import Pagination from "../../components/Pagination";
 import useTable from "../../hooks/useTable";
+import { statusBadge } from "../../utils/styles";
 
 const AdminHandover = ({
   handovers = [],
@@ -102,7 +103,7 @@ const AdminHandover = ({
                         {h.asset}
                       </td>
                       <td className="p-4 text-sm">
-                        <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-yellow-50 text-yellow-700 border-yellow-200">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${statusBadge(h.status)}`}>
                           {h.status}
                         </span>
                       </td>
@@ -190,7 +191,7 @@ const AdminHandover = ({
                         )}
                       </td>
                       <td className="p-4 text-sm">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${isOverdue ? 'bg-red-50 text-red-700 border-red-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${isOverdue ? 'bg-red-50 text-red-700 border-red-200' : statusBadge(loan.status)}`}>
                           {isOverdue ? 'Overdue' : loan.status}
                         </span>
                       </td>

@@ -22,11 +22,16 @@ const compareValues = (a, b) => {
 };
 
 const useTable = (items = [], options = {}) => {
-  const { pageSize: initialPageSize = 10, accessors = {} } = options;
+  const {
+    pageSize: initialPageSize = 10,
+    accessors = {},
+    defaultSortKey = null,
+    defaultSortDir = 'asc',
+  } = options;
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(initialPageSize);
-  const [sortKey, setSortKey] = useState(null);
-  const [sortDir, setSortDir] = useState('asc');
+  const [sortKey, setSortKey] = useState(defaultSortKey);
+  const [sortDir, setSortDir] = useState(defaultSortDir);
 
   const count = items.length;
 

@@ -4,10 +4,12 @@ import { useAuth } from "../../hooks/useAuth";
 import SortHeader from "../../components/SortHeader";
 import Pagination from "../../components/Pagination";
 import useTable from "../../hooks/useTable";
-import { tierRank } from "../../utils/styles";
+import { tierRank, statusBadge } from "../../utils/styles";
 
 // Helper function placed outside to ensure React purity compliance
 const generateCurrentTimestamp = () => Math.floor(Date.now() / 1000);
+
+const HISTORY_STATUSES = ["returned", "rejected", "cancelled"];
 
 const UserRequests = ({
   onOpenRequestModal,
@@ -26,42 +28,44 @@ const UserRequests = ({
     setIsQRModalOpen(true);
   };
 
-  const table = useTable(requests, {
-    accessors: {
-      id: (r) => r.request_code || r.id,
-      asset: (r) => (typeof r.asset === 'object' ? (r.asset?.asset_name || '') : String(r.asset || '')),
-      date: (r) => r.created_at || r.date,
-      risk: (r) => tierRank(r.risk_tier_snapshot || r.urgency || 'Low'),
-      status: (r) => r.status || r._status,
-    },
+  const tableAccessors = {
+    id: (r) => r.request_code || r.id,
+    asset: (r) => (typeof r.asset === 'object' ? (r.asset?.asset_name || '') : String(r.asset || '')),
+    date: (r) => r.created_at || r.date,
+    risk: (r) => tierRank(r.risk_tier_snapshot || r.urgency || 'Low'),
+    status: (r) => r.status || r._status,
+  };
+
+  const tableOptions = {
+    accessors: tableAccessors,
+    defaultSortKey: "id",
+    defaultSortDir: "desc",
+  };
+
+  const activeRequests = requests.filter((r) => {
+    const s = (r.status || r._status || "pending_admin").toLowerCase();
+    return !HISTORY_STATUSES.includes(s);
+  });
+  const historyRequests = requests.filter((r) => {
+    const s = (r.status || r._status || "").toLowerCase();
+    return HISTORY_STATUSES.includes(s);
   });
 
-  return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-      <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h3 className="text-lg font-bold text-slate-800">My Requests</h3>
-          <p className="text-sm text-slate-500">
-            Track and monitor the evaluation status of your asset applications.
-          </p>
+  const activeTable = useTable(activeRequests, tableOptions);
+  const historyTable = useTable(historyRequests, tableOptions);
+
+  const renderRequestTable = (table, showAction) => {
+    if (table.count === 0) {
+      return (
+        <div className="p-8 text-center text-slate-400 text-sm">
+          No requests found.
         </div>
-        <button
-          onClick={onOpenRequestModal}
-          className="px-4 py-2 bg-[#1E3A8A] text-white rounded-xl text-sm font-semibold hover:bg-blue-900 transition-colors shadow-sm cursor-pointer"
-        >
-          + New Request
-        </button>
-      </div>
-      <div className="overflow-x-auto">
-        {loading ? (
-          <div className="p-8 text-center text-slate-400 text-sm">
-            Loading...
-          </div>
-        ) : requests.length === 0 ? (
-          <div className="p-8 text-center text-slate-400 text-sm">
-            No requests found.
-          </div>
-        ) : (
+      );
+    }
+
+    return (
+      <>
+        <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
               <tr className="text-slate-400 text-xs uppercase tracking-wider border-b border-slate-100">
@@ -70,7 +74,7 @@ const UserRequests = ({
                 <SortHeader label="Application Date" sortKey="date" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
                 <SortHeader label="Risk Level" sortKey="risk" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
                 <SortHeader label="Status" sortKey="status" onSort={table.onSort} activeKey={table.sortKey} sortDir={table.sortDir} />
-                <th className="p-4 font-semibold text-right">Action</th>
+                {showAction && <th className="p-4 font-semibold text-right">Action</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -102,34 +106,74 @@ const UserRequests = ({
                       </div>
                     </td>
                     <td className="p-4 text-sm">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${
-                          isApproved
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            : "bg-yellow-50 text-yellow-700 border-yellow-200"
-                        }`}
-                      >
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${statusBadge(reqStatus)}`}>
                         {reqStatus}
                       </span>
                     </td>
-                    <td className="p-4 text-sm text-right">
-                      {isApproved && (
-                        <button
-                          onClick={() => handleOpenQR(req)}
-                          className="px-3 py-1.5 bg-[#1E3A8A] text-white shadow-sm hover:bg-blue-900 rounded-lg transition-all font-semibold text-xs cursor-pointer"
-                        >
-                          Show QR
-                        </button>
-                      )}
-                    </td>
+                    {showAction && (
+                      <td className="p-4 text-sm text-right">
+                        {isApproved && (
+                          <button
+                            onClick={() => handleOpenQR(req)}
+                            className="px-3 py-1.5 bg-[#1E3A8A] text-white shadow-sm hover:bg-blue-900 rounded-lg transition-all font-semibold text-xs cursor-pointer"
+                          >
+                            Show QR
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 );
               })}
             </tbody>
           </table>
+        </div>
+        {table.count > 0 && <Pagination {...table} />}
+      </>
+    );
+  };
+
+  return (
+    <div className="space-y-8">
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-lg font-bold text-slate-800">My Requests</h3>
+            <p className="text-sm text-slate-500">
+              Track and monitor the evaluation status of your active asset applications.
+            </p>
+          </div>
+          <button
+            onClick={onOpenRequestModal}
+            className="px-4 py-2 bg-[#1E3A8A] text-white rounded-xl text-sm font-semibold hover:bg-blue-900 transition-colors shadow-sm cursor-pointer"
+          >
+            + New Request
+          </button>
+        </div>
+        {loading ? (
+          <div className="p-8 text-center text-slate-400 text-sm">
+            Loading...
+          </div>
+        ) : (
+          renderRequestTable(activeTable, true)
         )}
       </div>
-      {table.count > 0 && <Pagination {...table} />}
+
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+          <h3 className="text-lg font-bold text-slate-800">Request History</h3>
+          <p className="text-sm text-slate-500 mt-1">
+            Your returned, rejected, and cancelled requests.
+          </p>
+        </div>
+        {loading ? (
+          <div className="p-8 text-center text-slate-400 text-sm">
+            Loading...
+          </div>
+        ) : (
+          renderRequestTable(historyTable, false)
+        )}
+      </div>
 
       <ProduceQRModal
         isOpen={isQRModalOpen}
