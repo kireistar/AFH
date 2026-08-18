@@ -30,7 +30,7 @@ const FinancePayments = ({ payments = [], loading = false }) => {
   };
 
   const amountLabel = (pay) => {
-    const val = pay.amount || pay.fine_amount;
+    const val = pay.amount || pay.fine_amount || pay.payload?.fine_amount;
     if (!val) return '-';
     return `Rp ${Number(val).toLocaleString('id-ID')}`;
   };
@@ -42,7 +42,7 @@ const FinancePayments = ({ payments = [], loading = false }) => {
       asset: (pay) => (pay.asset && typeof pay.asset === 'object' ? (pay.asset.asset_name || '') : String(pay.asset || '')),
       action: (pay) => pay.action || '',
       date: (pay) => pay.occurred_at || pay.created_at,
-      amount: (pay) => Number(pay.amount || pay.fine_amount || 0),
+      amount: (pay) => Number(pay.amount || pay.fine_amount || pay.payload?.fine_amount || 0),
     },
   });
 

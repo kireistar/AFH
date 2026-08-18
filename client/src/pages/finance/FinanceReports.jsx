@@ -3,6 +3,7 @@ import { exportToCSV } from '../../utils/exportCSV';
 import SortHeader from '../../components/SortHeader';
 import Pagination from '../../components/Pagination';
 import useTable from '../../hooks/useTable';
+import { statusBadge } from '../../utils/styles';
 
 const FinanceReports = ({ invoices = [], transactions = [] }) => {
   const borrowerLabel = (trx) => {
@@ -32,7 +33,7 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
   };
 
   const amountLabel = (trx) => {
-    const val = trx.amount || trx.fine_amount;
+    const val = trx.amount || trx.fine_amount || trx.payload?.fine_amount;
     if (!val) return '-';
     return `Rp ${Number(val).toLocaleString('id-ID')}`;
   };
@@ -58,7 +59,7 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
       },
       asset: (t) => (t.asset && typeof t.asset === 'object' ? (t.asset.asset_name || '') : String(t.asset || '')),
       action: (t) => t.action || '',
-      amount: (t) => Number(t.amount || t.fine_amount || 0),
+      amount: (t) => Number(t.amount || t.fine_amount || t.payload?.fine_amount || 0),
       date: (t) => t.occurred_at || t.created_at,
       status: (t) => t.status || '',
     },
@@ -118,10 +119,7 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
                     <td className="p-4 text-sm text-slate-600 max-w-xs truncate">{i.reason}</td>
                     <td className="p-4 text-sm font-bold text-right text-[#B91C1C]">{i.amount}</td>
                     <td className="p-4 text-sm">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
-                        i._status === 'paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                        'bg-red-50 text-[#B91C1C] border-red-200'
-                      }`}>{i.status}</span>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${statusBadge(i._status || i.status)}`}>{i.status}</span>
                     </td>
                     <td className="p-4 text-sm text-slate-500">{i.dueDate}</td>
                   </tr>
@@ -174,7 +172,7 @@ const FinanceReports = ({ invoices = [], transactions = [] }) => {
                       <td className="p-4 text-sm font-bold text-right text-slate-700">{amountLabel(t)}</td>
                       <td className="p-4 text-sm text-slate-500">{formatDateTime(t.occurred_at || t.created_at)}</td>
                       <td className="p-4 text-sm">
-                        <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${statusBadge(t.status)}`}>
                           {t.status}
                         </span>
                       </td>

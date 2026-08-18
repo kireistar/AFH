@@ -95,9 +95,15 @@ function Login() {
         </form>
 
         {/* Demo Credentials Info */}
-        <div className="pt-4 border-t border-slate-200">
+        <div className="pt-4 border-t border-slate-200 space-y-2">
           <p className="text-xs text-slate-500 text-center">
             Demo: admin@afh.com / password123
+          </p>
+          <p className="text-xs text-slate-500 text-center">
+            Forgot your password? Contact the administrator at{' '}
+            <a href="mailto:admin@afh.com" className="font-semibold text-blue-600 hover:underline">
+              admin@afh.com
+            </a>
           </p>
         </div>
       </div>

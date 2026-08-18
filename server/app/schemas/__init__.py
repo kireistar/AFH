@@ -28,6 +28,7 @@ from app.schemas.user import (
     UserResponse,
     UserUpdate,
     RegisterPublicKeyRequest,
+    ResetPasswordRequest,
 )
 
 # Asset
@@ -81,6 +82,7 @@ __all__ = [
     # User
     "Token", "TokenPayload", "UserBase", "UserCreate",
     "UserLogin", "UserResponse", "UserUpdate","RegisterPublicKeyRequest",
+    "ResetPasswordRequest",
     # Asset
     "AssetBase", "AssetCreate", "AssetResponse", "AssetUpdate",
     # Asset Request

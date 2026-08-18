@@ -12,6 +12,7 @@ import HandoverConfirmModal from '../../components/HandoverConfirmModal';
 import ManualHandoverModal from '../../components/ManualHandoverModal';
 import ConfirmModal from '../../components/ConfirmModal';
 import InputModal from '../../components/InputModal';
+import ProcessReturnModal from '../../components/ProcessReturnModal';
 import Toast, { createToast } from '../../components/Toast';
 
 import { useAuth } from '../../hooks/useAuth';
@@ -124,6 +125,12 @@ const AdminDashboard = () => {
       setIsApproveOpen(false);
       setApproveTarget(null);
       addToast("Request approved successfully.", "success");
+    } catch (err) {
+      refreshApprovals();
+      setIsApproveOpen(false);
+      setApproveTarget(null);
+      const msg = err?.message || "Failed to approve request.";
+      addToast(msg, "error");
     } finally {
       setIsApproving(false);
     }
@@ -144,6 +151,10 @@ const AdminDashboard = () => {
       setIsRejectOpen(false);
       setRejectTarget(null);
       addToast("Request rejected.", "success");
+    } catch (err) {
+      setIsRejectOpen(false);
+      setRejectTarget(null);
+      addToast(err?.message || "Failed to reject request.", "error");
     } finally {
       setIsRejecting(false);
     }
@@ -279,16 +290,22 @@ const AdminDashboard = () => {
     setIsReturnOpen(true);
   };
 
-  const submitReturn = async (conditionNotes) => {
+  const submitReturn = async (conditionNotes, returnCondition = null) => {
     if (!returnTarget) return;
     setIsReturning(true);
     try {
-      await returnAsset(returnTarget._id || returnTarget.id, conditionNotes || "Good condition");
+      await returnAsset(returnTarget._id || returnTarget.id, conditionNotes || "Good condition", returnCondition);
       refreshLoans();
       refreshTransactions();
+      refreshAssets();
       setIsReturnOpen(false);
       setReturnTarget(null);
-      addToast("Asset return processed successfully!", "success");
+      addToast(
+        returnCondition
+          ? `Asset return processed with ${returnCondition} flag. Fine invoice generated.`
+          : "Asset return processed successfully!",
+        returnCondition ? "warning" : "success"
+      );
     } catch (err) {
       const errorMessage = err?.message || "Server error";
       addToast("Failed to process return: " + errorMessage, "error");
@@ -523,17 +540,14 @@ const AdminDashboard = () => {
         isLoading={isRejecting}
       />
 
-      {/* Return Condition Modal */}
-      <InputModal
+      {/* Process Return Modal */}
+      <ProcessReturnModal
         isOpen={isReturnOpen}
         onClose={() => { setIsReturnOpen(false); setReturnTarget(null); }}
         onSubmit={submitReturn}
-        title="Process Asset Return"
-        label="Enter the condition of the returned device"
-        placeholder="Good condition"
-        multiline
-        defaultValue="Good condition"
+        requestData={returnTarget}
         isLoading={isReturning}
+        incidents={incidents}
       />
 
       {/* Toast Notifications */}

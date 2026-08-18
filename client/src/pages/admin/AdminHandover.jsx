@@ -2,6 +2,7 @@ import React from "react";
 import SortHeader from "../../components/SortHeader";
 import Pagination from "../../components/Pagination";
 import useTable from "../../hooks/useTable";
+import { statusBadge } from "../../utils/styles";
 
 const AdminHandover = ({
   handovers = [],
@@ -102,7 +103,7 @@ const AdminHandover = ({
                         {h.asset}
                       </td>
                       <td className="p-4 text-sm">
-                        <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-yellow-50 text-yellow-700 border-yellow-200">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${statusBadge(h.status)}`}>
                           {h.status}
                         </span>
                       </td>
@@ -157,6 +158,11 @@ const AdminHandover = ({
               <tbody className="divide-y divide-slate-50">
                 {loansTable.pageItems.map((loan, rowIdx) => {
                   const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const deadline = loan._requestedEnd ? new Date(loan._requestedEnd + 'T00:00:00') : null;
+                  const isOverdue = deadline && today > deadline;
+                  const daysOverdue = isOverdue ? Math.ceil((today - deadline) / (1000 * 60 * 60 * 24)) : 0;
                   return (
                     <tr
                       key={loan.id}
@@ -177,11 +183,16 @@ const AdminHandover = ({
                         {loan.asset}
                       </td>
                       <td className="p-4 text-sm text-slate-500 text-xs">
-                        {loan.startDate} — {loan.endDate}
+                        <div>{loan.startDate} — {loan.endDate}</div>
+                        {isOverdue && (
+                          <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-200">
+                            Overdue {daysOverdue} day{daysOverdue > 1 ? 's' : ''}
+                          </span>
+                        )}
                       </td>
                       <td className="p-4 text-sm">
-                        <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200">
-                          {loan.status}
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${isOverdue ? 'bg-red-50 text-red-700 border-red-200' : statusBadge(loan.status)}`}>
+                          {isOverdue ? 'Overdue' : loan.status}
                         </span>
                       </td>
                       <td className="p-4 text-sm text-right">

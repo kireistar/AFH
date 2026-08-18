@@ -1,7 +1,7 @@
 import React from 'react';
 import { exportToCSV } from '../../utils/exportCSV';
-import { openReceiptInNewTab } from '../../utils/receipt';
-import { severityRank } from '../../utils/styles';
+import { formatDateTime, openReceiptInNewTab } from '../../utils/receipt';
+import { severityRank, statusBadge } from '../../utils/styles';
 import SortHeader from '../../components/SortHeader';
 import Pagination from '../../components/Pagination';
 import useTable from '../../hooks/useTable';
@@ -78,7 +78,7 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
         renderSafeValue(t.party || t.borrower || t.user),
         renderSafeValue(t.asset),
         renderSafeValue(t.action),
-        renderSafeValue(t.date || t.occurred_at),
+        formatDateTime(t.date || t.occurred_at),
         renderSafeValue(t.status),
       ])
     );
@@ -94,7 +94,7 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
         renderSafeValue(i.severity),
         renderSafeValue(i.status),
         renderSafeValue(i.description),
-        renderSafeValue(i.date || i.created_at),
+        formatDateTime(i.date || i.created_at),
       ])
     );
   };
@@ -150,10 +150,10 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
                         {renderSafeValue(t.action)}
                       </td>
                       <td className="p-4 text-sm text-slate-500">
-                        {renderSafeValue(t.date || t.occurred_at)}
+                        {formatDateTime(t.date || t.occurred_at)}
                       </td>
                       <td className="p-4 text-sm">
-                        <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200 uppercase">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border uppercase ${statusBadge(t.status)}`}>
                           {renderSafeValue(t.status, 'COMPLETED')}
                         </span>
                       </td>
@@ -221,11 +221,7 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
                         {renderSafeValue(i.severity)}
                       </td>
                       <td className="p-4 text-sm">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border uppercase ${
-                          statusVal === 'open' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' :
-                          statusVal === 'resolved' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                          'bg-blue-50 text-[#1E3A8A] border-blue-200'
-                        }`}>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border uppercase ${statusBadge(statusVal)}`}>
                           {statusVal}
                         </span>
                       </td>
@@ -233,7 +229,7 @@ const AdminReports = ({ transactions = [], incidents = [] }) => {
                         {renderSafeValue(i.description)}
                       </td>
                       <td className="p-4 text-sm text-slate-500">
-                        {renderSafeValue(i.date || i.created_at)}
+                        {formatDateTime(i.date || i.created_at)}
                       </td>
                     </tr>
                   );

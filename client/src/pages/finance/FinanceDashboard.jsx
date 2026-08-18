@@ -27,34 +27,23 @@ const FinanceDashboard = () => {
     return 'Rp ' + total.toLocaleString('id-ID');
   }, [paidInvoices]);
 
+  const outstandingAmount = useMemo(() => {
+    const total = fines.reduce((sum, inv) => sum + Number(inv._rawAmount || 0), 0);
+    return 'Rp ' + total.toLocaleString('id-ID');
+  }, [fines]);
+
   const { transactions, loading: loadingTransactions } = useTransactions();
 
-  const recentTransactions = useMemo(() => {
-    return transactions.slice(0, 5).map(trx => {
-      const borrower = trx.borrower || trx.party;
-      const userName = borrower
-        ? (typeof borrower === 'object'
-            ? (borrower.employee_name || borrower.username || borrower.full_name || 'User')
-            : String(borrower))
-        : 'Unknown';
-      const asset = trx.asset;
-      const assetName = asset
-        ? (typeof asset === 'object'
-            ? (asset.asset_name || asset.asset_code || 'Asset')
-            : String(asset))
-        : 'Asset';
-      return {
-        id: trx.id,
-        description: `${trx.action} - ${assetName}`,
-        user: userName,
-        time: trx.occurred_at || trx.created_at || trx.date
-          ? new Date(trx.occurred_at || trx.created_at || trx.date).toLocaleString()
-          : '',
-        type: trx.action === 'fine_paid' ? 'Income' : 'Expense',
-        amount: trx.amount ?? trx.payload?.fine_amount ?? trx.payload?.amount,
-      };
-    });
-  }, [transactions]);
+  const recentInvoices = useMemo(() => {
+    return invoices.slice(0, 5).map(inv => ({
+      id: inv.id,
+      description: inv.reason || 'Fine',
+      user: typeof inv.user === 'object' ? (inv.user?.employee_name || 'User') : String(inv.user || 'User'),
+      time: inv.paidAt || inv.dueDate || '-',
+      type: inv._status === 'paid' ? 'Income' : 'Expense',
+      amount: inv.amount,
+    }));
+  }, [invoices]);
 
   // Payment confirm modal
   const [isPayConfirmOpen, setIsPayConfirmOpen] = useState(false);
@@ -108,13 +97,13 @@ const FinanceDashboard = () => {
   const renderContent = () => {
     switch (activeTab) {
       case 'Dashboard':
-        return <FinanceOverview financeStats={{ collectedFines, pendingInvoices: unpaidCount, unpaidFines: unpaidCount }} recentTransactions={recentTransactions} alerts={[]} />;
+        return <FinanceOverview financeStats={{ collectedFines, paidCount: paidInvoices.length, unpaidFines: unpaidCount, outstandingAmount }} recentTransactions={recentInvoices} alerts={[]} onNavigate={setActiveTab} />;
       case 'Fines':
         return <FinanceFines fines={fines} loading={loading} handleMarkAsPaid={handleMarkAsPaid} />;
       case 'Invoices':
-        return <FinanceInvoices invoices={paidInvoices} loading={loading} />;
+        return <FinanceInvoices invoices={invoices} loading={loading} />;
       case 'Payments':
-        return <FinancePayments payments={transactions} loading={loadingTransactions} />;
+        return <FinancePayments payments={transactions.filter(t => t.action === 'fine_paid')} loading={loadingTransactions} />;
       case 'Reports':
         return <FinanceReports invoices={invoices} transactions={transactions} />;
       default:

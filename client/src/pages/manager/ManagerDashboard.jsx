@@ -59,6 +59,10 @@ const ManagerDashboard = () => {
       setIsApproveOpen(false);
       setApproveTarget(null);
       addToast("High-risk request approved.", "success");
+    } catch (err) {
+      setIsApproveOpen(false);
+      setApproveTarget(null);
+      addToast(err?.message || "Failed to approve request.", "error");
     } finally {
       setIsApproving(false);
     }
@@ -77,6 +81,10 @@ const ManagerDashboard = () => {
       setIsRejectOpen(false);
       setRejectTarget(null);
       addToast("Request rejected.", "success");
+    } catch (err) {
+      setIsRejectOpen(false);
+      setRejectTarget(null);
+      addToast(err?.message || "Failed to reject request.", "error");
     } finally {
       setIsRejecting(false);
     }

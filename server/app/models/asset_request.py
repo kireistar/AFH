@@ -2,7 +2,7 @@
 AssetRequest model — Workflow request: user submit -> AI risk score
 -> route ke admin/manager -> approve -> handover -> return.
 """
-from sqlalchemy import Column, BigInteger, String, Date, Numeric, Text, DateTime, ForeignKey
+from sqlalchemy import Column, BigInteger, String, Date, Numeric, Text, DateTime, Boolean, ForeignKey
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -24,6 +24,12 @@ class AssetRequest(Base):
     reason = Column(Text, nullable=False)
     requested_start = Column(Date, nullable=False)
     requested_end = Column(Date, nullable=False)
+
+    # Long-term loan: user menyimpan asset sampai selesai bekerja di perusahaan.
+    # needs_review: di-flag oleh weekly check (asset tidak lagi bersama user /
+    # user sudah tidak aktif bekerja) untuk ditindaklanjuti admin.
+    is_long_term = Column(Boolean, nullable=False, default=False)
+    needs_review = Column(Boolean, nullable=False, default=False)
 
     # Snapshot AI saat request dibuat (immutable per-request)
     risk_score_snapshot = Column(Numeric(5, 2), nullable=False, default=0)

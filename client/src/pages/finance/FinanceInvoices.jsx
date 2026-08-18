@@ -2,6 +2,7 @@ import React from 'react';
 import SortHeader from '../../components/SortHeader';
 import Pagination from '../../components/Pagination';
 import useTable from '../../hooks/useTable';
+import { statusBadge } from '../../utils/styles';
 
 const FinanceInvoices = ({ invoices = [], loading = false }) => {
   const table = useTable(invoices, {
@@ -17,10 +18,10 @@ const FinanceInvoices = ({ invoices = [], loading = false }) => {
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
       <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-lg font-bold text-slate-800">Asset Invoices</h3>
-        <button className="px-4 py-2 bg-[#1E3A8A] text-white rounded-xl text-sm font-semibold hover:bg-blue-900 transition-colors">
-          + New Invoice
-        </button>
+        <div>
+          <h3 className="text-lg font-bold text-slate-800">All Invoices</h3>
+          <p className="text-sm text-slate-500 mt-1">Complete list of all invoices (paid and unpaid).</p>
+        </div>
       </div>
       <div className="overflow-x-auto">
         {loading ? (
@@ -42,7 +43,6 @@ const FinanceInvoices = ({ invoices = [], loading = false }) => {
               {table.pageItems.map((inv, rowIdx) => {
                 const rowBgClass = rowIdx % 2 === 0 ? 'bg-white' : 'bg-slate-50/70';
                 const userName = typeof inv.user === 'object' ? (inv.user?.employee_name || 'User') : String(inv.user || '-');
-                const isPaid = (inv.status || '').toLowerCase() === 'paid';
                 return (
                   <tr key={inv.id} className={`${rowBgClass} hover:bg-blue-50/30 transition-colors border-b border-slate-100/80`}>
                     <td className="p-4 text-sm font-semibold text-slate-700">{inv.invoice_code || inv.id}</td>
@@ -50,9 +50,7 @@ const FinanceInvoices = ({ invoices = [], loading = false }) => {
                     <td className="p-4 text-sm text-slate-600">{inv.reason || '-'}</td>
                     <td className="p-4 text-sm font-bold text-slate-700">{inv.fine_amount ? `Rp ${Number(inv.fine_amount).toLocaleString('id-ID')}` : (inv.amount || '-')}</td>
                     <td className="p-4 text-sm">
-                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${
-                        isPaid ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-orange-50 text-orange-700 border-orange-200'
-                      }`}>{inv.status || 'Unpaid'}</span>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${statusBadge(inv.status)}`}>{inv.status || 'Unpaid'}</span>
                     </td>
                   </tr>
                 );

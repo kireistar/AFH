@@ -3,6 +3,7 @@ import { formatDateTime, openReceiptInNewTab } from '../../utils/receipt';
 import SortHeader from '../../components/SortHeader';
 import Pagination from '../../components/Pagination';
 import useTable from '../../hooks/useTable';
+import { statusBadge } from '../../utils/styles';
 
 const UserReceipts = ({ receipts = [], loading = false }) => {
   const assetLabel = (t) => {
@@ -66,7 +67,7 @@ const UserReceipts = ({ receipts = [], loading = false }) => {
                       {formatDateTime(t.occurred_at || t.created_at)}
                     </td>
                     <td className="p-4 text-sm">
-                      <span className="px-2.5 py-1 rounded-full text-xs font-bold border bg-emerald-50 text-emerald-700 border-emerald-200 uppercase">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border uppercase ${statusBadge(t.status)}`}>
                         {t.status || 'COMPLETED'}
                       </span>
                     </td>

@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from cryptography.hazmat.primitives.asymmetric import ed25519
 
 from app.core.dependencies import verify_non_repudiation, get_current_user
+from app.core.database import get_db
 from app.models import User
 
 # --- SETUP DUMMY APP UNTUK TESTING DEPENDENCY ---
@@ -37,6 +38,25 @@ def mock_user(keypair):
     user.public_key = pub_key_b64
     user.role = "user"
     return user
+
+
+@pytest.fixture
+def mock_db(keypair):
+    """Override get_db sehingga dual-party QR tests me-resolve borrower dari mock session
+    (bukan live database). Borrower memiliki public key milik keypair fixture."""
+    _, borrower_pub_b64 = keypair
+    borrower = MagicMock(spec=User)
+    borrower.id = "123e4567-e89b-12d3-a456-426614174000"
+    borrower.public_key = borrower_pub_b64
+    session = MagicMock()
+    session.query.return_value.filter.return_value.first.return_value = borrower
+
+    def _override():
+        return session
+
+    test_app.dependency_overrides[get_db] = _override
+    yield session
+    test_app.dependency_overrides.pop(get_db, None)
 
 
 def create_signature(priv_key, action: str, borrower_id: str, asset_id: int, timestamp: int, expires_at: int = None) -> str:
@@ -280,7 +300,7 @@ def test_verify_non_repudiation_qr_not_expired(keypair, mock_user):
 
 # --- UNIT TESTS: Dual-Party Verification (QR Code Flow) ---
 
-def test_verify_non_repudiation_dual_party_success(keypair, mock_user):
+def test_verify_non_repudiation_dual_party_success(keypair, mock_user, mock_db):
     """
     Test 7: Dual-Party Happy Path
     Borrower signature + admin signature keduanya valid.
@@ -339,10 +359,10 @@ def test_verify_non_repudiation_dual_party_success(keypair, mock_user):
     test_app.dependency_overrides.clear()
 
 
-def test_verify_non_repudiation_dual_party_missing_borrower_pubkey(keypair, mock_user):
+def test_verify_non_repudiation_dual_party_missing_borrower_pubkey(keypair, mock_user, mock_db):
     """
     Test 8: Dual-Party Missing Borrower Public Key
-    Admin signature present but x-ed25519-public-key header missing -> 400.
+    Borrower belum terdaftar public key-nya di database -> 403.
     """
     _, borrower_pub_b64 = keypair
     admin_priv = ed25519.Ed25519PrivateKey.generate()
@@ -350,6 +370,7 @@ def test_verify_non_repudiation_dual_party_missing_borrower_pubkey(keypair, mock
     admin_pub_b64 = base64.b64encode(admin_pub_bytes).decode("utf-8")
 
     mock_user.public_key = admin_pub_b64
+    mock_db.query.return_value.filter.return_value.first.return_value.public_key = None
     current_time = int(time.time())
 
     test_app.dependency_overrides[get_current_user] = lambda: mock_user
@@ -380,13 +401,13 @@ def test_verify_non_repudiation_dual_party_missing_borrower_pubkey(keypair, mock
         }
     )
 
-    assert response.status_code == 400
-    assert "borrower public key" in response.json()["detail"].lower()
+    assert response.status_code == 403
+    assert "borrower device not registered" in response.json()["detail"].lower()
 
     test_app.dependency_overrides.clear()
 
 
-def test_verify_non_repudiation_dual_party_wrong_admin_sig(keypair, mock_user):
+def test_verify_non_repudiation_dual_party_wrong_admin_sig(keypair, mock_user, mock_db):
     """
     Test 9: Dual-Party Wrong Admin Signature
     Borrower sig valid, admin sig does not match admin's key -> 401.
@@ -442,7 +463,7 @@ def test_verify_non_repudiation_dual_party_wrong_admin_sig(keypair, mock_user):
     test_app.dependency_overrides.clear()
 
 
-def test_verify_non_repudiation_dual_party_wrong_borrower_sig(keypair, mock_user):
+def test_verify_non_repudiation_dual_party_wrong_borrower_sig(keypair, mock_user, mock_db):
     """
     Test 10: Dual-Party Wrong Borrower Signature
     Admin sig valid, borrower sig does not match borrower's key -> 401.
@@ -564,7 +585,7 @@ def test_verify_non_repudiation_dual_party_expired_qr(keypair, mock_user):
 # fresh timestamp used to break every QR handover ("Signature mismatch for canonical
 # payload"). These tests lock that invariant in so it can never regress.
 
-def test_verify_non_repudiation_dual_party_qr_nested_success(keypair, mock_user):
+def test_verify_non_repudiation_dual_party_qr_nested_success(keypair, mock_user, mock_db):
     """
     QR dual-party with nested QR payload where ROOT canonical fields match the
     nested payload byte-for-byte -> must verify successfully (200).

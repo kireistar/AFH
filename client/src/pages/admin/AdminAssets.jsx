@@ -8,6 +8,7 @@ import BulkImportModal from '../../components/BulkImportModal';
 import UserProfileModal from '../../components/UserProfileModal';
 import ImageLightboxModal from '../../components/ImageLightboxModal';
 import AssetQRModal from '../../components/AssetQRModal';
+import { statusBadge } from '../../utils/styles';
 import ColumnToggleDropdown from '../../components/ColumnToggleDropdown';
 import MultiSelectFilterDropdown from '../../components/MultiSelectFilterDropdown';
 import ConfirmModal from '../../components/ConfirmModal';
@@ -249,25 +250,20 @@ const AdminAssets = ({ assets = [], loading = false, onRefresh, autoOpenAdd = fa
   };
 
   const renderStatusBadge = (status) => {
-    let badgeColor = 'bg-slate-50 text-slate-700 border-slate-200';
     let dotColor = 'bg-slate-400';
 
     if (status === 'Available') {
-      badgeColor = 'bg-emerald-50 text-emerald-700 border-emerald-200';
       dotColor = 'bg-emerald-500';
     } else if (status === 'Borrowed') {
-      badgeColor = 'bg-blue-50 text-[#1E3A8A] border-blue-200';
       dotColor = 'bg-[#1E3A8A]';
     } else if (status === 'Maintenance' || status === 'Maintenanced') {
-      badgeColor = 'bg-amber-50 text-amber-700 border-amber-200';
       dotColor = 'bg-amber-500';
     } else if (status === 'Retired' || status === 'Broken' || status === 'Damaged' || status === 'Lost') {
-      badgeColor = 'bg-rose-50 text-rose-700 border-rose-200';
       dotColor = 'bg-rose-500';
     }
 
     return (
-      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${badgeColor}`}>
+      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${statusBadge(status)}`}>
         <span className={`w-1.5 h-1.5 rounded-full ${dotColor}`}></span>
         <span>{status}</span>
       </span>

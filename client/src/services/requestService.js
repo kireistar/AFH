@@ -22,6 +22,7 @@ const mapRequest = (raw) => ({
   _status: raw.status,                   // status raw untuk logic kondisional
   _assetId: raw.asset_id,
   _borrowerId: raw.user_id,
+  _requestedEnd: raw.requested_end,
 });
 
 export const fetchAllRequests = async (statusFilter = null) => {
@@ -57,9 +58,13 @@ export const rejectRequest = async (requestId, rejectionReason) => {
   return mapRequest(data);
 };
 
-export const returnRequest = async (requestId, conditionNotes = "") => {
-  const url = conditionNotes
-    ? `/api/v1/asset-requests/${requestId}/return?condition_notes=${encodeURIComponent(conditionNotes)}`
+export const returnRequest = async (requestId, conditionNotes = "", returnCondition = null) => {
+  const params = new URLSearchParams();
+  if (conditionNotes) params.set('condition_notes', conditionNotes);
+  if (returnCondition) params.set('return_condition', returnCondition);
+  const query = params.toString();
+  const url = query
+    ? `/api/v1/asset-requests/${requestId}/return?${query}`
     : `/api/v1/asset-requests/${requestId}/return`;
   const data = await apiPatch(url);
   return mapRequest(data);

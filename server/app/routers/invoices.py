@@ -217,9 +217,11 @@ def verify_payment(
         occurred_at=now,
     )
 
+    request_id = linked_txn.request_id if linked_txn else None
+
     transaction = Transaction(
         transaction_code=generate_transaction_code(db),
-        request_id=invoice.transaction_id,
+        request_id=request_id,
         asset_id=asset_id,
         borrower_id=invoice.user_id,
         admin_id=current_user.id,

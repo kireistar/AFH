@@ -14,8 +14,9 @@ from cryptography.exceptions import InvalidSignature
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_role
 from app.core.security import hash_password
-from app.models import User
-from app.schemas import UserCreate, UserResponse, UserUpdate, RegisterPublicKeyRequest
+from app.models import User, UserBehaviorStats
+from app.schemas import UserCreate, UserResponse, UserUpdate, RegisterPublicKeyRequest, ResetPasswordRequest, UserBehaviorStatsResponse
+
 
 router = APIRouter(
     prefix="/api/v1/users",
@@ -79,6 +80,59 @@ def reset_device_key(
     db.refresh(user)
     return user
 
+@router.post("/{user_id}/reset-password", response_model=UserResponse)
+def reset_user_password(
+    user_id: UUID,
+    body: ResetPasswordRequest,
+    db: Session = Depends(get_db),
+    admin_user: User = Depends(require_role("admin")),
+):
+    """
+    Admin-only: Reset password user yang lupa password.
+    User yang lupa password harus menghubungi admin terlebih dahulu
+    (lihat email admin di halaman login) — tidak ada self-service recovery.
+    """
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with id {user_id} not found",
+        )
+
+    user.password_hash = hash_password(body.new_password)
+    db.commit()
+    db.refresh(user)
+
+    from app.services.audit_service import log_admin_action
+    log_admin_action(
+        db,
+        actor_id=admin_user.id,
+        action="RESET_PASSWORD",
+        entity_type="User",
+        entity_id=user.id,
+        details=f"Admin reset password untuk {user.employee_name} ({user.email})",
+    )
+    return user
+
+@router.get("/{user_id}/behavior-stats", response_model=UserBehaviorStatsResponse)
+def get_user_behavior_stats(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_role("admin", "manager")),
+):
+    """
+    Ambil detail 8 fitur behavior stats user (input untuk Random Forest).
+    Admin & Manager only.
+    """
+    stats = db.query(UserBehaviorStats).filter(
+        UserBehaviorStats.user_id == user_id
+    ).first()
+    if not stats:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Behavior stats for user {user_id} not found",
+        )
+    return stats
 
 # --- EXISTING CRUD ENDPOINTS ---
 
