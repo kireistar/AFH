@@ -7,7 +7,8 @@ function NewRequestModal({ isOpen, onClose, onSuccess }) {
     asset_id: '',
     startDate: '',
     endDate: '',
-    reason: ''
+    reason: '',
+    is_long_term: false
   });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -15,14 +16,33 @@ function NewRequestModal({ isOpen, onClose, onSuccess }) {
   // Load daftar asset yang tersedia dari backend
   const { assets, loading: loadingAssets } = useAssets(true); // true = only available
 
+  const today = new Date().toISOString().split('T')[0];
+
+  // >= 12 months = auto long-term, cannot be unchecked
+  const autoLongTerm =
+    formData.startDate &&
+    formData.endDate &&
+    (new Date(formData.endDate) - new Date(formData.startDate)) >= 365 * 24 * 60 * 60 * 1000;
+
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+
+    if (formData.startDate < today) {
+      setError('Start date cannot be before today.');
+      return;
+    }
+
+    if (formData.endDate < formData.startDate) {
+      setError('End date must be on or after the start date.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       await createRequest({
@@ -30,8 +50,9 @@ function NewRequestModal({ isOpen, onClose, onSuccess }) {
         requested_start: formData.startDate,
         requested_end: formData.endDate,
         reason: formData.reason,
+        is_long_term: autoLongTerm || formData.is_long_term,
       });
-      setFormData({ asset_id: '', startDate: '', endDate: '', reason: '' });
+      setFormData({ asset_id: '', startDate: '', endDate: '', reason: '', is_long_term: false });
       onClose();
       if (onSuccess) onSuccess(); // trigger refresh di parent
     } catch (err) {
@@ -81,6 +102,7 @@ function NewRequestModal({ isOpen, onClose, onSuccess }) {
               value={formData.startDate}
               onChange={handleChange}
               required
+              min={today}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -92,6 +114,7 @@ function NewRequestModal({ isOpen, onClose, onSuccess }) {
               value={formData.endDate}
               onChange={handleChange}
               required
+              min={formData.startDate || today}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -107,6 +130,25 @@ function NewRequestModal({ isOpen, onClose, onSuccess }) {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
             />
           </div>
+          <label className={`flex items-start gap-3 p-3 border rounded-lg ${autoLongTerm ? 'bg-blue-100/60 border-blue-300' : 'bg-blue-50/60 border-blue-200'}`}>
+            <input
+              type="checkbox"
+              name="is_long_term"
+              checked={autoLongTerm || formData.is_long_term}
+              disabled={autoLongTerm}
+              onChange={handleChange}
+              className="mt-1 w-4 h-4 rounded border-blue-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed cursor-pointer"
+            />
+            <span className="text-sm text-gray-700">
+              <span className="font-semibold">Long-term loan</span> — I will keep this asset until I leave the company.
+              (Your loan will be reviewed weekly to confirm the asset is still with you.)
+              {autoLongTerm && (
+                <span className="block mt-1 text-xs text-blue-700 font-medium">
+                  Automatically enabled for loans of 12 months or more.
+                </span>
+              )}
+            </span>
+          </label>
           <div className="flex gap-3 pt-4">
             <button
               type="button"

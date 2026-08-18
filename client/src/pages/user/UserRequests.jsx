@@ -4,7 +4,7 @@ import { useAuth } from "../../hooks/useAuth";
 import SortHeader from "../../components/SortHeader";
 import Pagination from "../../components/Pagination";
 import useTable from "../../hooks/useTable";
-import { tierRank, statusBadge } from "../../utils/styles";
+import { TIER_STYLES, tierRank, statusBadge } from "../../utils/styles";
 
 // Helper function placed outside to ensure React purity compliance
 const generateCurrentTimestamp = () => Math.floor(Date.now() / 1000);
@@ -98,12 +98,9 @@ const UserRequests = ({
                       {req.created_at ? new Date(req.created_at).toLocaleDateString() : (req.date || '-')}
                     </td>
                     <td className="p-4 text-sm">
-                      <div className="flex items-center font-medium text-xs">
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full mr-1.5 ${req.risk_tier_snapshot === "High" || req.urgency === "High" ? "bg-red-500" : "bg-blue-500"}`}
-                        ></span>
-                        {req.risk_tier_snapshot || req.urgency || "Low"}
-                      </div>
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${TIER_STYLES[req.risk_tier_snapshot] || TIER_STYLES[req.urgency] || TIER_STYLES.Low}`}>
+                        {req.risk_tier_snapshot || req.urgency || 'Low'}
+                      </span>
                     </td>
                     <td className="p-4 text-sm">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-bold border capitalize ${statusBadge(reqStatus)}`}>

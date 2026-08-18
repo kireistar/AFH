@@ -1,7 +1,7 @@
 """
 Asset Request schemas.
 """
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 from typing import Optional
 from uuid import UUID
@@ -18,6 +18,7 @@ class AssetRequestBase(BaseModel):
     reason: str = Field(..., min_length=3)
     requested_start: date
     requested_end: date
+    is_long_term: bool = False
 
     @model_validator(mode="after")
     def validate_date_range(self) -> "AssetRequestBase":
@@ -28,7 +29,17 @@ class AssetRequestBase(BaseModel):
 
 # Saat user submit dari frontend (user_id di-inject dari JWT, bukan body)
 class AssetRequestCreate(AssetRequestBase):
-    pass
+    @model_validator(mode="after")
+    def validate_start_not_in_past(self) -> "AssetRequestCreate":
+        if self.requested_start < date.today():
+            raise ValueError("requested_start cannot be before today")
+        return self
+
+    @model_validator(mode="after")
+    def validate_long_term_auto(self) -> "AssetRequestCreate":
+        if self.requested_end - self.requested_start >= timedelta(days=365):
+            self.is_long_term = True
+        return self
 
 
 # Update untuk approve/reject oleh admin/manager
@@ -45,6 +56,7 @@ class AssetRequestResponse(AssetRequestBase):
     risk_tier_snapshot: RiskTier
     ai_decision_reason: Optional[str] = None
     status: RequestStatus
+    needs_review: bool = False
     approved_by: Optional[UUID] = None
     approved_at: Optional[datetime] = None
     rejection_reason: Optional[str] = None

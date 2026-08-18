@@ -1,10 +1,11 @@
 import React, { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FiEdit, FiTrash2, FiRefreshCw, FiUpload } from 'react-icons/fi';
+import { FiEdit, FiTrash2, FiRefreshCw, FiUpload, FiKey } from 'react-icons/fi';
 import AddUserModal from '../../components/AddUserModal';
 import EditUserModal from '../../components/EditUserModal';
 import BulkImportModal from '../../components/BulkImportModal';
 import ConfirmModal from '../../components/ConfirmModal';
+import ResetPasswordModal from '../../components/ResetPasswordModal';
 import Toast, { createToast } from '../../components/Toast';
 import { deleteUser, resetUserDeviceKey } from '../../services/userService';
 import { useAuth } from '../../hooks/useAuth';
@@ -27,6 +28,9 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
   // Reset key confirm modal
   const [isResetOpen, setIsResetOpen] = useState(false);
   const [resetTarget, setResetTarget] = useState(null);
+
+  // Reset password modal
+  const [resetPwUser, setResetPwUser] = useState(null);
 
   // Loading states for modals
   const [isDeleting, setIsDeleting] = useState(false);
@@ -67,6 +71,10 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
   const handleResetKey = (user) => {
     setResetTarget(user);
     setIsResetOpen(true);
+  };
+
+  const handleResetPassword = (user) => {
+    setResetPwUser(user);
   };
 
   const confirmReset = async () => {
@@ -208,6 +216,14 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
                             <span className="text-amber-600">Reset Key</span>
                           </button>
                           <button
+                            onClick={() => handleResetPassword(user)}
+                            className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1 text-xs font-semibold border border-transparent hover:border-blue-100"
+                            title="Reset Password"
+                          >
+                            <FiKey size={14} className="text-blue-500" />
+                            <span className="text-blue-600">Reset Password</span>
+                          </button>
+                          <button
                             onClick={() => handleDeleteUser(user)}
                             className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all cursor-pointer inline-flex items-center gap-1 text-xs font-semibold border border-transparent hover:border-red-100"
                             title="Delete User"
@@ -261,6 +277,13 @@ const AdminUsers = ({ users = [], loading = false, onRefresh }) => {
         confirmLabel="Reset Key"
         variant="primary"
         isLoading={isResetting}
+      />
+
+      <ResetPasswordModal
+        isOpen={!!resetPwUser}
+        onClose={() => setResetPwUser(null)}
+        onSuccess={onRefresh}
+        user={resetPwUser}
       />
 
       <BulkImportModal

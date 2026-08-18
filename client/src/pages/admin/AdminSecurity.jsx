@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { verifyLedger } from '../../services/transactionService';
-import { apiGet } from '../../services/apiClient';
+import { apiGet, apiPost } from '../../services/apiClient';
 import SortHeader from '../../components/SortHeader';
 import Pagination from '../../components/Pagination';
 import useTable from '../../hooks/useTable';
@@ -14,6 +14,24 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
   // Audit Logs state
   const [auditLogs, setAuditLogs] = useState([]);
   const [loadingAudit, setLoadingAudit] = useState(false);
+
+  // Active loan weekly check state
+  const [runningWeekly, setRunningWeekly] = useState(false);
+  const [weeklyResult, setWeeklyResult] = useState(null);
+
+  const runWeeklyCheck = async () => {
+    setRunningWeekly(true);
+    setWeeklyResult(null);
+    try {
+      const data = await apiPost('/api/v1/asset-requests/run-weekly-check');
+      setWeeklyResult(data);
+    } catch (err) {
+      console.error('Failed to run weekly check:', err);
+      setWeeklyResult({ message: 'Failed to run weekly check. Please check server logs.' });
+    } finally {
+      setRunningWeekly(false);
+    }
+  };
 
   const loadAuditLogs = async () => {
     setLoadingAudit(true);
@@ -289,6 +307,45 @@ const AdminSecurity = ({ transactions = [], loadingTransactions = false, onRefre
           >
             Refresh Audit Logs
           </button>
+        </div>
+
+        {/* Active Loan Weekly Check */}
+        <div className="p-4 md:p-6 border-b border-slate-100 bg-blue-50/40">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h4 className="text-sm md:text-base font-bold text-slate-800">Active Loan Weekly Check</h4>
+              <p className="text-xs md:text-sm text-slate-500 mt-1">
+                Verify all active loans: asset still with the user and the user still works at the company.
+                Run this weekly. Flagged loans are sent to admins and marked for review.
+              </p>
+            </div>
+            <button
+              onClick={runWeeklyCheck}
+              disabled={runningWeekly}
+              className="w-full sm:w-auto px-4 py-2 bg-[#1E3A8A] text-white font-semibold text-xs md:text-sm rounded-xl hover:bg-blue-900 transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+            >
+              {runningWeekly ? 'Checking...' : 'Run Weekly Check'}
+            </button>
+          </div>
+          {weeklyResult && (
+            <div className={`mt-3 p-3 rounded-xl text-xs md:text-sm ${weeklyResult.status === 'Error' || weeklyResult.message === 'Failed to run weekly check. Please check server logs.' ? 'bg-rose-50 border border-rose-200 text-rose-700' : 'bg-emerald-50 border border-emerald-200 text-emerald-700'}`}>
+              <div className="font-semibold">{weeklyResult.message}</div>
+              {weeklyResult.checked !== undefined && (
+                <div className="mt-1">
+                  Active loans checked: {weeklyResult.checked} | Flagged for review: {weeklyResult.flagged}
+                </div>
+              )}
+              {weeklyResult.issues?.length > 0 && (
+                <ul className="mt-2 space-y-1 list-disc list-inside">
+                  {weeklyResult.issues.map((issue, i) => (
+                    <li key={i}>
+                      #{issue.request_code} — {issue.asset_name || 'Asset'} — {issue.reason}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="overflow-x-auto w-full">

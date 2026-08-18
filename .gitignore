@@ -32,3 +32,7 @@ __pycache__/
 # Study / defense materials
 docs/study/
 *.docx
+
+# Generated presentations & PDFs
+*.pptx
+*.pdf

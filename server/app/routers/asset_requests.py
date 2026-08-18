@@ -430,3 +430,90 @@ def process_return(
     db.commit()
     db.refresh(request)
     return request
+
+
+@router.post("/run-weekly-check")
+def run_weekly_check(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role("admin")),
+):
+    """
+    Admin-triggered weekly check untuk semua active loans (status handed_over).
+    Memverifikasi bahwa:
+      1. Asset masih dengan user (asset.status == 'borrowed'), dan
+      2. User masih bekerja di perusahaan (employment_status Active / On Leave).
+
+    Setiap pelanggaran menandai request dengan needs_review=True, mengirim
+    notifikasi ke semua admin, dan mencatat audit log untuk ditindaklanjuti.
+    """
+    from app.models.notification import Notification
+    from app.services.audit_service import log_admin_action
+
+    ALLOWED_STATUSES = ["Active", "On Leave"]
+    admin_users = db.query(User).filter(User.role == "admin").all()
+
+    long_term_loans = db.query(AssetRequest).filter(
+        AssetRequest.status == "handed_over",
+    ).all()
+
+    checked = len(long_term_loans)
+    flagged = []
+    issues = []
+
+    for req in long_term_loans:
+        user = db.query(User).filter(User.id == req.user_id).first()
+        asset = db.query(Asset).filter(Asset.id == req.asset_id).first()
+
+        reason = None
+        if not user or user.employment_status not in ALLOWED_STATUSES:
+            status = user.employment_status if user else "unknown"
+            reason = f"User {user.employee_name if user else '?'} tidak lagi aktif (status: {status})"
+        elif not asset or asset.status != "borrowed":
+            reason = f"Asset {asset.asset_name if asset else '?'} tidak lagi bersama user (status: {asset.status if asset else 'unknown'})"
+
+        if reason:
+            req.needs_review = True
+            flagged.append(req.id)
+            issues.append({
+                "request_code": req.request_code,
+                "request_id": req.id,
+                "user_id": str(req.user_id),
+                "user_name": user.employee_name if user else None,
+                "asset_id": req.asset_id,
+                "asset_name": asset.asset_name if asset else None,
+                "reason": reason,
+            })
+
+            for admin in admin_users:
+                try:
+                    notif = Notification(
+                        user_id=admin.id,
+                        title="Active Loan Review Needed",
+                        message=(
+                            f"Loan #{req.request_code} ({asset.asset_name if asset else 'Asset'}) "
+                            f"perlu review. Alasan: {reason}"
+                        ),
+                        type="active_loan_check",
+                    )
+                    db.add(notif)
+                except Exception as e:
+                    print(f"Failed to create notification: {e}")
+
+            log_admin_action(
+                db,
+                actor_id=current_user.id,
+                action="WEEKLY_CHECK_FLAG",
+                entity_type="AssetRequest",
+                entity_id=str(req.id),
+                details=reason,
+            )
+
+    db.commit()
+
+    return {
+        "status": "Success",
+        "checked": checked,
+        "flagged": len(flagged),
+        "issues": issues,
+        "message": f"Checked {checked} active loan(s), flagged {len(flagged)} for review.",
+    }
