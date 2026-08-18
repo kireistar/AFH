@@ -8,9 +8,10 @@ import seaborn as sns
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import train_test_split,cross_val_score, GridSearchCV
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.cluster import KMeans
 
 # --- 0. LOAD DATA ---
-df = pd.read_csv('C:\\Users\\tiara\\Documents\\CAPSTONE\\AFH\\data_training\\behavior_dataset.csv')
+df = pd.read_csv(r'C:\Users\starlr\Documents\CAPSTONE\AFH\data_training\behavior_dataset.csv')
 
 FEATURES = [
     'total_borrows', 'total_returns', 'on_time_returns', 'late_returns', 'damage_count', 'lost_count', 'total_fines', 'unpaid_fines'
@@ -83,6 +84,38 @@ print(f"\n Correlation with risk_score:")
 for feat, val in risk_corr.items():
     print(f"    {feat}: {val:.4f}")
 print()
+
+# 1.e k-means tier threshold visualization #
+scores = df['risk_score'].values.reshape(-1, 1)
+kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
+kmeans.fit(scores)
+
+centers = sorted(kmeans.cluster_centers_.flatten())
+threshold_low_medium = round((centers[0] + centers[1]) / 2, 2)
+threshold_medium_high = round((centers[1] + centers[2]) / 2, 2)
+
+plt.figure(figsize=(12, 6))
+plt.hist(df['risk_score'], bins=50, color='steelblue', edgecolor='white', alpha=0.7, label='Risk Score Distribution')
+
+# threshold line
+plt.axvline(x=threshold_low_medium, color='#10B981', linestyle='--', linewidth=2.5, label=f'Low/Medium = {threshold_low_medium}')
+plt.axvline(x=threshold_medium_high, color='#EF4444', linestyle='--', linewidth=2.5, label=f'Medium/High = {threshold_medium_high}')
+
+# mark the cluster centers
+for i, c in enumerate(centers):
+    plt.axvline(x=c, color='#F59E0B', linestyle=':', linewidth=1.5, alpha=0.8)
+    plt.text(c, plt.ylim()[1] * 0.9, f'Center {i+1}\n({c:.2f})', ha='center', fontsize=9, fontweight='bold', color='#F59E0B')
+
+plt.xlabel('Risk Score', fontsize=12)
+plt.ylabel('Count', fontsize=12)
+plt.title('Risk Tier Threshold — Determined by K-Means Clustering (K=3)', fontsize=14, fontweight='bold')
+plt.legend(fontsize=11)
+plt.tight_layout()
+plt.savefig('eda_kmeans_threshold.png', dpi=150)
+plt.close()
+print(f" Saved: eda_kmeans_threshold.png")
+print(f" Threshold Low/Medium: {threshold_low_medium}")
+print(f" Threshold Medium/High: {threshold_medium_high}")
 
 # --- 2. DATA SPLITTING --- #
 

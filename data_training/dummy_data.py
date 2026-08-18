@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from sklearn.cluster import KMeans
 
 np.random.seed(42)
 N = 1000
@@ -75,14 +76,31 @@ df = pd.DataFrame({
     'risk_score': risk_score,
 })
 
+# --- k-means clustering to determine tier thresholds ---
+scores = df['risk_score'].values.reshape(-1, 1)
+kmeans = KMeans(n_clusters=3, random_state=42, n_init=10)
+kmeans.fit(scores)
+
+# sort the cluster centers to from smallest to largest
+centers = sorted(kmeans.cluster_centers_.flatten())
+
+# calculate the distance between clusters (the midpoint between two centers)
+threshold_low_medium = round((centers[0] + centers[1]) / 2, 2)
+threshold_medium_high = round((centers[1] + centers[2]) / 2, 2)
+
+print(f"\nK-Means Cluster Centers: {[round(c, 2) for c in centers]}")
+print(f"Threshold Low/Medium: {threshold_low_medium}")
+print(f"Threshold Medium/High: {threshold_medium_high}")
+
+# assign tiers based on the k-means thresholds
 def get_tier(score):
-    if score <= 3:
+    if score <= threshold_low_medium:
         return 'Low'
-    elif score <= 6:
+    elif score <= threshold_medium_high:
         return 'Medium'
     else:
         return 'High'
-    
+
 df['risk_tier'] = df['risk_score'].apply(get_tier)
 
 # Export

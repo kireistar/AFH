@@ -42,10 +42,10 @@ def predict_risk(stats: UserBehaviorStats) -> tuple[Decimal, str]:
     raw_score = model.predict(features)[0]
     score = round(min(max(raw_score, 1.0), 10.0), 2)
 
-    if score <= 3:
+    if score <= 4.0:    # k-means threshold (rounded from 4.1)
         tier = "Low"
-    elif score <= 6:
-        tier = "Medium"
+    elif score <= 6.0:
+        tier = "Medium" # k-means threshold (rounded from 5.92)
     else:
         tier = "High"
 
